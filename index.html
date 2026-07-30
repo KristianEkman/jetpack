@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JETPACK - Retro Arcade Action</title>
+    <meta name="description"
+        content="A classic retro 1993-inspired Jetpack arcade puzzle-platformer built with HTML5 Canvas, Vanilla JS, and Web Audio. Collect emeralds, manage fuel, phase through walls, avoid hazards, and build custom maps!">
+
+    <!-- Google Fonts for Retro Aesthetics -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+    <!-- Main Application Viewport Container -->
+    <div id="appContainer" class="app-container">
+
+        <!-- Header / HUD Bar -->
+        <header id="gameHud" class="hud-bar">
+            <div class="hud-group">
+                <div class="hud-item logo-item">
+                    <span class="logo-text">JETPACK</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">LEVEL</span>
+                    <span id="hudLevel" class="hud-value">1</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">SCORE</span>
+                    <span id="hudScore" class="hud-value">000000</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">LIVES</span>
+                    <span id="hudLives" class="hud-value">❤️❤️❤️</span>
+                </div>
+            </div>
+
+            <div class="hud-group">
+                <div class="hud-item emerald-item">
+                    <span class="hud-label">EMERALDS</span>
+                    <div class="emerald-counter">
+                        <span class="emerald-icon">💎</span>
+                        <span id="hudEmeralds" class="hud-value">0 / 0</span>
+                    </div>
+                </div>
+
+                <div class="hud-item fuel-item">
+                    <span class="hud-label">JETPACK FUEL</span>
+                    <div class="fuel-bar-container">
+                        <div id="fuelBarFill" class="fuel-bar-fill"></div>
+                        <span id="fuelText" class="fuel-text">100%</span>
+                    </div>
+                </div>
+
+                <div class="hud-item">
+                    <button id="btnPause" class="btn-icon" title="Pause Game (Esc)">⏸️</button>
+                    <button id="btnSound" class="btn-icon" title="Mute/Unmute Audio">🔊</button>
+                    <button id="btnCRT" class="btn-icon" title="Toggle CRT Retro Filter">📺</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Canvas Game World Viewport -->
+        <main class="game-viewport">
+            <div id="canvasWrapper" class="canvas-wrapper">
+                <canvas id="gameCanvas" width="960" height="576"></canvas>
+
+                <!-- CRT Retro Overlay Layer -->
+                <div id="crtOverlay" class="crt-overlay active"></div>
+
+                <!-- On-Screen Notification Banner -->
+                <div id="bannerNotification" class="banner-notification hidden">
+                    <span id="bannerText">LEVEL COMPLETE!</span>
+                </div>
+
+                <!-- Touchscreen Virtual Gamepad (Mobile/Tablet fallback) -->
+                <div id="touchGamepad" class="touch-gamepad hidden">
+                    <div class="dpad">
+                        <button id="touchUp" class="dpad-btn up">▲</button>
+                        <button id="touchLeft" class="dpad-btn left">◄</button>
+                        <button id="touchRight" class="dpad-btn right">►</button>
+                        <button id="touchDown" class="dpad-btn down">▼</button>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="touchJetpack" class="action-btn jetpack">🚀 FLY</button>
+                        <button id="touchPhase" class="action-btn phase">⚡ PHASE</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Level Editor Floating Toolbar (Visible only in Level Editor Mode) -->
+        <div id="editorToolbar" class="editor-toolbar hidden">
+            <div class="editor-header">
+                <span>LEVEL EDITOR TOOLBAR</span>
+                <span id="editorStatusText" class="editor-status">Mode: Painting</span>
+            </div>
+
+            <div id="tilePalette" class="tile-palette">
+                <!-- Dynamically populated tile palette items -->
+            </div>
+
+            <div class="editor-actions">
+                <button id="btnEditorPlay" class="btn-editor primary">▶️ PLAYTEST</button>
+                <button id="btnEditorSave" class="btn-editor">💾 SAVE LOCAL</button>
+                <button id="btnEditorExport" class="btn-editor">📥 EXPORT JSON</button>
+                <button id="btnEditorImport" class="btn-editor">📤 IMPORT JSON</button>
+                <input type="file" id="fileImportInput" accept=".json" style="display:none;">
+                <button id="btnEditorClear" class="btn-editor danger">🗑️ CLEAR</button>
+                <button id="btnEditorExit" class="btn-editor">🚪 MAIN MENU</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN MENU DIALOG -->
+    <dialog id="dlgMainMenu" class="retro-dialog">
+        <div class="dialog-content">
+            <h1 class="game-title">JETPACK</h1>
+            <p class="subtitle">RETRO ACTION PUZZLE PLATFORMER</p>
+
+            <div class="menu-buttons">
+                <button id="btnStartGame" class="btn-menu primary">🚀 START CAMPAIGN</button>
+                <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
+                <button id="btnOpenEditor" class="btn-menu accent">✏️ LEVEL EDITOR</button>
+                <button id="btnControls" class="btn-menu">❓ CONTROLS & HOW TO PLAY</button>
+            </div>
+
+            <div class="footer-note">
+                Press <strong>SPACE / SHIFT</strong> to fly • Phase walls with <strong>Z / SPACE</strong>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- LEVEL SELECT DIALOG -->
+    <dialog id="dlgLevelSelect" class="retro-dialog">
+        <div class="dialog-content">
+            <h2>SELECT CAMPAIGN LEVEL</h2>
+            <div id="levelGrid" class="level-grid">
+                <!-- Populated via JS -->
+            </div>
+            <div class="dialog-actions">
+                <button id="btnCloseLevelSelect" class="btn-menu">BACK TO MAIN MENU</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- CONTROLS & INSTRUCTIONS DIALOG -->
+    <dialog id="dlgControls" class="retro-dialog">
+        <div class="dialog-content wide">
+            <h2>HOW TO PLAY & CONTROLS</h2>
+
+            <div class="instructions-grid">
+                <div class="instruction-box">
+                    <h3>🎮 CONTROLS</h3>
+                    <ul>
+                        <li><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> : Walk Left / Right</li>
+                        <li><kbd>↑</kbd> <kbd>↓</kbd> or <kbd>W</kbd> <kbd>S</kbd> : Climb Ladders & Vines</li>
+                        <li><kbd>SHIFT</kbd> or <kbd>UP</kbd> : Fire Jetpack (Consumes Fuel)</li>
+                        <li><kbd>Z</kbd> or <kbd>SPACE</kbd> : Fire Phase Shifter Beam</li>
+                        <li><kbd>K</kbd> or <kbd>BACKSPACE</kbd> : Self-Destruct / Respawn</li>
+                        <li><kbd>P</kbd> or <kbd>ESC</kbd> : Pause Game</li>
+                    </ul>
+                </div>
+
+                <div class="instruction-box">
+                    <h3>🎯 OBJECTIVE & TOOLS</h3>
+                    <ul>
+                        <li><strong>Emeralds 💎:</strong> Collect all emeralds on the map to activate the Exit Portal
+                            🌀.</li>
+                        <li><strong>Jetpack Fuel ⛽:</strong> Watch your fuel gauge! Land on fuel pads or grab fuel
+                            tanks.</li>
+                        <li><strong>Phase Shifter ⚡:</strong> Temporarily dissolves phaseable brick walls to create
+                            tunnels. Blocks rebuild after a delay!</li>
+                        <li><strong>Teleporters 🔮:</strong> Walk or land on any Teleporter Pad to instantly warp across linked nodes.</li>
+                        <li><strong>Hazards ☣️:</strong> Avoid Spikes, Energy Drain fields, Flitzers, and Homing
+                            Missiles.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="dialog-actions">
+                <button id="btnCloseControls" class="btn-menu primary">GOT IT!</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- PAUSE MENU DIALOG -->
+    <dialog id="dlgPause" class="retro-dialog">
+        <div class="dialog-content">
+            <h2>GAME PAUSED</h2>
+            <div class="menu-buttons">
+                <button id="btnResume" class="btn-menu primary">▶️ RESUME</button>
+                <button id="btnRestartLevel" class="btn-menu">🔄 RESTART LEVEL</button>
+                <button id="btnPauseControls" class="btn-menu">❓ CONTROLS</button>
+                <button id="btnQuitToMenu" class="btn-menu danger">🚪 QUIT TO MENU</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- GAME OVER DIALOG -->
+    <dialog id="dlgGameOver" class="retro-dialog">
+        <div class="dialog-content">
+            <h2 class="danger-title">GAME OVER</h2>
+            <p id="gameOverStats">Final Score: 000000</p>
+            <div class="menu-buttons">
+                <button id="btnRetryLevel" class="btn-menu primary">🔄 RETRY LEVEL</button>
+                <button id="btnGameOverMenu" class="btn-menu">🚪 MAIN MENU</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- VICTORY / LEVEL COMPLETE DIALOG -->
+    <dialog id="dlgLevelComplete" class="retro-dialog">
+        <div class="dialog-content">
+            <h2 class="success-title">STAGE CLEARED!</h2>
+            <div id="levelCompleteStats" class="stats-box">
+                <p>Level Score: <span id="statLevelScore">0</span></p>
+                <p>Fuel Bonus: <span id="statFuelBonus">0</span></p>
+                <p>Total Score: <span id="statTotalScore">0</span></p>
+            </div>
+            <div class="menu-buttons">
+                <button id="btnNextLevel" class="btn-menu primary">🚀 NEXT LEVEL</button>
+                <button id="btnCompleteMenu" class="btn-menu">🚪 MAIN MENU</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- JS Application Scripts (ES6 Modules) -->
+    <script type="module" src="js/game.js"></script>
+</body>
+
+</html>

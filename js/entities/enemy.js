@@ -1,0 +1,462 @@
+/* ==========================================================================
+   ENEMY AI MODULE (Flitzers, Homing Missiles, Turrets)
+   ========================================================================== */
+
+import { TILE_SIZE } from '../world/tilemap.js';
+
+export const ENEMY_TYPES = {
+    FLITZER: 'flitzer',
+    HOMING_MISSILE: 'homing_missile',
+    TURRET: 'turret'
+};
+
+export class EnemyManager {
+    constructor(tileMap) {
+        this.tileMap = tileMap;
+        this.enemies = [];
+        this.projectiles = [];
+    }
+
+    clear() {
+        this.enemies = [];
+        this.projectiles = [];
+    }
+
+    addFlitzer(x, y, vx = 100, vy = 100) {
+        this.enemies.push({
+            type: ENEMY_TYPES.FLITZER,
+            x,
+            y,
+            width: 20,
+            height: 20,
+            vx,
+            vy,
+            animTimer: Math.random() * 10
+        });
+    }
+
+    addHomingMissile(x, y) {
+        this.enemies.push({
+            type: ENEMY_TYPES.HOMING_MISSILE,
+            x,
+            y,
+            width: 16,
+            height: 16,
+            vx: 0,
+            vy: 0,
+            speed: 90
+        });
+    }
+
+    addTurret(x, y, fireInterval = 2.0) {
+        this.enemies.push({
+            type: ENEMY_TYPES.TURRET,
+            x,
+            y,
+            width: 24,
+            height: 24,
+            timer: 0,
+            fireInterval
+        });
+    }
+
+    update(dt, player) {
+        if (player && player.isDead) return;
+
+        // 1. Update Enemies
+        for (let enemy of this.enemies) {
+            enemy.animTimer = (enemy.animTimer || 0) + dt;
+
+            if (enemy.type === ENEMY_TYPES.FLITZER) {
+                // Bounce along walls & tile boundaries
+                enemy.x += enemy.vx * dt;
+                enemy.y += enemy.vy * dt;
+
+                const colLeft = Math.floor(enemy.x / TILE_SIZE);
+                const colRight = Math.floor((enemy.x + enemy.width) / TILE_SIZE);
+                const rowTop = Math.floor(enemy.y / TILE_SIZE);
+                const rowBottom = Math.floor((enemy.y + enemy.height) / TILE_SIZE);
+
+                if (this.tileMap.isSolid(colLeft, rowTop) || this.tileMap.isSolid(colRight, rowTop) ||
+                    this.tileMap.isSolid(colLeft, rowBottom) || this.tileMap.isSolid(colRight, rowBottom) ||
+                    enemy.x <= 0 || enemy.x + enemy.width >= this.tileMap.cols * TILE_SIZE) {
+                    enemy.vx *= -1;
+                }
+                if (enemy.y <= 0 || enemy.y + enemy.height >= this.tileMap.rows * TILE_SIZE) {
+                    enemy.vy *= -1;
+                }
+
+                // Bio-luminescent particle trail
+                if (Math.random() < 0.35 && this.tileMap && this.tileMap.addSparkles) {
+                    this.tileMap.addSparkles(
+                        enemy.x + 10 + (Math.random() * 6 - 3),
+                        enemy.y + 10 + (Math.random() * 6 - 3),
+                        '#ff0055',
+                        1
+                    );
+                }
+            } else if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
+                // Tracking vector physics towards player
+                if (player) {
+                    const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
+                    const dy = (player.y + player.height / 2) - (enemy.y + enemy.height / 2);
+                    const angle = Math.atan2(dy, dx);
+
+                    enemy.vx = Math.cos(angle) * enemy.speed;
+                    enemy.vy = Math.sin(angle) * enemy.speed;
+                }
+
+                enemy.x += enemy.vx * dt;
+                enemy.y += enemy.vy * dt;
+
+                // Fire trail sparkles
+                if (Math.random() < 0.5 && this.tileMap && this.tileMap.addSparkles) {
+                    this.tileMap.addSparkles(
+                        enemy.x + 8 - enemy.vx * 0.05,
+                        enemy.y + 8 - enemy.vy * 0.05,
+                        '#ff5500',
+                        1
+                    );
+                }
+            } else if (enemy.type === ENEMY_TYPES.TURRET) {
+                // Fire periodic projectile
+                enemy.timer += dt;
+                if (enemy.timer >= enemy.fireInterval && player) {
+                    enemy.timer = 0;
+                    const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
+                    const dy = (player.y + player.height / 2) - (enemy.y + enemy.height / 2);
+                    const angle = Math.atan2(dy, dx);
+
+                    this.projectiles.push({
+                        x: enemy.x + enemy.width / 2,
+                        y: enemy.y + enemy.height / 2,
+                        vx: Math.cos(angle) * 220,
+                        vy: Math.sin(angle) * 220,
+                        radius: 5,
+                        life: 3.5
+                    });
+                }
+            }
+
+            // Check Collision with Player
+            if (player && this.checkAABB(enemy, player)) {
+                player.takeDamage();
+            }
+        }
+
+        // 2. Update Turret Projectiles
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const p = this.projectiles[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.life -= dt;
+
+            if (Math.random() < 0.3 && this.tileMap && this.tileMap.addSparkles) {
+                this.tileMap.addSparkles(p.x, p.y, '#ff0055', 1);
+            }
+
+            // Check player hit
+            if (player) {
+                const dx = p.x - (player.x + player.width / 2);
+                const dy = p.y - (player.y + player.height / 2);
+                if (Math.sqrt(dx * dx + dy * dy) < p.radius + 10) {
+                    player.takeDamage();
+                    this.projectiles.splice(i, 1);
+                    continue;
+                }
+            }
+
+            // Wall hit or expired
+            const col = Math.floor(p.x / TILE_SIZE);
+            const row = Math.floor(p.y / TILE_SIZE);
+            if (this.tileMap.isSolid(col, row) || p.life <= 0) {
+                this.projectiles.splice(i, 1);
+            }
+        }
+    }
+
+    checkAABB(rect1, rect2) {
+        return (
+            rect1.x < rect2.x + rect2.width &&
+            rect1.x + rect1.width > rect2.x &&
+            rect1.y < rect2.y + rect2.height &&
+            rect1.y + rect1.height > rect2.y
+        );
+    }
+
+    render(ctx, player = null) {
+        // Render Enemies
+        for (let enemy of this.enemies) {
+            ctx.save();
+            if (enemy.type === ENEMY_TYPES.FLITZER) {
+                this.renderFlitzer(ctx, enemy, player);
+            } else if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
+                this.renderHomingMissile(ctx, enemy);
+            } else if (enemy.type === ENEMY_TYPES.TURRET) {
+                this.renderTurret(ctx, enemy, player);
+            }
+            ctx.restore();
+        }
+
+        // Render Turret Projectiles
+        for (let p of this.projectiles) {
+            ctx.save();
+            // Outer Energy Halo
+            ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius + 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mid Plasma Glow
+            ctx.fillStyle = '#ff0055';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius + 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Intense Hot Core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    renderFlitzer(ctx, enemy, player) {
+        const cx = enemy.x + enemy.width / 2;
+        const cy = enemy.y + enemy.height / 2;
+        const moveAngle = Math.atan2(enemy.vy, enemy.vx);
+
+        // 1. Pulsing Crimson Void Aura
+        const auraRad = 15 + Math.sin(enemy.animTimer * 10) * 3;
+        const auraGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, auraRad);
+        auraGrad.addColorStop(0, 'rgba(255, 0, 85, 0.85)');
+        auraGrad.addColorStop(0.5, 'rgba(180, 0, 50, 0.4)');
+        auraGrad.addColorStop(1, 'rgba(100, 0, 30, 0)');
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, auraRad, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.translate(cx, cy);
+
+        // 2. Rotating Serrated Demonic Horns / Spikes
+        const spikeCount = 8;
+        const rotAngle = enemy.animTimer * 4;
+        ctx.save();
+        ctx.rotate(rotAngle);
+        for (let i = 0; i < spikeCount; i++) {
+            const a = (i * Math.PI * 2) / spikeCount;
+            const spikeLen = 13 + Math.sin(enemy.animTimer * 12 + i * 1.5) * 3;
+            const innerR = 6;
+
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a - 0.3) * innerR, Math.sin(a - 0.3) * innerR);
+            ctx.lineTo(Math.cos(a) * spikeLen, Math.sin(a) * spikeLen);
+            ctx.lineTo(Math.cos(a + 0.3) * innerR, Math.sin(a + 0.3) * innerR);
+
+            ctx.fillStyle = '#ff0033';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // 3. Dark Bio-Chitin Carapace Hull
+        const hullGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, 9);
+        hullGrad.addColorStop(0, '#3a0614');
+        hullGrad.addColorStop(0.7, '#150208');
+        hullGrad.addColorStop(1, '#050002');
+        ctx.fillStyle = hullGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // 4. Snapping Demonic Fangs
+        const jawOpen = Math.sin(enemy.animTimer * 14) * 2;
+        ctx.fillStyle = '#ffeef2';
+        // Left fang
+        ctx.beginPath();
+        ctx.moveTo(-4, 4);
+        ctx.lineTo(-2.5, 8.5 + jawOpen);
+        ctx.lineTo(-1, 4);
+        ctx.fill();
+        // Right fang
+        ctx.beginPath();
+        ctx.moveTo(1, 4);
+        ctx.lineTo(2.5, 8.5 + jawOpen);
+        ctx.lineTo(4, 4);
+        ctx.fill();
+
+        // 5. Piercing Predator Eyes
+        let eyeAngle = moveAngle;
+        if (player && !player.isDead) {
+            eyeAngle = Math.atan2((player.y + player.height / 2) - cy, (player.x + player.width / 2) - cx);
+        }
+        const eyeDx = Math.cos(eyeAngle) * 2.2;
+        const eyeDy = Math.sin(eyeAngle) * 2.2;
+
+        // Left Eye
+        ctx.fillStyle = '#ff0033';
+        ctx.beginPath();
+        ctx.arc(-3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffee00';
+        ctx.beginPath();
+        ctx.arc(-3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right Eye
+        ctx.fillStyle = '#ff0033';
+        ctx.beginPath();
+        ctx.arc(3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffee00';
+        ctx.beginPath();
+        ctx.arc(3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 6. Arcing Lightning Sparks
+        if (Math.random() < 0.45) {
+            const sparkAngle = Math.random() * Math.PI * 2;
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(sparkAngle) * 4, Math.sin(sparkAngle) * 4);
+            ctx.lineTo(Math.cos(sparkAngle) * 14, Math.sin(sparkAngle) * 14);
+            ctx.stroke();
+        }
+    }
+
+    renderHomingMissile(ctx, enemy) {
+        const cx = enemy.x + enemy.width / 2;
+        const cy = enemy.y + enemy.height / 2;
+        const angle = Math.atan2(enemy.vy, enemy.vx);
+
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+
+        // 1. Thruster Engine Plume
+        const flameLen = 10 + Math.random() * 8;
+        const flameGrad = ctx.createLinearGradient(-8, 0, -8 - flameLen, 0);
+        flameGrad.addColorStop(0, '#ffffff');
+        flameGrad.addColorStop(0.3, '#ffaa00');
+        flameGrad.addColorStop(0.7, '#ff0033');
+        flameGrad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.moveTo(-6, -4);
+        ctx.lineTo(-8 - flameLen, 0);
+        ctx.lineTo(-6, 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. Obsidian Demonic Rocket Hull
+        ctx.fillStyle = '#1c040d';
+        ctx.beginPath();
+        ctx.moveTo(10, 0);
+        ctx.lineTo(4, -6);
+        ctx.lineTo(-8, -5);
+        ctx.lineTo(-6, 0);
+        ctx.lineTo(-8, 5);
+        ctx.lineTo(4, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#ff0044';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // 3. Stabilizer Fins
+        ctx.fillStyle = '#4a081a';
+        ctx.beginPath();
+        ctx.moveTo(-2, -5);
+        ctx.lineTo(-7, -9);
+        ctx.lineTo(-5, -3);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-2, 5);
+        ctx.lineTo(-7, 9);
+        ctx.lineTo(-5, 3);
+        ctx.fill();
+
+        // 4. Glowing Target-Seeking Nose Lens
+        ctx.fillStyle = '#ff0033';
+        ctx.beginPath();
+        ctx.arc(4, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffee00';
+        ctx.beginPath();
+        ctx.arc(5, 0, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    renderTurret(ctx, enemy, player) {
+        const cx = enemy.x + enemy.width / 2;
+        const cy = enemy.y + enemy.height / 2;
+
+        let angle = Math.PI / 2;
+        if (player && !player.isDead) {
+            angle = Math.atan2((player.y + player.height / 2) - cy, (player.x + player.width / 2) - cx);
+        }
+
+        // 1. Armored Base Platform
+        ctx.fillStyle = '#1e272e';
+        ctx.fillRect(enemy.x + 2, enemy.y + 10, 20, 14);
+        ctx.strokeStyle = '#485460';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(enemy.x + 2, enemy.y + 10, 20, 14);
+
+        // Hazard Stripes on Base
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(enemy.x + 4, enemy.y + 20, 4, 3);
+        ctx.fillRect(enemy.x + 10, enemy.y + 20, 4, 3);
+        ctx.fillRect(enemy.x + 16, enemy.y + 20, 4, 3);
+
+        // 2. Faint Targeting Laser Line towards Player
+        if (player && !player.isDead) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 0, 85, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(angle) * 160, cy + Math.sin(angle) * 160);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // 3. Rotating Turret Head
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+
+        // Double Gun Barrels
+        ctx.fillStyle = '#0f171e';
+        ctx.fillRect(2, -5, 10, 3);
+        ctx.fillRect(2, 2, 10, 3);
+
+        ctx.fillStyle = '#ff0044';
+        ctx.fillRect(10, -5, 2, 3);
+        ctx.fillRect(10, 2, 2, 3);
+
+        // Cannon Base Dome
+        ctx.fillStyle = '#2c3e50';
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // 4. Optic Charging Lens
+        const chargeRatio = Math.min(1, enemy.timer / enemy.fireInterval);
+        const glowRad = 2 + chargeRatio * 2;
+        ctx.fillStyle = chargeRatio > 0.8 ? '#ffffff' : '#ff0033';
+        ctx.beginPath();
+        ctx.arc(0, 0, glowRad, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}

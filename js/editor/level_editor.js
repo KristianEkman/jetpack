@@ -1,0 +1,206 @@
+/* ==========================================================================
+   LEVEL EDITOR ENGINE
+   ========================================================================== */
+
+import { TILES, TILE_SIZE, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
+
+export const PALETTE = [
+    { type: TILES.AIR, name: 'Eraser', icon: '🧹', color: 'rgba(255,255,255,0.1)' },
+    { type: TILES.BRICK, name: 'Brick', icon: '🧱', color: '#8b263e' },
+    { type: TILES.PHASE_BRICK, name: 'Phase Brick', icon: '⚡', color: '#00f0ff' },
+    { type: TILES.ICE, name: 'Ice Floor', icon: '🧊', color: '#b4f0ff' },
+    { type: TILES.CONVEYOR_LEFT, name: 'Conv Left', icon: '◄', color: '#e74c3c' },
+    { type: TILES.CONVEYOR_RIGHT, name: 'Conv Right', icon: '►', color: '#e74c3c' },
+    { type: TILES.LADDER, name: 'Ladder', icon: '🪜', color: '#d35400' },
+    { type: TILES.VINE, name: 'Vine', icon: '🌿', color: '#27ae60' },
+    { type: TILES.SPIKE, name: 'Spike', icon: '⚠️', color: '#e74c3c' },
+    { type: TILES.ENERGY_DRAIN, name: 'Energy Drain', icon: '☣️', color: '#ff0055' },
+    { type: TILES.EMERALD, name: 'Emerald', icon: '💎', color: '#00ff77' },
+    { type: TILES.FUEL, name: 'Fuel Can', icon: '⛽', color: '#f39c12' },
+    { type: TILES.GOLD, name: 'Gold Coin', icon: '🪙', color: '#f1c40f' },
+    { type: TILES.SPAWN, name: 'Player Spawn', icon: '🚀', color: '#00ffcc' },
+    { type: TILES.EXIT_PORTAL, name: 'Exit Portal', icon: '🌀', color: '#ff00ff' },
+    { type: TILES.TELEPORTER, name: 'Teleporter', icon: '🔮', color: '#9b59b6' }
+];
+
+export class LevelEditor {
+    constructor(canvas, tileMap, onPlaytest, isEditorActive = () => true) {
+        this.canvas = canvas;
+        this.tileMap = tileMap;
+        this.onPlaytest = onPlaytest;
+        this.isEditorActive = isEditorActive;
+
+        this.selectedTile = TILES.BRICK;
+        this.isPainting = false;
+        this.hoverCol = -1;
+        this.hoverRow = -1;
+
+        this.initPaletteUI();
+        this.bindCanvasEvents();
+    }
+
+    initPaletteUI() {
+        const paletteContainer = document.getElementById('tilePalette');
+        if (!paletteContainer) return;
+
+        paletteContainer.innerHTML = '';
+        PALETTE.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = `tile-btn ${item.type === this.selectedTile ? 'active' : ''}`;
+            btn.dataset.tile = item.type;
+            
+            btn.innerHTML = `
+                <div class="tile-preview" style="background:${item.color}; display:flex; align-items:center; justify-content:center; font-size:12px;">${item.icon}</div>
+                <span class="tile-name">${item.name}</span>
+            `;
+
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tile-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedTile = item.type;
+            });
+
+            paletteContainer.appendChild(btn);
+        });
+    }
+
+    bindCanvasEvents() {
+        const getCanvasCoords = (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const scaleX = this.canvas.width / rect.width;
+            const scaleY = this.canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const col = Math.floor(((clientX - rect.left) * scaleX) / TILE_SIZE);
+            const row = Math.floor(((clientY - rect.top) * scaleY) / TILE_SIZE);
+            return { col, row };
+        };
+
+        const handleStart = (e) => {
+            if (this.isEditorActive && !this.isEditorActive()) return;
+            this.isPainting = true;
+            const { col, row } = getCanvasCoords(e);
+            this.paintTile(col, row);
+        };
+
+        const handleMove = (e) => {
+            if (this.isEditorActive && !this.isEditorActive()) {
+                this.hoverCol = -1;
+                this.hoverRow = -1;
+                this.isPainting = false;
+                return;
+            }
+            const { col, row } = getCanvasCoords(e);
+            this.hoverCol = col;
+            this.hoverRow = row;
+            if (this.isPainting) {
+                this.paintTile(col, row);
+            }
+        };
+
+        const handleEnd = () => {
+            if (this.isPainting) {
+                this.isPainting = false;
+                this.autoSaveLocal();
+            }
+        };
+
+        this.canvas.addEventListener('mousedown', handleStart);
+        this.canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        this.canvas.addEventListener('touchstart', handleStart, { passive: false });
+        this.canvas.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleEnd);
+    }
+
+    paintTile(col, row) {
+        if (this.isEditorActive && !this.isEditorActive()) return;
+        if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
+
+        // If placing spawn point, ensure only one spawn exists
+        if (this.selectedTile === TILES.SPAWN) {
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (this.tileMap.getTile(c, r) === TILES.SPAWN) {
+                        this.tileMap.setTile(c, r, TILES.AIR);
+                    }
+                }
+            }
+        }
+        // If placing exit portal, ensure only one portal exists
+        if (this.selectedTile === TILES.EXIT_PORTAL) {
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (this.tileMap.getTile(c, r) === TILES.EXIT_PORTAL) {
+                        this.tileMap.setTile(c, r, TILES.AIR);
+                    }
+                }
+            }
+        }
+
+        this.tileMap.setTile(col, row, this.selectedTile);
+    }
+
+    validateLevel() {
+        let spawnCount = 0;
+        let portalCount = 0;
+        let emeraldCount = 0;
+
+        for (let r = 0; r < GRID_ROWS; r++) {
+            for (let c = 0; c < GRID_COLS; c++) {
+                const t = this.tileMap.getTile(c, r);
+                if (t === TILES.SPAWN) spawnCount++;
+                if (t === TILES.EXIT_PORTAL) portalCount++;
+                if (t === TILES.EMERALD) emeraldCount++;
+            }
+        }
+
+        if (spawnCount === 0) return { valid: false, error: 'Please place a Player Spawn point (🚀)!' };
+        if (portalCount === 0) return { valid: false, error: 'Please place an Exit Portal (🌀)!' };
+        if (emeraldCount === 0) return { valid: false, error: 'Please place at least one Emerald (💎)!' };
+
+        return { valid: true };
+    }
+
+    getExportData() {
+        return {
+            name: "Custom Jetpack Level",
+            author: "User",
+            cols: GRID_COLS,
+            rows: GRID_ROWS,
+            grid: [...this.tileMap.grid]
+        };
+    }
+
+    autoSaveLocal() {
+        try {
+            localStorage.setItem('jetpack_custom_level', JSON.stringify(this.getExportData()));
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    loadFromLocal() {
+        try {
+            const data = localStorage.getItem('jetpack_custom_level');
+            if (data) {
+                const parsed = JSON.parse(data);
+                this.tileMap.loadLevelData(parsed);
+                return true;
+            }
+        } catch (e) {
+            // ignore
+        }
+        return false;
+    }
+
+    renderHoverPreview(ctx) {
+        if (this.hoverCol >= 0 && this.hoverCol < GRID_COLS && this.hoverRow >= 0 && this.hoverRow < GRID_ROWS) {
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.hoverCol * TILE_SIZE, this.hoverRow * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+    }
+}
