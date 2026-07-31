@@ -4,7 +4,10 @@
   "description": "Jetpack - Retro Arcade Action with Real-time Multiplayer Engine",
   "type": "module",
   "scripts": {
-    "test": "node scripts/test_shared.js"
+    "start": "node server/index.js",
+    "test": "node scripts/test_shared.js && node scripts/test_server.js",
+    "test:shared": "node scripts/test_shared.js",
+    "test:server": "node scripts/test_server.js"
   },
   "keywords": [
     "jetpack",
@@ -13,5 +16,10 @@
     "arcade"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
+  }
 }
