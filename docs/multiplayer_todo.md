@@ -89,7 +89,7 @@ For an action-platformer with physics, phase-able terrain, and shared collectibl
   Reorganize code so tile collision and physics constants can be imported by Node.js.
 - [x] **Phase 2: Node.js Backend Server Setup**  
   Setup Express server with `Socket.IO`, basic connection handshake, room creation, and tick loop (30 or 60 Hz).
-- [ ] **Phase 3: Multiplayer Entity System & Input Sync**  
+- [x] **Phase 3: Multiplayer Entity System & Input Sync**  
   Connect clients to room; send inputs to server; receive state updates; render multiple jetpack players on screen.
 - [ ] **Phase 4: Client-Side Prediction & Interpolation**  
   Implement local movement prediction and remote entity smoothing to ensure fluid gameplay under network latency.

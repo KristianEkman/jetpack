@@ -10,6 +10,8 @@ import { Player } from './entities/player.js';
 import { EnemyManager } from './entities/enemy.js';
 import { CAMPAIGN_LEVELS } from './levels/campaign.js';
 import { LevelEditor } from './editor/level_editor.js';
+import { PlayerManager } from './entities/playerManager.js';
+import { NetworkManager } from './network/networkManager.js';
 
 export const GAME_STATES = {
     MENU: 'menu',
@@ -30,6 +32,11 @@ class Game {
         this.tileMap = new TileMap();
         this.player = new Player(this.audio, this.tileMap);
         this.enemyManager = new EnemyManager(this.tileMap);
+
+        this.playerManager = new PlayerManager(this.audio, this.tileMap);
+        this.network = new NetworkManager();
+        this.isMultiplayer = false;
+        this.selectedColor = '#ff4444';
 
         this.currentLevelIndex = 0;
         this.gameState = GAME_STATES.MENU;
@@ -68,6 +75,8 @@ class Game {
         );
 
         this.bindUI();
+        this.initNetwork();
+        this.bindMultiplayerUI();
         this.audio.setupUserUnlock();
         this.showDialog('dlgMainMenu');
         this.loop.start();
@@ -86,10 +95,17 @@ class Game {
 
         // Main Menu buttons
         document.getElementById('btnStartGame').addEventListener('click', () => {
+            this.isMultiplayer = false;
             this.currentLevelIndex = 0;
             this.player.score = 0;
             this.player.lives = 3;
             this.startLevel(0);
+        });
+
+        document.getElementById('btnMultiplayer').addEventListener('click', () => {
+            this.showDialog('dlgMultiplayer');
+            this.network.connect();
+            this.network.listRooms();
         });
 
         document.getElementById('btnLevelSelect').addEventListener('click', () => {
@@ -196,6 +212,241 @@ class Game {
                 this.resumeGame();
             }
         };
+    }
+
+    initNetwork() {
+        this.network.onRoomCreatedCb = (data) => {
+            this.playerManager.setLocalSocketId(this.network.socketId);
+            this.updateLobbyUI(data.room);
+            this.showLobbyView();
+            this.showBanner(`ROOM ${data.roomId} CREATED!`);
+        };
+
+        this.network.onRoomJoinedCb = (data) => {
+            this.playerManager.setLocalSocketId(this.network.socketId);
+            this.updateLobbyUI(data.room);
+            this.showLobbyView();
+            this.showBanner(`JOINED ROOM ${data.room.id}!`);
+        };
+
+        this.network.onPlayerJoinedCb = (data) => {
+            if (data.room) this.updateLobbyUI(data.room);
+            if (data.player) this.showBanner(`${data.player.name.toUpperCase()} JOINED!`);
+        };
+
+        this.network.onPlayerLeftCb = (data) => {
+            if (data.room) this.updateLobbyUI(data.room);
+            if (data.leavingPlayer) this.showBanner(`${data.leavingPlayer.name.toUpperCase()} LEFT`);
+        };
+
+        this.network.onWorldSnapshotCb = (snapshot) => {
+            if (this.isMultiplayer && this.gameState === GAME_STATES.PLAYING) {
+                this.playerManager.updateFromSnapshot(snapshot.players);
+                const localPlayer = this.playerManager.getLocalPlayer();
+                if (localPlayer) {
+                    this.player = localPlayer;
+                }
+            }
+        };
+
+        this.network.onRoomListCb = (list) => {
+            this.renderPublicRoomsList(list);
+        };
+
+        this.network.onErrorCb = (errMsg) => {
+            alert(`Multiplayer Error: ${errMsg}`);
+        };
+    }
+
+    bindMultiplayerUI() {
+        // Tab Buttons
+        const tabCreate = document.getElementById('tabCreateRoom');
+        const tabJoin = document.getElementById('tabJoinRoom');
+        const tabPublic = document.getElementById('tabPublicRooms');
+
+        const viewCreate = document.getElementById('viewCreateRoom');
+        const viewJoin = document.getElementById('viewJoinRoom');
+        const viewPublic = document.getElementById('viewPublicRooms');
+        const viewLobby = document.getElementById('viewRoomLobby');
+
+        const switchTab = (activeTab, activeView) => {
+            [tabCreate, tabJoin, tabPublic].forEach(t => t?.classList.remove('active'));
+            [viewCreate, viewJoin, viewPublic, viewLobby].forEach(v => v?.classList.add('hidden'));
+
+            activeTab?.classList.add('active');
+            activeView?.classList.remove('hidden');
+        };
+
+        tabCreate?.addEventListener('click', () => switchTab(tabCreate, viewCreate));
+        tabJoin?.addEventListener('click', () => switchTab(tabJoin, viewJoin));
+        tabPublic?.addEventListener('click', () => {
+            switchTab(tabPublic, viewPublic);
+            this.network.listRooms();
+        });
+
+        // Color Picker Chips
+        document.querySelectorAll('.color-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                this.selectedColor = chip.dataset.color || '#ff4444';
+            });
+        });
+
+        // Form Submit Buttons
+        document.getElementById('btnCreateRoomSubmit')?.addEventListener('click', () => {
+            const hostName = document.getElementById('inputHostName').value.trim() || 'Host Pilot';
+            this.network.createRoom({
+                playerName: hostName,
+                playerColor: this.selectedColor,
+                levelIndex: 0
+            });
+        });
+
+        document.getElementById('btnJoinRoomSubmit')?.addEventListener('click', () => {
+            const joinName = document.getElementById('inputJoinName').value.trim() || 'Wingman';
+            const roomCode = document.getElementById('inputRoomCode').value.trim().toUpperCase();
+            if (!roomCode || roomCode.length !== 4) {
+                alert('Please enter a valid 4-letter room code.');
+                return;
+            }
+            this.network.joinRoom(roomCode, {
+                playerName: joinName,
+                playerColor: this.selectedColor
+            });
+        });
+
+        document.getElementById('btnRefreshRooms')?.addEventListener('click', () => {
+            this.network.listRooms();
+        });
+
+        document.getElementById('btnLeaveRoom')?.addEventListener('click', () => {
+            this.network.leaveRoom(() => {
+                switchTab(tabCreate, viewCreate);
+                this.showBanner('LEFT ROOM');
+            });
+        });
+
+        document.getElementById('btnStartMultiplayerGame')?.addEventListener('click', () => {
+            this.startMultiplayerMatch();
+        });
+
+        document.getElementById('btnCloseMultiplayer')?.addEventListener('click', () => {
+            this.showDialog('dlgMainMenu');
+        });
+    }
+
+    showLobbyView() {
+        const viewCreate = document.getElementById('viewCreateRoom');
+        const viewJoin = document.getElementById('viewJoinRoom');
+        const viewPublic = document.getElementById('viewPublicRooms');
+        const viewLobby = document.getElementById('viewRoomLobby');
+
+        [viewCreate, viewJoin, viewPublic].forEach(v => v?.classList.add('hidden'));
+        viewLobby?.classList.remove('hidden');
+    }
+
+    updateLobbyUI(room) {
+        if (!room) return;
+
+        document.getElementById('displayRoomCode').textContent = room.id;
+        document.getElementById('lobbyPlayerCount').textContent = `${room.players.length}`;
+
+        const listEl = document.getElementById('lobbyPlayerList');
+        listEl.innerHTML = '';
+
+        const isHost = (this.network.socketId === room.hostSocketId);
+        const startBtn = document.getElementById('btnStartMultiplayerGame');
+
+        if (startBtn) {
+            if (isHost) {
+                startBtn.classList.remove('hidden');
+            } else {
+                startBtn.classList.add('hidden');
+            }
+        }
+
+        room.players.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'lobby-player-card';
+            card.innerHTML = `
+                <div class="player-info-group">
+                    <div class="player-color-dot" style="background: ${p.color};"></div>
+                    <span class="player-name-text">${p.name} ${p.isHost ? '<span class="host-badge">HOST</span>' : ''}</span>
+                </div>
+                <span style="font-size: 0.8rem; color: #00ffcc;">READY</span>
+            `;
+            listEl.appendChild(card);
+        });
+    }
+
+    renderPublicRoomsList(list) {
+        const container = document.getElementById('publicRoomsList');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            container.innerHTML = '<p class="empty-list-note">No active public rooms found. Create one!</p>';
+            return;
+        }
+
+        list.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'lobby-player-card';
+            row.style.cursor = 'pointer';
+            row.innerHTML = `
+                <div class="player-info-group">
+                    <strong style="color: #00f0ff; letter-spacing: 2px;">${r.id}</strong>
+                    <span style="font-size: 0.85rem; color: #aaa;">(${r.playerCount}/${r.maxPlayers} Players)</span>
+                </div>
+                <button class="btn-editor primary">JOIN</button>
+            `;
+            row.addEventListener('click', () => {
+                const joinName = document.getElementById('inputJoinName').value.trim() || 'Wingman';
+                this.network.joinRoom(r.id, {
+                    playerName: joinName,
+                    playerColor: this.selectedColor
+                });
+            });
+            container.appendChild(row);
+        });
+    }
+
+    startMultiplayerMatch() {
+        this.isMultiplayer = true;
+        this.currentLevelIndex = 0;
+
+        const levelData = CAMPAIGN_LEVELS[0];
+        this.tileMap.loadLevelData(levelData);
+        this.enemyManager.clear();
+        this.spawnEnemiesFromGrid();
+
+        this.playerManager.clear();
+        this.playerManager.setLocalSocketId(this.network.socketId);
+
+        // Populate initial players from current room state
+        if (this.network.currentRoom && this.network.currentRoom.players) {
+            this.network.currentRoom.players.forEach(p => {
+                this.playerManager.addPlayer(p.socketId, {
+                    id: p.id,
+                    name: p.name,
+                    color: p.color,
+                    isLocal: p.socketId === this.network.socketId,
+                    x: p.x || 128,
+                    y: p.y || 100
+                });
+            });
+        }
+
+        const localPlayer = this.playerManager.getLocalPlayer();
+        if (localPlayer) {
+            this.player = localPlayer;
+        }
+
+        this.gameState = GAME_STATES.PLAYING;
+        this.audio.startGameMusic(0);
+        this.closeAllDialogs();
+        this.showBanner('MULTIPLAYER MATCH STARTED!');
     }
 
     startLevel(index) {
@@ -418,6 +669,10 @@ class Game {
     update(dt) {
         if (this.gameState !== GAME_STATES.PLAYING) return;
 
+        if (this.isMultiplayer) {
+            this.network.sendInput(this.input.serializeInputState());
+        }
+
         // Time Dilation scale during dramatic player death sequence
         let effectiveDt = dt;
         if (this.player.isDead) {
@@ -538,8 +793,12 @@ class Game {
         // Render Enemies
         this.enemyManager.render(this.ctx, this.player);
 
-        // Render Player
-        this.player.render(this.ctx);
+        // Render Player / Multi-Player Entities
+        if (this.isMultiplayer) {
+            this.playerManager.render(this.ctx);
+        } else {
+            this.player.render(this.ctx);
+        }
 
         // Render Editor Overlay if in Level Editor Mode
         if (this.gameState === GAME_STATES.LEVEL_EDITOR) {

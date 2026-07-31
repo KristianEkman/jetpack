@@ -71,9 +71,9 @@ export class RoomManager {
      */
     addPlayerToRoom(room, socketId, playerOptions = {}) {
         const playerIndex = room.players.size;
-        const color = playerOptions.color || PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
+        const color = playerOptions.color || playerOptions.playerColor || PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
         const playerId = `player_${playerIndex + 1}_${socketId.substr(0, 4)}`;
-        const name = playerOptions.name || `Player ${playerIndex + 1}`;
+        const name = playerOptions.name || playerOptions.playerName || `Player ${playerIndex + 1}`;
 
         const playerEntity = new Player(null, room.tileMap, {
             id: playerId,

@@ -95,8 +95,8 @@ io.on('connection', (socket) => {
         if (typeof callback === 'function') callback(result);
         socket.emit('room_joined', result);
 
-        // Notify other room participants
-        socket.to(result.room.id).emit('player_joined', {
+        // Notify room participants
+        io.to(result.room.id).emit('player_joined', {
             player: result.player,
             room: result.room
         });

@@ -690,6 +690,25 @@ export class Player {
         }
     }
 
+    applySnapshot(data) {
+        if (!data) return;
+        if (data.x !== undefined) this.x = data.x;
+        if (data.y !== undefined) this.y = data.y;
+        if (data.vx !== undefined) this.vx = data.vx;
+        if (data.vy !== undefined) this.vy = data.vy;
+        if (data.fuel !== undefined) this.fuel = data.fuel;
+        if (data.lives !== undefined) this.lives = data.lives;
+        if (data.score !== undefined) this.score = data.score;
+        if (data.facingRight !== undefined) this.facingRight = data.facingRight;
+        if (data.isGrounded !== undefined) this.isGrounded = data.isGrounded;
+        if (data.isThrusting !== undefined) this.isThrusting = data.isThrusting;
+        if (data.isClimbing !== undefined) this.isClimbing = data.isClimbing;
+        if (data.isPhasing !== undefined) this.isPhasing = data.isPhasing;
+        if (data.isDead !== undefined) this.isDead = data.isDead;
+        if (data.color) this.color = data.color;
+        if (data.name) this.name = data.name;
+    }
+
     render(ctx) {
         if (this.isDead) return;
 
@@ -728,15 +747,35 @@ export class Player {
         const boot1X = this.facingRight ? leg1X : leg1X - 1;
         ctx.fillRect(boot1X, py + 22 + leg1Height - 2, 6, 2);
 
-        // Jetpack Unit on back
+        // Jetpack Unit on back & Thrust Flame
         ctx.fillStyle = '#7f8c8d';
         const packX = this.facingRight ? px - 4 : px + this.width - 2;
         ctx.fillRect(packX, py + 6, 6, 16);
         ctx.fillStyle = '#e74c3c';
         ctx.fillRect(packX + 1, py + 8, 4, 4);
 
+        if (this.isThrusting) {
+            // Animated jetpack flame exhaust
+            const flameLen = 8 + Math.random() * 8;
+            ctx.fillStyle = '#ff6600';
+            ctx.beginPath();
+            ctx.moveTo(packX + 1, py + 22);
+            ctx.lineTo(packX + 5, py + 22);
+            ctx.lineTo(packX + 3, py + 22 + flameLen);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.moveTo(packX + 2, py + 22);
+            ctx.lineTo(packX + 4, py + 22);
+            ctx.lineTo(packX + 3, py + 22 + flameLen * 0.6);
+            ctx.closePath();
+            ctx.fill();
+        }
+
         // Main Body Suit
-        ctx.fillStyle = '#00ffcc';
+        ctx.fillStyle = this.color || '#00ffcc';
         ctx.fillRect(px + 4, py + 8, 14, 14);
 
         // Head Helmet
@@ -804,6 +843,30 @@ export class Player {
             ctx.beginPath();
             ctx.arc(beamEndX, beamStartY, 4, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // Overhead Name Tag & Color Badge
+        if (this.name) {
+            ctx.save();
+            ctx.font = 'bold 9px Orbitron, sans-serif';
+            ctx.textAlign = 'center';
+
+            const tagText = this.name;
+            const textWidth = ctx.measureText(tagText).width;
+            const tagX = px + this.width / 2;
+            const tagY = py - 10;
+
+            // Background badge
+            ctx.fillStyle = 'rgba(10, 15, 25, 0.75)';
+            ctx.fillRect(tagX - textWidth / 2 - 5, tagY - 9, textWidth + 10, 12);
+            ctx.strokeStyle = this.color || '#00f0ff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(tagX - textWidth / 2 - 5, tagY - 9, textWidth + 10, 12);
+
+            // Name text
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(tagText, tagX, tagY);
+            ctx.restore();
         }
 
         ctx.restore();

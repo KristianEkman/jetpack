@@ -124,6 +124,7 @@
 
             <div class="menu-buttons">
                 <button id="btnStartGame" class="btn-menu primary">🚀 START CAMPAIGN</button>
+                <button id="btnMultiplayer" class="btn-menu primary-glow">🌐 MULTIPLAYER LOBBY</button>
                 <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
                 <button id="btnOpenEditor" class="btn-menu accent">✏️ LEVEL EDITOR</button>
                 <button id="btnControls" class="btn-menu">❓ CONTROLS & HOW TO PLAY</button>
@@ -230,6 +231,86 @@
         </div>
     </dialog>
 
+    <!-- MULTIPLAYER LOBBY DIALOG -->
+    <dialog id="dlgMultiplayer" class="retro-dialog">
+        <div class="dialog-content wide">
+            <h2>MULTIPLAYER LOBBY</h2>
+
+            <div class="mp-tabs">
+                <button id="tabCreateRoom" class="mp-tab-btn active">CREATE ROOM</button>
+                <button id="tabJoinRoom" class="mp-tab-btn">JOIN ROOM</button>
+                <button id="tabPublicRooms" class="mp-tab-btn">PUBLIC ROOMS</button>
+            </div>
+
+            <!-- Create Room View -->
+            <div id="viewCreateRoom" class="mp-view-section">
+                <div class="form-group">
+                    <label for="inputHostName">Pilot Name:</label>
+                    <input type="text" id="inputHostName" class="retro-input" value="Pilot 1" maxlength="12">
+                </div>
+                <div class="form-group">
+                    <label>Pilot Suit Color:</label>
+                    <div class="color-picker-row">
+                        <button class="color-chip active" data-color="#ff4444" style="background:#ff4444;"></button>
+                        <button class="color-chip" data-color="#44ff44" style="background:#44ff44;"></button>
+                        <button class="color-chip" data-color="#4488ff" style="background:#4488ff;"></button>
+                        <button class="color-chip" data-color="#ffff44" style="background:#ffff44;"></button>
+                        <button class="color-chip" data-color="#ff44ff" style="background:#ff44ff;"></button>
+                        <button class="color-chip" data-color="#00ffff" style="background:#00ffff;"></button>
+                    </div>
+                </div>
+                <button id="btnCreateRoomSubmit" class="btn-menu primary">🏠 CREATE PRIVATE ROOM</button>
+            </div>
+
+            <!-- Join Room View -->
+            <div id="viewJoinRoom" class="mp-view-section hidden">
+                <div class="form-group">
+                    <label for="inputJoinName">Pilot Name:</label>
+                    <input type="text" id="inputJoinName" class="retro-input" value="Wingman" maxlength="12">
+                </div>
+                <div class="form-group">
+                    <label for="inputRoomCode">4-Letter Room Code:</label>
+                    <input type="text" id="inputRoomCode" class="retro-input code-input" placeholder="e.g. JTPK" maxlength="4">
+                </div>
+                <button id="btnJoinRoomSubmit" class="btn-menu primary">🔑 JOIN ROOM</button>
+            </div>
+
+            <!-- Public Rooms View -->
+            <div id="viewPublicRooms" class="mp-view-section hidden">
+                <div id="publicRoomsList" class="public-rooms-list">
+                    <p class="empty-list-note">No active public rooms found. Create one!</p>
+                </div>
+                <button id="btnRefreshRooms" class="btn-menu">🔄 REFRESH ROOM LIST</button>
+            </div>
+
+            <!-- Active Room Lobby View -->
+            <div id="viewRoomLobby" class="mp-view-section hidden">
+                <div class="room-code-badge">
+                    <span>ROOM CODE:</span>
+                    <strong id="displayRoomCode">----</strong>
+                </div>
+
+                <div class="lobby-players-container">
+                    <h3>CONNECTED PILOTS (<span id="lobbyPlayerCount">0</span>/4)</h3>
+                    <div id="lobbyPlayerList" class="lobby-player-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="lobby-actions">
+                    <button id="btnStartMultiplayerGame" class="btn-menu primary hidden">🚀 START MULTIPLAYER MATCH</button>
+                    <button id="btnLeaveRoom" class="btn-menu danger">🚪 LEAVE ROOM</button>
+                </div>
+            </div>
+
+            <div class="dialog-actions">
+                <button id="btnCloseMultiplayer" class="btn-menu">BACK TO MAIN MENU</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Socket.IO Client Library -->
+    <script src="/socket.io/socket.io.js"></script>
     <!-- JS Application Scripts (ES6 Modules) -->
     <script type="module" src="js/game.js"></script>
 </body>

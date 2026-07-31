@@ -112,4 +112,45 @@ assert.equal(deserialized.left, false);
 assert.equal(deserialized.sequenceId, 43);
 console.log('   ✅ Input state serialization & deserialization passed.\n');
 
-console.log('🎉 ALL SHARED CORE MODULE TESTS PASSED SUCCESSFULLY!');
+// 5. Verify PlayerManager & Snapshot Entity Sync
+console.log('5️⃣  Testing PlayerManager Entity Lifecycle & Snapshot Sync...');
+import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
+    const manager = new PlayerManager(null, tileMap);
+    manager.setLocalSocketId('socket_1');
+
+    const pLocal = manager.addPlayer('socket_1', { name: 'Alpha', color: '#ff4444' });
+    const pRemote = manager.addPlayer('socket_2', { name: 'Beta', color: '#44ff44' });
+
+    assert.equal(manager.getLocalPlayer(), pLocal);
+    assert.equal(pLocal.isLocal, true);
+    assert.equal(pRemote.isLocal, false);
+
+    // Apply snapshot update
+    manager.updateFromSnapshot([
+        { socketId: 'socket_1', id: pLocal.id, x: 200, y: 150, fuel: 85, isThrusting: true },
+        { socketId: 'socket_2', id: pRemote.id, x: 300, y: 180, fuel: 90, isPhasing: true },
+        { socketId: 'socket_3', id: 'p3', name: 'Gamma', color: '#4488ff', x: 400, y: 200 }
+    ]);
+
+    assert.equal(pLocal.x, 200);
+    assert.equal(pLocal.fuel, 85);
+    assert.equal(pLocal.isThrusting, true);
+    assert.equal(pRemote.x, 300);
+    assert.equal(pRemote.isPhasing, true);
+
+    const p3 = manager.getPlayer('socket_3');
+    assert.notEqual(p3, null);
+    assert.equal(p3.name, 'Gamma');
+
+    // Snapshot omitting socket_2 should prune socket_2
+    manager.updateFromSnapshot([
+        { socketId: 'socket_1', id: pLocal.id, x: 210, y: 150 },
+        { socketId: 'socket_3', id: 'p3', x: 410, y: 200 }
+    ]);
+
+    assert.equal(manager.getPlayer('socket_2'), undefined);
+    assert.equal(manager.players.size, 2);
+
+    console.log('   ✅ PlayerManager entity lifecycle & snapshot sync passed.\n');
+    console.log('🎉 ALL SHARED CORE MODULE TESTS PASSED SUCCESSFULLY!');
+});

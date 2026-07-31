@@ -65,8 +65,11 @@ try {
     await new Promise((resolve) => client2.on('connect', resolve));
 
     let client1PlayerJoinedEvent = null;
-    client1.on('player_joined', (data) => {
-        client1PlayerJoinedEvent = data;
+    const playerJoinedPromise = new Promise((resolve) => {
+        client1.on('player_joined', (data) => {
+            client1PlayerJoinedEvent = data;
+            resolve(data);
+        });
     });
 
     const joinResult = await new Promise((resolve) => {
@@ -78,8 +81,12 @@ try {
     assert.equal(joinResult.room.players.length, 2);
     console.log('   ✅ Client 2 joined room successfully.');
 
-    // Wait briefly for event listener to catch `player_joined` on Client 1
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Wait for player_joined event or timeout after 500ms
+    await Promise.race([
+        playerJoinedPromise,
+        new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+
     assert.notEqual(client1PlayerJoinedEvent, null, 'Client 1 should receive player_joined event');
     assert.equal(client1PlayerJoinedEvent.player.name, 'Wingman');
     console.log('   ✅ player_joined broadcast event received by host.\n');
@@ -117,24 +124,34 @@ try {
     // 8. Client Disconnection & Room Cleanup
     console.log('8️⃣  Testing Client Disconnect & Room Cleanup...');
     let client1PlayerLeftEvent = null;
-    client1.on('player_left', (data) => {
-        client1PlayerLeftEvent = data;
+    const playerLeftPromise = new Promise((resolve) => {
+        client1.on('player_left', (data) => {
+            client1PlayerLeftEvent = data;
+            resolve(data);
+        });
     });
 
+    const client2SocketId = client2.id;
     client2.disconnect();
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await Promise.race([
+        playerLeftPromise,
+        new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
 
     assert.notEqual(client1PlayerLeftEvent, null, 'Client 1 should receive player_left notification');
-    assert.equal(client1PlayerLeftEvent.socketId, client2.id);
+    assert.equal(client1PlayerLeftEvent.socketId, client2SocketId);
     assert.equal(roomManager.getRoom(roomId).players.size, 1);
     console.log('   ✅ Client 2 leave cleanup verified.');
 
     client1.disconnect();
     await new Promise((resolve) => setTimeout(resolve, 50));
-    assert.equal(roomManager.getRoom(roomId), null, 'Room should be destroyed when all players disconnect');
+    assert.equal(roomManager.getRoom(roomId), undefined, 'Room should be destroyed when all players disconnect');
     console.log('   ✅ Empty room destruction verified.\n');
 
     console.log('🎉 ALL BACKEND SERVER INTEGRATION TESTS PASSED SUCCESSFULLY!');
+} catch (err) {
+    console.error('❌ Integration Test Error:', err);
+    process.exitCode = 1;
 } finally {
     gameLoop.stop();
     if (client1) client1.close();

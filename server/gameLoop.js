@@ -67,6 +67,8 @@ export class GameLoop {
                     isGrounded: playerEntity.isGrounded,
                     isThrusting: playerEntity.isThrusting,
                     isClimbing: playerEntity.isClimbing,
+                    isPhasing: playerEntity.isPhasing,
+                    isDead: playerEntity.isDead,
                     lastSequenceId: config ? config.lastSequenceId : 0
                 });
             }
