@@ -104,6 +104,8 @@ class Game {
 
         document.getElementById('btnMultiplayer').addEventListener('click', () => {
             this.showDialog('dlgMultiplayer');
+            // Reset to default tab (Create Room)
+            document.getElementById('tabCreateRoom')?.click();
             this.network.connect();
             this.network.listRooms();
         });
@@ -322,6 +324,9 @@ class Game {
 
             activeTab?.classList.add('active');
             activeView?.classList.remove('hidden');
+
+            // Show tab controls since we are navigating the tabs
+            document.getElementById('mpTabs')?.classList.remove('hidden');
         };
 
         tabCreate?.addEventListener('click', () => switchTab(tabCreate, viewCreate));
@@ -439,6 +444,7 @@ class Game {
         });
 
         document.getElementById('btnCloseMultiplayer')?.addEventListener('click', () => {
+            this.network.leaveRoom();
             this.showDialog('dlgMainMenu');
         });
     }
@@ -451,6 +457,9 @@ class Game {
 
         [viewCreate, viewJoin, viewPublic].forEach(v => v?.classList.add('hidden'));
         viewLobby?.classList.remove('hidden');
+
+        // Hide tab controls inside the room lobby
+        document.getElementById('mpTabs')?.classList.add('hidden');
     }
 
     updateLobbyUI(room) {

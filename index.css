@@ -44,6 +44,11 @@ html {
     align-items: center;
 }
 
+/* Global utility classes */
+.hidden {
+    display: none !important;
+}
+
 /* App Container */
 .app-container {
     display: flex;

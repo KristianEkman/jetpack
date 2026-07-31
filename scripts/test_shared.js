@@ -132,9 +132,10 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
         { socketId: 'socket_3', id: 'p3', name: 'Gamma', color: '#4488ff', x: 400, y: 200 }
     ]);
 
-    assert.equal(pLocal.x, 200);
-    assert.equal(pLocal.fuel, 85);
-    assert.equal(pLocal.isThrusting, true);
+    // Local player properties should NOT be overwritten by server snapshot to prevent UI flicker
+    assert.equal(pLocal.x, 100);
+    assert.equal(pLocal.fuel, 100);
+    assert.equal(pLocal.isThrusting, false);
     assert.equal(pRemote.x, 300);
     assert.equal(pRemote.isPhasing, true);
 

@@ -218,7 +218,7 @@ export class Player {
                     if (hitEnemyIndex >= 0) {
                         const enemy = enemyManager.enemies[hitEnemyIndex];
                         this.tileMap.addSparkles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ff0055', 25);
-                        this.audio.playExplosion();
+                        this.audio?.playExplosion?.();
                         this.score += 200;
                         enemyManager.enemies.splice(hitEnemyIndex, 1);
                         this.phaseBeamLength = dist;
@@ -557,13 +557,11 @@ export class Player {
         this.isDead = true;
         this.lives--;
         this.stuckTimer = 0;
-        if (this.audio.stopThrust) this.audio.stopThrust();
-        if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
+        this.audio?.stopThrust?.();
+        this.audio?.stopEnergyDrain?.();
 
         const isGameOver = this.lives <= 0;
-        if (this.audio.playExplosion) {
-            this.audio.playExplosion(isGameOver);
-        }
+        this.audio?.playExplosion?.(isGameOver);
 
         if (this.tileMap) {
             this.tileMap.addDeathExplosion(this.x, this.y, this.facingRight);
