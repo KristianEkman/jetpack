@@ -8,6 +8,9 @@ export class SoundEffects {
         this.thrustGain = null;
         this.thrustNode = null;
         this.isThrusting = false;
+        this.drainGain = null;
+        this.drainNodes = null;
+        this.isEnergyDraining = false;
     }
 
     get ctx() {
@@ -311,5 +314,89 @@ export class SoundEffects {
         osc2.start();
         osc1.stop(this.ctx.currentTime + 0.25);
         osc2.stop(this.ctx.currentTime + 0.25);
+    }
+
+    // Energy Drain hazard sound loop
+    startEnergyDrain() {
+        if (this.isMuted || this.isEnergyDraining) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        try {
+            this.isEnergyDraining = true;
+            const now = this.ctx.currentTime;
+
+            // Low frequency buzzing oscillator
+            const osc1 = this.ctx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(140, now);
+
+            // High frequency zapping oscillator
+            const osc2 = this.ctx.createOscillator();
+            osc2.type = 'square';
+            osc2.frequency.setValueAtTime(280, now);
+
+            // LFO for pulsating electric zaps
+            const lfo = this.ctx.createOscillator();
+            lfo.type = 'sawtooth';
+            lfo.frequency.setValueAtTime(16, now); // 16 Hz buzz rhythm
+
+            const lfoGain = this.ctx.createGain();
+            lfoGain.gain.setValueAtTime(80, now); // Pitch modulation depth
+
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc1.frequency);
+            lfoGain.connect(osc2.frequency);
+
+            // Resonant bandpass filter for electrifying sound quality
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(900, now);
+            filter.Q.setValueAtTime(3.5, now);
+
+            this.drainGain = this.ctx.createGain();
+            this.drainGain.gain.setValueAtTime(0.0001, now);
+            this.drainGain.gain.linearRampToValueAtTime(0.12, now + 0.03);
+
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(this.drainGain);
+            this.drainGain.connect(this.ctx.destination);
+
+            osc1.start(now);
+            osc2.start(now);
+            lfo.start(now);
+
+            this.drainNodes = [osc1, osc2, lfo, filter];
+        } catch (e) {
+            console.warn('Audio energy drain error:', e);
+        }
+    }
+
+    stopEnergyDrain() {
+        if (!this.isEnergyDraining) return;
+        this.isEnergyDraining = false;
+        if (this.drainGain && this.ctx) {
+            try {
+                const now = this.ctx.currentTime;
+                this.drainGain.gain.cancelScheduledValues(now);
+                this.drainGain.gain.setValueAtTime(this.drainGain.gain.value, now);
+                this.drainGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+                const nodesToStop = this.drainNodes;
+                this.drainNodes = null;
+                setTimeout(() => {
+                    if (nodesToStop) {
+                        nodesToStop.forEach(node => {
+                            try {
+                                if (node.stop) node.stop();
+                                node.disconnect();
+                            } catch (err) {}
+                        });
+                    }
+                }, 60);
+            } catch (e) {
+                // ignore
+            }
+        }
     }
 }

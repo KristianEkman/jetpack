@@ -103,6 +103,9 @@ export class AudioManager {
         if (this.isMuted && this.sfx.thrustGain) {
             this.sfx.thrustGain.gain.value = 0;
         }
+        if (this.isMuted && this.sfx.drainGain) {
+            this.sfx.drainGain.gain.value = 0;
+        }
         return this.isMuted;
     }
 
@@ -158,5 +161,13 @@ export class AudioManager {
 
     playTeleport() {
         this.sfx.playTeleport();
+    }
+
+    startEnergyDrain() {
+        this.sfx.startEnergyDrain();
+    }
+
+    stopEnergyDrain() {
+        this.sfx.stopEnergyDrain();
     }
 }

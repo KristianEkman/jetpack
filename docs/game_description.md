@@ -57,7 +57,20 @@ In the original 1983 *Jetpac*, you control **Jetman**, an astronaut stranded on 
 
 ---
 
-## Summary Comparison
+## 3. Campaign Background Music (Web Audio API Synthesizer)
+
+The game features custom 192-step retro chiptune and synthwave adaptations of famous classical and ragtime compositions, engineered using the Web Audio API with unique keys, tempos, and synthesizer sound designs across campaign levels:
+
+| Level | Composition & Composer | Key | Tempo | Synth Lead Instrument |
+| :--- | :--- | :--- | :--- | :--- |
+| **Level 1** | *In the Hall of the Mountain King* (Edvard Grieg) | **A Minor** | **96 BPM** | Classic 8-Bit Square Pulse Wave |
+| **Level 2** | *Hungarian Dance No. 5* (Johannes Brahms) | **D Minor** | **132 BPM** | Detuned Dual-Oscillator Resonant Synth |
+| **Level 3** | *Summer - Presto* (Antonio Vivaldi) | **E Minor** | **116 BPM** | Biting Virtuoso Square Pulse + Sub-Harmonic Octave |
+| **Level 4** | *Maple Leaf Rag* (Scott Joplin) | **C Major** | **110 BPM** | Bright Bouncy Ragtime Staccato Pulse |
+
+---
+
+## 4. Summary Comparison
 
 | Feature | *Jetpack* (1993 MS-DOS) | *Jetpac* (1983 ZX Spectrum) |
 | :--- | :--- | :--- |

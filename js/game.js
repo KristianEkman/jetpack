@@ -123,6 +123,7 @@ class Game {
         });
         document.getElementById('btnQuitToMenu').addEventListener('click', () => {
             this.audio.stopThrust();
+            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
             this.audio.stopMusic();
             this.gameState = GAME_STATES.MENU;
             this.showDialog('dlgMainMenu');
@@ -340,6 +341,7 @@ class Game {
         if (this.gameState === GAME_STATES.PLAYING) {
             this.gameState = GAME_STATES.PAUSED;
             this.audio.stopThrust();
+            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
             this.audio.stopMusic();
             this.showDialog('dlgPause');
         }
@@ -370,6 +372,7 @@ class Game {
             if (document.hidden) {
                 this.loop.stop();
                 this.audio.stopThrust();
+                if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
             } else {
                 this.isCanvasRenderedForState = false;
                 this.loop.start();
@@ -418,6 +421,7 @@ class Game {
         // 5. Check Player Death / Game Over
         if (this.player.isDead) {
             this.audio.stopThrust();
+            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
             setTimeout(() => {
                 if (this.player.lives <= 0) {
                     this.gameState = GAME_STATES.GAME_OVER;
@@ -438,6 +442,7 @@ class Game {
     triggerLevelComplete() {
         this.gameState = GAME_STATES.LEVEL_COMPLETE;
         this.audio.stopThrust();
+        if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
         this.audio.stopMusic();
         this.audio.playPortalWarp();
 

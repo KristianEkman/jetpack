@@ -85,11 +85,20 @@ export class Player {
 
         // Hazard check: Spikes or Energy Drain
         if (currentTile === TILES.SPIKE || feetTile === TILES.SPIKE) {
+            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
             this.takeDamage();
             return;
         }
-        if (currentTile === TILES.ENERGY_DRAIN) {
+        if (currentTile === TILES.ENERGY_DRAIN || feetTile === TILES.ENERGY_DRAIN) {
             this.fuel = Math.max(0, this.fuel - 40 * dt);
+            if (this.audio.startEnergyDrain) this.audio.startEnergyDrain();
+            if (Math.random() < 0.3) {
+                const px = this.x + Math.random() * this.width;
+                const py = this.y + Math.random() * this.height;
+                this.tileMap.addSparkles(px, py, '#ff0055', 1);
+            }
+        } else {
+            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
         }
 
         // 2. Movement Logic: Walking & Facing Direction
@@ -511,6 +520,8 @@ export class Player {
         this.isDead = true;
         this.lives--;
         this.stuckTimer = 0;
+        if (this.audio.stopThrust) this.audio.stopThrust();
+        if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
         this.audio.playExplosion();
         this.tileMap.addSparkles(this.x + 11, this.y + 14, '#ff0055', 25);
     }
