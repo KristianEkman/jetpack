@@ -73,7 +73,12 @@ export class PlayerManager {
                 });
             }
 
-            player.applySnapshot(pData);
+            // Skip overwriting local player with server state to prevent flicker.
+            // Local player runs its own physics; server snapshots are 1-2 frames behind
+            // and would cause visible position/fuel/score jitter.
+            if (socketId !== this.localSocketId) {
+                player.applySnapshot(pData);
+            }
         }
 
         // Clean up disconnected players not in latest room snapshot

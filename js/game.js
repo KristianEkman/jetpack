@@ -291,14 +291,8 @@ class Game {
                 if (localPlayer) {
                     this.player = localPlayer;
                 }
-                if (snapshot.worldState && this.tileMap) {
-                    if (snapshot.worldState.collectedEmeralds !== undefined) {
-                        this.tileMap.collectedEmeralds = snapshot.worldState.collectedEmeralds;
-                    }
-                    if (snapshot.worldState.totalEmeralds !== undefined) {
-                        this.tileMap.totalEmeralds = snapshot.worldState.totalEmeralds;
-                    }
-                }
+                // World state (emeralds) is updated authoritatively via
+                // item_collected events, not snapshots, to avoid HUD flicker.
             }
         };
 
