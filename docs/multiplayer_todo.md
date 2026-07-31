@@ -93,7 +93,7 @@ For an action-platformer with physics, phase-able terrain, and shared collectibl
   Connect clients to room; send inputs to server; receive state updates; render multiple jetpack players on screen.
 - [ ] **Phase 4: Client-Side Prediction & Interpolation**  
   Implement local movement prediction and remote entity smoothing to ensure fluid gameplay under network latency.
-- [ ] **Phase 5: World State Sync & Custom Map Sharing**  
+- [x] **Phase 5: World State Sync & Custom Map Sharing**  
   Sync phase bricks, emerald pickups, exit portal triggers, and Level Editor map uploading.
 - [ ] **Phase 6: UI, Lobby, & Polishing**  
   Add room creation UI, scoreboard, audio triggers for net events, and color selection.

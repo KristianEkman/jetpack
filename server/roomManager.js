@@ -38,7 +38,16 @@ export class RoomManager {
         const maxPlayers = options.maxPlayers || 4;
 
         const tileMap = new TileMap();
-        const levelData = CAMPAIGN_LEVELS[levelIndex] || CAMPAIGN_LEVELS[0];
+        let levelData = CAMPAIGN_LEVELS[levelIndex] || CAMPAIGN_LEVELS[0];
+        let customMapData = null;
+        let mapName = levelData ? levelData.name || `Level ${levelIndex + 1}` : 'Campaign Level';
+
+        if (options.customMapData && Array.isArray(options.customMapData.grid) && options.customMapData.grid.length === 540) {
+            customMapData = options.customMapData;
+            levelData = customMapData;
+            mapName = customMapData.name || 'Custom Map';
+        }
+
         tileMap.loadLevelData(levelData);
 
         const room = {
@@ -46,6 +55,8 @@ export class RoomManager {
             hostSocketId: hostSocketId,
             maxPlayers: maxPlayers,
             levelIndex: levelIndex,
+            customMapData: customMapData,
+            mapName: mapName,
             tileMap: tileMap,
             players: new Map(),        // socketId -> Player instance
             playerConfigs: new Map(),  // socketId -> metadata ({ id, name, color, isReady, isHost })
@@ -223,6 +234,8 @@ export class RoomManager {
             hostSocketId: room.hostSocketId,
             maxPlayers: room.maxPlayers,
             levelIndex: room.levelIndex,
+            customMapData: room.customMapData,
+            mapName: room.mapName,
             status: room.status,
             tickCount: room.tickCount,
             players: playersList
@@ -240,7 +253,8 @@ export class RoomManager {
                 playerCount: room.players.size,
                 maxPlayers: room.maxPlayers,
                 status: room.status,
-                levelIndex: room.levelIndex
+                levelIndex: room.levelIndex,
+                mapName: room.mapName
             });
         }
         return list;

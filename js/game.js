@@ -239,12 +239,65 @@ class Game {
             if (data.leavingPlayer) this.showBanner(`${data.leavingPlayer.name.toUpperCase()} LEFT`);
         };
 
+        this.network.onGameStartedCb = (payload) => {
+            this.startMultiplayerMatch(payload);
+        };
+
+        this.network.onTilePhasedCb = (data) => {
+            if (this.isMultiplayer && this.tileMap && data) {
+                this.tileMap.phaseTile(data.col, data.row);
+            }
+        };
+
+        this.network.onTileRestoredCb = (data) => {
+            if (this.isMultiplayer && this.tileMap && data) {
+                this.tileMap.restoreTile(data.col, data.row);
+            }
+        };
+
+        this.network.onItemCollectedCb = (data) => {
+            if (this.isMultiplayer && this.tileMap && data) {
+                this.tileMap.setTile(data.col, data.row, TILES.AIR);
+                this.tileMap.collectedEmeralds = data.collectedEmeralds;
+                if (data.tileType === TILES.EMERALD) {
+                    if (data.isAllCaught) {
+                        this.audio?.playAllDiamondsCaught?.();
+                        this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#00e5ff', 25);
+                        this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#00ff77', 25);
+                    } else {
+                        this.audio?.playEmeraldPickup?.();
+                        this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#00e5ff', 12);
+                    }
+                } else if (data.tileType === TILES.FUEL) {
+                    this.audio?.playFuelPickup?.();
+                    this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#ffaa00', 14);
+                } else if (data.tileType === TILES.GOLD) {
+                    this.audio?.playEmeraldPickup?.();
+                    this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#f1c40f', 10);
+                }
+            }
+        };
+
+        this.network.onLevelCompleteCb = (data) => {
+            if (this.isMultiplayer) {
+                this.triggerMultiplayerLevelComplete(data);
+            }
+        };
+
         this.network.onWorldSnapshotCb = (snapshot) => {
             if (this.isMultiplayer && this.gameState === GAME_STATES.PLAYING) {
                 this.playerManager.updateFromSnapshot(snapshot.players);
                 const localPlayer = this.playerManager.getLocalPlayer();
                 if (localPlayer) {
                     this.player = localPlayer;
+                }
+                if (snapshot.worldState && this.tileMap) {
+                    if (snapshot.worldState.collectedEmeralds !== undefined) {
+                        this.tileMap.collectedEmeralds = snapshot.worldState.collectedEmeralds;
+                    }
+                    if (snapshot.worldState.totalEmeralds !== undefined) {
+                        this.tileMap.totalEmeralds = snapshot.worldState.totalEmeralds;
+                    }
                 }
             }
         };
@@ -284,6 +337,47 @@ class Game {
             this.network.listRooms();
         });
 
+        // Level / Custom Map Selection Controls
+        const selectLevel = document.getElementById('selectRoomLevel');
+        const uploadGroup = document.getElementById('groupCustomMapUpload');
+        const fileInput = document.getElementById('inputCustomMapFile');
+        const statusText = document.getElementById('customMapStatusText');
+
+        selectLevel?.addEventListener('change', () => {
+            if (selectLevel.value === 'custom') {
+                uploadGroup?.classList.remove('hidden');
+                try {
+                    const saved = localStorage.getItem('jetpack_custom_level');
+                    if (saved && !this.customMapDataPayload) {
+                        this.customMapDataPayload = JSON.parse(saved);
+                        if (statusText) statusText.textContent = `Using Editor map: "${this.customMapDataPayload.name || 'Custom Level'}"`;
+                    }
+                } catch (e) {}
+            } else {
+                uploadGroup?.classList.add('hidden');
+            }
+        });
+
+        fileInput?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if (parsed && Array.isArray(parsed.grid) && parsed.grid.length === 540) {
+                        this.customMapDataPayload = parsed;
+                        if (statusText) statusText.textContent = `Loaded map: "${parsed.name || file.name}" (${parsed.grid.length} tiles)`;
+                    } else {
+                        alert('Invalid level JSON file! Grid must contain 540 tiles (30x18).');
+                    }
+                } catch (err) {
+                    alert('Error parsing map JSON file.');
+                }
+            };
+            reader.readAsText(file);
+        });
+
         // Color Picker Chips
         document.querySelectorAll('.color-chip').forEach(chip => {
             chip.addEventListener('click', (e) => {
@@ -296,11 +390,30 @@ class Game {
         // Form Submit Buttons
         document.getElementById('btnCreateRoomSubmit')?.addEventListener('click', () => {
             const hostName = document.getElementById('inputHostName').value.trim() || 'Host Pilot';
-            this.network.createRoom({
+            const levelVal = document.getElementById('selectRoomLevel')?.value || '0';
+
+            const createOpts = {
                 playerName: hostName,
-                playerColor: this.selectedColor,
-                levelIndex: 0
-            });
+                playerColor: this.selectedColor
+            };
+
+            if (levelVal === 'custom') {
+                if (!this.customMapDataPayload) {
+                    try {
+                        const saved = localStorage.getItem('jetpack_custom_level');
+                        if (saved) this.customMapDataPayload = JSON.parse(saved);
+                    } catch (e) {}
+                }
+                if (!this.customMapDataPayload) {
+                    alert('Please upload a valid custom map JSON file or build one in the Level Editor!');
+                    return;
+                }
+                createOpts.customMapData = this.customMapDataPayload;
+            } else {
+                createOpts.levelIndex = parseInt(levelVal, 10);
+            }
+
+            this.network.createRoom(createOpts);
         });
 
         document.getElementById('btnJoinRoomSubmit')?.addEventListener('click', () => {
@@ -328,7 +441,7 @@ class Game {
         });
 
         document.getElementById('btnStartMultiplayerGame')?.addEventListener('click', () => {
-            this.startMultiplayerMatch();
+            this.network.startMatch();
         });
 
         document.getElementById('btnCloseMultiplayer')?.addEventListener('click', () => {
@@ -351,6 +464,11 @@ class Game {
 
         document.getElementById('displayRoomCode').textContent = room.id;
         document.getElementById('lobbyPlayerCount').textContent = `${room.players.length}`;
+
+        const mapNameEl = document.getElementById('displayRoomMapName');
+        if (mapNameEl) {
+            mapNameEl.textContent = room.mapName || `Level ${(room.levelIndex || 0) + 1}`;
+        }
 
         const listEl = document.getElementById('lobbyPlayerList');
         listEl.innerHTML = '';
@@ -381,42 +499,76 @@ class Game {
     }
 
     renderPublicRoomsList(list) {
-        const container = document.getElementById('publicRoomsList');
-        if (!container) return;
-        container.innerHTML = '';
+        try {
+            const container = document.getElementById('publicRoomsList');
+            if (!container) {
+                console.warn('publicRoomsList element not found in DOM');
+                return;
+            }
+            container.innerHTML = '';
 
-        if (!list || list.length === 0) {
-            container.innerHTML = '<p class="empty-list-note">No active public rooms found. Create one!</p>';
-            return;
-        }
+            if (!list || list.length === 0) {
+                container.innerHTML = '<p class="empty-list-note">No active public rooms found. Create one!</p>';
+                return;
+            }
 
-        list.forEach(r => {
-            const row = document.createElement('div');
-            row.className = 'lobby-player-card';
-            row.style.cursor = 'pointer';
-            row.innerHTML = `
-                <div class="player-info-group">
-                    <strong style="color: #00f0ff; letter-spacing: 2px;">${r.id}</strong>
-                    <span style="font-size: 0.85rem; color: #aaa;">(${r.playerCount}/${r.maxPlayers} Players)</span>
-                </div>
-                <button class="btn-editor primary">JOIN</button>
-            `;
-            row.addEventListener('click', () => {
-                const joinName = document.getElementById('inputJoinName').value.trim() || 'Wingman';
-                this.network.joinRoom(r.id, {
-                    playerName: joinName,
-                    playerColor: this.selectedColor
+            console.log(`📋 Rendering ${list.length} public rooms in list UI:`, list);
+
+            list.forEach(r => {
+                const row = document.createElement('div');
+                row.className = 'lobby-player-card';
+                row.style.cursor = 'pointer';
+                const statusBadge = (r.status === 'playing') ?
+                    '<span style="font-size: 0.75rem; color: #ffaa00; background: rgba(255,170,0,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">[PLAYING]</span>' :
+                    '<span style="font-size: 0.75rem; color: #00ffcc; background: rgba(0,255,204,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">[LOBBY]</span>';
+
+                row.innerHTML = `
+                    <div class="player-info-group">
+                        <strong style="color: #00f0ff; letter-spacing: 2px;">${r.id}</strong>
+                        <span style="font-size: 0.85rem; color: #aaa;">(${r.playerCount}/${r.maxPlayers} Pilots)</span>
+                        <span style="font-size: 0.8rem; color: #ffee55;">[${r.mapName || 'Map'}]</span>
+                        ${statusBadge}
+                    </div>
+                    <button class="btn-editor primary">JOIN</button>
+                `;
+
+                row.addEventListener('click', () => {
+                    const joinName = document.getElementById('inputJoinName')?.value?.trim() || 'Wingman';
+                    console.log(`🔑 Attempting to join room ${r.id} as ${joinName}...`);
+                    this.network.joinRoom(r.id, {
+                        playerName: joinName,
+                        playerColor: this.selectedColor
+                    });
                 });
+
+                container.appendChild(row);
             });
-            container.appendChild(row);
-        });
+        } catch (err) {
+            console.error('❌ Error rendering public rooms list:', err);
+        }
     }
 
-    startMultiplayerMatch() {
+    startMultiplayerMatch(payload = null) {
         this.isMultiplayer = true;
-        this.currentLevelIndex = 0;
+        const room = payload?.room || this.network.currentRoom;
 
-        const levelData = CAMPAIGN_LEVELS[0];
+        let levelData = CAMPAIGN_LEVELS[0];
+        if (payload?.customMapData) {
+            levelData = payload.customMapData;
+            this.isCustomLevel = true;
+        } else if (room?.customMapData) {
+            levelData = room.customMapData;
+            this.isCustomLevel = true;
+        } else if (payload?.levelIndex !== undefined) {
+            this.currentLevelIndex = payload.levelIndex;
+            levelData = CAMPAIGN_LEVELS[payload.levelIndex] || CAMPAIGN_LEVELS[0];
+            this.isCustomLevel = false;
+        } else if (room?.levelIndex !== undefined) {
+            this.currentLevelIndex = room.levelIndex;
+            levelData = CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
+            this.isCustomLevel = false;
+        }
+
         this.tileMap.loadLevelData(levelData);
         this.enemyManager.clear();
         this.spawnEnemiesFromGrid();
@@ -425,8 +577,8 @@ class Game {
         this.playerManager.setLocalSocketId(this.network.socketId);
 
         // Populate initial players from current room state
-        if (this.network.currentRoom && this.network.currentRoom.players) {
-            this.network.currentRoom.players.forEach(p => {
+        if (room && room.players) {
+            room.players.forEach(p => {
                 this.playerManager.addPlayer(p.socketId, {
                     id: p.id,
                     name: p.name,
@@ -444,9 +596,35 @@ class Game {
         }
 
         this.gameState = GAME_STATES.PLAYING;
-        this.audio.startGameMusic(0);
+        this.audio.startGameMusic(this.currentLevelIndex || 0);
         this.closeAllDialogs();
         this.showBanner('MULTIPLAYER MATCH STARTED!');
+    }
+
+    triggerMultiplayerLevelComplete(data) {
+        this.gameState = GAME_STATES.LEVEL_COMPLETE;
+        this.audio.stopThrust();
+        if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
+        this.audio.stopMusic();
+        this.audio.playPortalWarp();
+
+        const fuelBonus = Math.floor((this.player ? this.player.fuel : 0) * 10);
+        const levelScore = 1000 + fuelBonus;
+
+        const statLevelScore = document.getElementById('statLevelScore');
+        const statFuelBonus = document.getElementById('statFuelBonus');
+        const statTotalScore = document.getElementById('statTotalScore');
+
+        if (statLevelScore) statLevelScore.textContent = '1000';
+        if (statFuelBonus) statFuelBonus.textContent = `${fuelBonus}`;
+        if (statTotalScore) statTotalScore.textContent = `${(this.player ? this.player.score : 0) + levelScore}`;
+
+        const sub = document.getElementById('dialogLevelCompleteSub');
+        if (sub) {
+            sub.textContent = `MATCH CLEARED BY ${data?.clearedBy ? data.clearedBy.toUpperCase() : 'TEAM'}!`;
+        }
+
+        this.showDialog('dlgLevelComplete');
     }
 
     startLevel(index) {
@@ -669,12 +847,14 @@ class Game {
     update(dt) {
         if (this.gameState !== GAME_STATES.PLAYING) return;
 
-        if (this.isMultiplayer) {
-            this.network.sendInput(this.input.serializeInputState());
-        }
-
         // Time Dilation scale during dramatic player death sequence
         let effectiveDt = dt;
+
+        if (this.isMultiplayer) {
+            this.network.sendInput(this.input.serializeInputState());
+            this.playerManager.update(effectiveDt);
+        }
+
         if (this.player.isDead) {
             this.deathSequenceTimer += dt;
             // First 0.25s of death runs in slow-motion (0.15x speed), smoothly scaling back to 1.0x

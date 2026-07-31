@@ -10,7 +10,8 @@ import { fileURLToPath } from 'node:url';
 
 import { RoomManager } from './roomManager.js';
 import { GameLoop } from './gameLoop.js';
-import { GAME_EVENTS } from '../js/shared/constants.js';
+import { GAME_EVENTS, TILES } from '../js/shared/constants.js';
+import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +60,17 @@ io.on('connection', (socket) => {
     socket.on('create_room', (data = {}, callback) => {
         const room = roomManager.createRoom(socket.id, data);
         socket.join(room.id);
+
+        // Bind world state tilemap events to broadcast across room
+        room.tileMap.on(GAME_EVENTS.TILE_PHASED, (payload) => {
+            io.to(room.id).emit(GAME_EVENTS.TILE_PHASED, payload);
+        });
+        room.tileMap.on(GAME_EVENTS.TILE_RESTORED, (payload) => {
+            io.to(room.id).emit(GAME_EVENTS.TILE_RESTORED, payload);
+        });
+        room.tileMap.on(GAME_EVENTS.ITEM_COLLECTED, (payload) => {
+            io.to(room.id).emit(GAME_EVENTS.ITEM_COLLECTED, payload);
+        });
 
         const response = {
             success: true,
@@ -132,6 +144,60 @@ io.on('connection', (socket) => {
         const list = roomManager.listRooms();
         if (typeof callback === 'function') callback(list);
         socket.emit('room_list', list);
+    });
+
+    // Start Multiplayer Match (Host only)
+    socket.on(GAME_EVENTS.START_MATCH || 'start_match', (data = {}, callback) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) {
+            const errRes = { success: false, error: 'Room not found' };
+            if (typeof callback === 'function') callback(errRes);
+            return;
+        }
+
+        if (room.hostSocketId !== socket.id) {
+            const errRes = { success: false, error: 'Only the room host can start the match' };
+            if (typeof callback === 'function') callback(errRes);
+            return;
+        }
+
+        room.status = 'playing';
+
+        // Re-load level tileMap data on server at match start
+        const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
+        room.tileMap.loadLevelData(levelData);
+
+        // Find spawn points from SPAWN tile or default
+        let spawnX = 128;
+        let spawnY = 100;
+        for (let r = 0; r < room.tileMap.rows; r++) {
+            for (let c = 0; c < room.tileMap.cols; c++) {
+                if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
+                    spawnX = c * 32 + 4;
+                    spawnY = r * 32 + 2;
+                    break;
+                }
+            }
+        }
+
+        for (const [sId, playerEntity] of room.players.entries()) {
+            playerEntity.spawn(spawnX, spawnY);
+            playerEntity.lives = 3;
+            playerEntity.score = 0;
+            playerEntity.isDead = false;
+        }
+
+        const payload = {
+            success: true,
+            room: roomManager.serializeRoom(room),
+            levelIndex: room.levelIndex,
+            customMapData: room.customMapData
+        };
+
+        if (typeof callback === 'function') callback(payload);
+        io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || 'game_started', payload);
+        io.emit('room_list_updated', roomManager.listRooms());
+        console.log(`🚀 Match started in Room ${room.id} by Host ${socket.id}`);
     });
 
     // Player Input Handler (Client -> Server)

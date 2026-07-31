@@ -2,7 +2,7 @@
    PLAYER ENTITY MODULE (Jetman Physics & Actions)
    ========================================================================== */
 
-import { TILE_SIZE, TILES, PLAYER_PHYSICS } from '../shared/constants.js';
+import { TILE_SIZE, TILES, PLAYER_PHYSICS, GAME_EVENTS } from '../shared/constants.js';
 
 export class Player {
     constructor(audioManager = null, tileMap = null, options = {}) {
@@ -464,6 +464,12 @@ export class Player {
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00e5ff', 12);
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ff77', 10);
                     }
+                    this.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+                        col, row, tileType: tile, playerId: this.id,
+                        collectedEmeralds: this.tileMap.collectedEmeralds,
+                        totalEmeralds: this.tileMap.totalEmeralds,
+                        isAllCaught
+                    });
                 } else if (tile === TILES.FUEL) {
                     this.tileMap.setTile(col, row, TILES.AIR);
                     this.fuel = Math.min(this.maxFuel, this.fuel + 50);
@@ -472,11 +478,23 @@ export class Player {
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffaa00', 14);
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffee55', 10);
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffffff', 6);
+                    this.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+                        col, row, tileType: tile, playerId: this.id,
+                        collectedEmeralds: this.tileMap.collectedEmeralds,
+                        totalEmeralds: this.tileMap.totalEmeralds,
+                        fuel: this.fuel
+                    });
                 } else if (tile === TILES.GOLD) {
                     this.tileMap.setTile(col, row, TILES.AIR);
                     this.score += 500;
                     this.audio?.playEmeraldPickup?.();
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#f1c40f', 10);
+                    this.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+                        col, row, tileType: tile, playerId: this.id,
+                        collectedEmeralds: this.tileMap.collectedEmeralds,
+                        totalEmeralds: this.tileMap.totalEmeralds,
+                        score: this.score
+                    });
                 }
             }
         }
@@ -714,8 +732,13 @@ export class Player {
 
         ctx.save();
 
+        // Ensure animTimer advances for remote players during render frames
+        if (!this.isLocal) {
+            this.animTimer += 0.016;
+        }
+
         // Legs & Vertical Walking Bounce (Animate legs and bob vertically when walking on ground to eliminate gliding look)
-        const isMovingOnGround = this.isGrounded && !this.isThrusting && !this.isClimbing && Math.abs(this.vx) > 5;
+        const isMovingOnGround = (this.isGrounded || Math.abs(this.vy) < 25) && !this.isThrusting && !this.isClimbing && Math.abs(this.vx) > 5;
         
         let strideX = 0;
         let liftY1 = 0;
@@ -772,6 +795,16 @@ export class Player {
             ctx.lineTo(packX + 3, py + 22 + flameLen * 0.6);
             ctx.closePath();
             ctx.fill();
+
+            // Spawn smoke/sparkles for remote players
+            if (!this.isLocal && this.tileMap) {
+                const smokeX = packX + 3;
+                const smokeY = py + 22;
+                this.tileMap.addSparkles(smokeX, smokeY, '#ff6600', 1);
+                if (Math.random() < 0.3) {
+                    this.tileMap.addSparkles(smokeX, smokeY, '#aaaaaa', 1);
+                }
+            }
         }
 
         // Main Body Suit
@@ -801,6 +834,23 @@ export class Player {
 
         // Phase Beam Laser Shot Rendering
         if (this.isPhasing) {
+            // Recalculate beam length dynamically for remote players to stop at solid tiles
+            if (!this.isLocal && this.tileMap) {
+                const dir = this.facingRight ? 1 : -1;
+                const startX = this.facingRight ? px + this.width : px;
+                const startY = py + 12;
+                this.phaseBeamLength = 160;
+                for (let dist = 0; dist <= 160; dist += 8) {
+                    const targetX = startX + dir * dist;
+                    const targetCol = Math.floor(targetX / TILE_SIZE);
+                    const targetRow = Math.floor(startY / TILE_SIZE);
+                    if (this.tileMap.isSolid(targetCol, targetRow)) {
+                        this.phaseBeamLength = dist;
+                        break;
+                    }
+                }
+            }
+
             const beamStartX = this.facingRight ? px + this.width : px;
             const beamStartY = py + 12;
             const beamEndX = this.facingRight ? beamStartX + this.phaseBeamLength : beamStartX - this.phaseBeamLength;

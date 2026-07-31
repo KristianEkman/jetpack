@@ -199,6 +199,13 @@ export class LevelEditor {
         return false;
     }
 
+    loadFromJSON(jsonData) {
+        if (!jsonData || !Array.isArray(jsonData.grid)) return false;
+        this.tileMap.loadLevelData(jsonData);
+        this.autoSaveLocal();
+        return true;
+    }
+
     renderHoverPreview(ctx) {
         if (this.hoverCol >= 0 && this.hoverCol < GRID_COLS && this.hoverRow >= 0 && this.hoverRow < GRID_ROWS) {
             ctx.strokeStyle = '#00ffcc';

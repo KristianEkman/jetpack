@@ -55,5 +55,10 @@ export const GAME_EVENTS = {
     TILE_PHASED: 'tile_phased',
     TILE_RESTORED: 'tile_restored',
     PLAYER_INPUT: 'player_input',
-    WORLD_SNAPSHOT: 'world_snapshot'
+    WORLD_SNAPSHOT: 'world_snapshot',
+    START_MATCH: 'start_match',
+    GAME_STARTED: 'game_started',
+    ITEM_COLLECTED: 'item_collected',
+    LEVEL_COMPLETE: 'level_complete'
 };
+

@@ -2,7 +2,7 @@
    SERVER FIXED TICK GAME LOOP (60 Hz Engine)
    ========================================================================== */
 
-import { GAME_EVENTS } from '../js/shared/constants.js';
+import { GAME_EVENTS, TILE_SIZE, TILES } from '../js/shared/constants.js';
 
 export class GameLoop {
     constructor(roomManager, io, tickRate = 60) {
@@ -41,11 +41,55 @@ export class GameLoop {
                 room.tileMap.update(this.dt);
             }
 
-            // 2. Build world snapshot
+            // 2. Check Level Clear Condition (Exit Portal reached with all emeralds)
+            if (room.status === 'playing' && room.tileMap) {
+                const allEmeraldsCaught = (room.tileMap.totalEmeralds > 0 && room.tileMap.collectedEmeralds >= room.tileMap.totalEmeralds) ||
+                    (room.tileMap.totalEmeralds === 0 && room.tileMap.collectedEmeralds >= 4);
+
+                if (allEmeraldsCaught) {
+                    let levelCleared = false;
+                    let clearingPlayer = null;
+
+                    for (const playerEntity of room.players.values()) {
+                        if (!playerEntity.isDead) {
+                            const col = Math.floor((playerEntity.x + playerEntity.width / 2) / TILE_SIZE);
+                            const row = Math.floor((playerEntity.y + playerEntity.height / 2) / TILE_SIZE);
+                            if (room.tileMap.getTile(col, row) === TILES.EXIT_PORTAL) {
+                                levelCleared = true;
+                                clearingPlayer = playerEntity;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (levelCleared) {
+                        room.status = 'finished';
+                        const winnerList = [];
+                        for (const [sId, p] of room.players.entries()) {
+                            winnerList.push({ socketId: sId, name: p.name, score: p.score, fuel: p.fuel });
+                        }
+                        if (this.io) {
+                            this.io.to(room.id).emit(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', {
+                                roomId: room.id,
+                                clearedBy: clearingPlayer ? clearingPlayer.name : 'Team',
+                                players: winnerList,
+                                levelIndex: room.levelIndex
+                            });
+                        }
+                        console.log(`🏆 Level completed in Room ${room.id}!`);
+                    }
+                }
+            }
+
+            // 3. Build world snapshot
             const snapshot = {
                 roomId: room.id,
                 tick: room.tickCount,
                 timestamp: Date.now(),
+                worldState: room.tileMap ? {
+                    collectedEmeralds: room.tileMap.collectedEmeralds,
+                    totalEmeralds: room.tileMap.totalEmeralds
+                } : null,
                 players: []
             };
 
@@ -73,7 +117,7 @@ export class GameLoop {
                 });
             }
 
-            // 3. Broadcast snapshot to room socket channel
+            // 4. Broadcast snapshot to room socket channel
             if (this.io) {
                 this.io.to(room.id).emit(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', snapshot);
             }

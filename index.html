@@ -249,6 +249,22 @@
                     <input type="text" id="inputHostName" class="retro-input" value="Pilot 1" maxlength="12">
                 </div>
                 <div class="form-group">
+                    <label for="selectRoomLevel">Select Level / Map:</label>
+                    <select id="selectRoomLevel" class="retro-input">
+                        <option value="0">Level 1 - Cavern Run</option>
+                        <option value="1">Level 2 - Toxic Shafts</option>
+                        <option value="2">Level 3 - Vertical Ascent</option>
+                        <option value="3">Level 4 - Teleport Core</option>
+                        <option value="4">Level 5 - The Gauntlet</option>
+                        <option value="custom">🛠️ Custom Map (Uploaded / Saved)</option>
+                    </select>
+                </div>
+                <div id="groupCustomMapUpload" class="form-group hidden">
+                    <label for="inputCustomMapFile">Upload Custom Map JSON:</label>
+                    <input type="file" id="inputCustomMapFile" class="retro-input" accept=".json">
+                    <small id="customMapStatusText" style="color: #00ffcc; font-size: 0.8rem; display: block; margin-top: 4px;"></small>
+                </div>
+                <div class="form-group">
                     <label>Pilot Suit Color:</label>
                     <div class="color-picker-row">
                         <button class="color-chip active" data-color="#ff4444" style="background:#ff4444;"></button>
@@ -288,6 +304,8 @@
                 <div class="room-code-badge">
                     <span>ROOM CODE:</span>
                     <strong id="displayRoomCode">----</strong>
+                    <span style="margin-left: 12px; opacity: 0.8;">| MAP:</span>
+                    <span id="displayRoomMapName" style="color: #ffee55; font-weight: bold;">Campaign Level</span>
                 </div>
 
                 <div class="lobby-players-container">

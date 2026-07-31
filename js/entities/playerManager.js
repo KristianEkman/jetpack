@@ -84,6 +84,17 @@ export class PlayerManager {
         }
     }
 
+    update(dt) {
+        for (const [sId, player] of this.players.entries()) {
+            if (sId !== this.localSocketId && !player.isLocal) {
+                player.animTimer += dt;
+                player.phaseBeamTimer = Math.max(0, player.phaseBeamTimer - dt);
+                player.phaseCooldown = Math.max(0, player.phaseCooldown - dt);
+                player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
+            }
+        }
+    }
+
     render(ctx) {
         for (const player of this.players.values()) {
             player.render(ctx);
