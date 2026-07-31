@@ -15,9 +15,13 @@ export class InputHandler {
             suicide: false
         };
 
+        this.sequenceCounter = 0;
         this.onPausePress = null;
-        this.setupKeyboard();
-        this.setupTouch();
+
+        if (typeof window !== 'undefined') {
+            this.setupKeyboard();
+            this.setupTouch();
+        }
     }
 
     setupKeyboard() {
@@ -145,5 +149,32 @@ export class InputHandler {
         for (let key in this.keys) {
             this.keys[key] = false;
         }
+    }
+
+    serializeInputState(sequenceId = null) {
+        return {
+            left: !!this.keys.left,
+            right: !!this.keys.right,
+            up: !!this.keys.up,
+            down: !!this.keys.down,
+            thrust: !!this.keys.thrust,
+            phase: !!this.keys.phase,
+            suicide: !!this.keys.suicide,
+            sequenceId: sequenceId !== null ? sequenceId : ++this.sequenceCounter
+        };
+    }
+
+    static deserializeInputState(payload) {
+        if (!payload) return { left: false, right: false, up: false, down: false, thrust: false, phase: false, suicide: false, sequenceId: 0 };
+        return {
+            left: !!payload.left,
+            right: !!payload.right,
+            up: !!payload.up,
+            down: !!payload.down,
+            thrust: !!payload.thrust,
+            phase: !!payload.phase,
+            suicide: !!payload.suicide,
+            sequenceId: payload.sequenceId || 0
+        };
     }
 }

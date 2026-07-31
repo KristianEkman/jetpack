@@ -2,15 +2,32 @@
    PLAYER ENTITY MODULE (Jetman Physics & Actions)
    ========================================================================== */
 
-import { TILE_SIZE, TILES } from '../world/tilemap.js';
+import { TILE_SIZE, TILES, PLAYER_PHYSICS } from '../shared/constants.js';
 
 export class Player {
-    constructor(audioManager, tileMap) {
+    constructor(audioManager = null, tileMap = null, options = {}) {
+        // Flexible argument handling for multiplayer / headless setup
+        if (audioManager && typeof audioManager === 'object' && audioManager.cols !== undefined && !tileMap) {
+            options = options || {};
+            tileMap = audioManager;
+            audioManager = null;
+        } else if (audioManager && !tileMap && (audioManager.id || audioManager.color)) {
+            options = audioManager;
+            audioManager = options.audio || null;
+            tileMap = options.tileMap || null;
+        }
+
         this.audio = audioManager;
         this.tileMap = tileMap;
 
-        this.width = 22;
-        this.height = 28;
+        // Multiplayer entity identifiers & visual properties
+        this.id = options.id || `player_${Math.random().toString(36).substr(2, 9)}`;
+        this.color = options.color || '#00f0ff';
+        this.name = options.name || 'Player 1';
+        this.isLocal = options.isLocal !== undefined ? options.isLocal : true;
+
+        this.width = PLAYER_PHYSICS.WIDTH;
+        this.height = PLAYER_PHYSICS.HEIGHT;
 
         this.x = 100;
         this.y = 100;
@@ -23,18 +40,18 @@ export class Player {
         this.isThrusting = false;
         this.isPhasing = false;
 
-        this.fuel = 100; // Max 100%
-        this.maxFuel = 100;
-        this.fuelBurnRate = 18; // % per second
+        this.fuel = PLAYER_PHYSICS.MAX_FUEL;
+        this.maxFuel = PLAYER_PHYSICS.MAX_FUEL;
+        this.fuelBurnRate = PLAYER_PHYSICS.FUEL_BURN_RATE;
 
         this.score = 0;
-        this.lives = 3;
+        this.lives = PLAYER_PHYSICS.INITIAL_LIVES;
         this.isDead = false;
 
         // Phase Shifter / Laser Beam properties
         this.phaseCooldown = 0;
         this.phaseBeamTimer = 0;
-        this.phaseBeamLength = 160;
+        this.phaseBeamLength = PLAYER_PHYSICS.PHASE_BEAM_LENGTH;
 
         // Visual animation frame, teleport cooldown & stuck timer
         this.animTimer = 0;
@@ -85,20 +102,20 @@ export class Player {
 
         // Hazard check: Spikes or Energy Drain
         if (currentTile === TILES.SPIKE || feetTile === TILES.SPIKE) {
-            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
+            this.audio?.stopEnergyDrain?.();
             this.takeDamage();
             return;
         }
         if (currentTile === TILES.ENERGY_DRAIN || feetTile === TILES.ENERGY_DRAIN) {
             this.fuel = Math.max(0, this.fuel - 40 * dt);
-            if (this.audio.startEnergyDrain) this.audio.startEnergyDrain();
+            this.audio?.startEnergyDrain?.();
             if (Math.random() < 0.3) {
                 const px = this.x + Math.random() * this.width;
                 const py = this.y + Math.random() * this.height;
                 this.tileMap.addSparkles(px, py, '#ff0055', 1);
             }
         } else {
-            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
+            this.audio?.stopEnergyDrain?.();
         }
 
         // 2. Movement Logic: Walking & Facing Direction
@@ -140,7 +157,7 @@ export class Player {
             this.vy -= 1400 * dt; // Thrust acceleration upward
             this.fuel = Math.max(0, this.fuel - this.fuelBurnRate * dt);
             
-            this.audio.startThrust();
+            this.audio?.startThrust?.();
 
             // Thrust particle effect
             const px = this.facingRight ? this.x + 2 : this.x + this.width - 2;
@@ -148,7 +165,7 @@ export class Player {
             this.tileMap.addSparkles(px, py, '#ff6600', 2);
         } else {
             this.isThrusting = false;
-            this.audio.stopThrust();
+            this.audio?.stopThrust?.();
         }
 
         // 5. Gravity Physics
@@ -162,7 +179,7 @@ export class Player {
             this.isPhasing = true;
             this.phaseBeamTimer = 0.14; // Visually persistent beam duration
             this.phaseCooldown = 0.12;  // Fire rate interval
-            this.audio.playPhaseSound();
+            this.audio?.playPhaseSound?.();
 
             // Check if player is currently standing inside a phase brick tile
             const playerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
@@ -438,12 +455,12 @@ export class Player {
                     const isAllCaught = this.tileMap.collectedEmeralds === 4 ||
                         (this.tileMap.totalEmeralds > 0 && this.tileMap.collectedEmeralds === this.tileMap.totalEmeralds);
                     if (isAllCaught) {
-                        this.audio.playAllDiamondsCaught();
+                        this.audio?.playAllDiamondsCaught?.();
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00e5ff', 25);
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ff77', 25);
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffd700', 20);
                     } else {
-                        this.audio.playEmeraldPickup();
+                        this.audio?.playEmeraldPickup?.();
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00e5ff', 12);
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ff77', 10);
                     }
@@ -451,14 +468,14 @@ export class Player {
                     this.tileMap.setTile(col, row, TILES.AIR);
                     this.fuel = Math.min(this.maxFuel, this.fuel + 50);
                     this.score += 50;
-                    this.audio.playFuelPickup();
+                    this.audio?.playFuelPickup?.();
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffaa00', 14);
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffee55', 10);
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffffff', 6);
                 } else if (tile === TILES.GOLD) {
                     this.tileMap.setTile(col, row, TILES.AIR);
                     this.score += 500;
-                    this.audio.playEmeraldPickup();
+                    this.audio?.playEmeraldPickup?.();
                     this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#f1c40f', 10);
                 }
             }
@@ -506,7 +523,7 @@ export class Player {
                         this.tileMap.addSparkles(destX, destY, '#ffffff', 18);
 
                         // Play teleport sound effect
-                        this.audio.playTeleport();
+                        this.audio?.playTeleport?.();
 
                         // 0.6s cooldown to allow smooth departure/arrival without instant re-warp
                         this.teleportCooldown = 0.6;

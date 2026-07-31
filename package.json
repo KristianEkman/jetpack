@@ -1,0 +1,17 @@
+{
+  "name": "jetpack-multiplayer",
+  "version": "1.0.0",
+  "description": "Jetpack - Retro Arcade Action with Real-time Multiplayer Engine",
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/test_shared.js"
+  },
+  "keywords": [
+    "jetpack",
+    "multiplayer",
+    "canvas",
+    "arcade"
+  ],
+  "author": "",
+  "license": "ISC"
+}

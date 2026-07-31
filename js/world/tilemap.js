@@ -2,31 +2,9 @@
    TILEMAP & WORLD ENGINE
    ========================================================================== */
 
-export const TILE_SIZE = 32;
-export const GRID_COLS = 30; // 30 * 32 = 960 px
-export const GRID_ROWS = 18; // 18 * 32 = 576 px (+ HUD height)
+import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, GAME_EVENTS } from '../shared/constants.js';
 
-export const TILES = {
-    AIR: 0,
-    BRICK: 1,
-    PHASE_BRICK: 2,
-    ICE: 3,
-    CONVEYOR_LEFT: 4,
-    CONVEYOR_RIGHT: 5,
-    LADDER: 6,
-    VINE: 7,
-    SPIKE: 8,
-    ENERGY_DRAIN: 9,
-    EMERALD: 10,
-    FUEL: 11,
-    GOLD: 12,
-    SPAWN: 13,
-    EXIT_PORTAL: 14,
-    TELEPORTER: 15,
-    ENEMY_FLITZER: 16,
-    ENEMY_MISSILE: 17,
-    ENEMY_TURRET: 18
-};
+export { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES };
 
 export class TileMap {
     constructor() {
@@ -48,6 +26,27 @@ export class TileMap {
         // Particles & Debris System
         this.particles = [];
         this.debris = [];
+
+        // Event listeners for world updates
+        this.listeners = {};
+    }
+
+    on(event, callback) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (!this.listeners[event]) return;
+        this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    }
+
+    emit(event, payload) {
+        if (this.listeners[event]) {
+            for (const cb of this.listeners[event]) {
+                cb(payload);
+            }
+        }
     }
 
     loadLevelData(levelData) {
@@ -169,10 +168,25 @@ export class TileMap {
 
                 // Spawn disintegration particles
                 this.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00e5ff', 12);
+                this.emit(GAME_EVENTS.TILE_PHASED, { col, row, index, originalTile: TILES.PHASE_BRICK });
                 return true;
             }
         }
         return false;
+    }
+
+    // Force re-solidifying a dissolved phase brick
+    restoreTile(col, row) {
+        if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return false;
+        const index = row * this.cols + col;
+        this.grid[index] = TILES.PHASE_BRICK;
+        const dIdx = this.dissolvedBricks.findIndex(b => b.index === index);
+        if (dIdx !== -1) {
+            this.dissolvedBricks.splice(dIdx, 1);
+        }
+        this.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ffcc', 10);
+        this.emit(GAME_EVENTS.TILE_RESTORED, { col, row, index, tile: TILES.PHASE_BRICK });
+        return true;
     }
 
     update(dt, player = null, enemyManager = null) {
@@ -218,36 +232,37 @@ export class TileMap {
                     brick.timer = 0.4;
                     this.addSparkles(brick.col * TILE_SIZE + 16, brick.row * TILE_SIZE + 16, '#ffaa00', 3);
                 } else {
-                    // Re-solidify brick
-                    this.grid[brick.index] = brick.originalTile;
-                    this.addSparkles(brick.col * TILE_SIZE + 16, brick.row * TILE_SIZE + 16, '#00ffcc', 10);
-                    this.dissolvedBricks.splice(i, 1);
+                    // Re-solidify brick cleanly via restoreTile event
+                    this.restoreTile(brick.col, brick.row);
                 }
             }
         }
 
         // Update particles
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life -= dt;
+        if (this.particles) {
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                const p = this.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= dt;
 
-            if (p.isSmoke) {
-                p.size = Math.min(10, p.size + dt * 6);
-                p.vy -= dt * 12; // Gently float upward
-            } else {
-                p.size = Math.max(0, p.size - dt * 2);
-            }
+                if (p.isSmoke) {
+                    p.size = Math.min(10, p.size + dt * 6);
+                    p.vy -= dt * 12; // Gently float upward
+                } else {
+                    p.size = Math.max(0, p.size - dt * 2);
+                }
 
-            if (p.life <= 0) {
-                this.particles.splice(i, 1);
+                if (p.life <= 0) {
+                    this.particles.splice(i, 1);
+                }
             }
         }
 
         // Update Debris Physics & Particle Spawning
-        for (let i = this.debris.length - 1; i >= 0; i--) {
-            const d = this.debris[i];
+        if (this.debris) {
+            for (let i = this.debris.length - 1; i >= 0; i--) {
+                const d = this.debris[i];
             d.life -= dt;
             if (d.life <= 0) {
                 this.debris.splice(i, 1);
@@ -283,6 +298,7 @@ export class TileMap {
             }
         }
     }
+}
 
     addDeathExplosion(x, y, facingRight = true) {
         const packX = facingRight ? x - 4 : x + 18;
@@ -412,6 +428,7 @@ export class TileMap {
     }
 
     addSparkles(x, y, color = '#00ffcc', count = 8) {
+        if (!this.particles) return;
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = Math.random() * 60 + 20;
