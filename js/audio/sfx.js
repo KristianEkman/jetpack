@@ -231,36 +231,164 @@ export class SoundEffects {
     }
 
     // Explosion / Damage Sound
-    playExplosion() {
+    playExplosion(isGameOver = false) {
+        this.playDramaticDeath(isGameOver);
+    }
+
+    // Dramatic Multi-stage Death Synthesizer Sound Effect
+    playDramaticDeath(isGameOver = false) {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
 
-        const bufferSize = this.ctx.sampleRate * 0.35;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
-        }
+        const now = this.ctx.currentTime;
 
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
+        // Stage 1: Hit Crunch Transient
+        try {
+            const crunchOsc = this.ctx.createOscillator();
+            const crunchGain = this.ctx.createGain();
+            crunchOsc.type = 'sawtooth';
+            crunchOsc.frequency.setValueAtTime(1400, now);
+            crunchOsc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
 
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(600, this.ctx.currentTime);
-        filter.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.35);
+            crunchGain.gain.setValueAtTime(0.35, now);
+            crunchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+            crunchOsc.connect(crunchGain);
+            crunchGain.connect(this.ctx.destination);
+            crunchOsc.start(now);
+            crunchOsc.stop(now + 0.08);
+        } catch (e) {}
 
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.ctx.destination);
+        // Stage 2: Speaker-Rumbling Sub-Bass Boom (85Hz -> 18Hz drop)
+        try {
+            const subOsc = this.ctx.createOscillator();
+            const subGain = this.ctx.createGain();
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(85, now + 0.01);
+            subOsc.frequency.exponentialRampToValueAtTime(18, now + 0.8);
 
-        noise.start();
+            subGain.gain.setValueAtTime(0.5, now + 0.01);
+            subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+            subOsc.connect(subGain);
+            subGain.connect(this.ctx.destination);
+            subOsc.start(now + 0.01);
+            subOsc.stop(now + 0.8);
+        } catch (e) {}
+
+        // Stage 3: Descending Death Wail / Synth Siren
+        try {
+            const sirenOsc1 = this.ctx.createOscillator();
+            const sirenOsc2 = this.ctx.createOscillator();
+            const sirenGain = this.ctx.createGain();
+
+            sirenOsc1.type = 'sawtooth';
+            sirenOsc2.type = 'square';
+
+            sirenOsc1.frequency.setValueAtTime(1200, now + 0.05);
+            sirenOsc1.frequency.exponentialRampToValueAtTime(80, now + 0.9);
+
+            sirenOsc2.frequency.setValueAtTime(1210, now + 0.05);
+            sirenOsc2.frequency.exponentialRampToValueAtTime(75, now + 0.9);
+
+            const sirenFilter = this.ctx.createBiquadFilter();
+            sirenFilter.type = 'lowpass';
+            sirenFilter.frequency.setValueAtTime(2500, now);
+            sirenFilter.frequency.exponentialRampToValueAtTime(200, now + 0.9);
+
+            sirenGain.gain.setValueAtTime(0.22, now + 0.05);
+            sirenGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+
+            sirenOsc1.connect(sirenFilter);
+            sirenOsc2.connect(sirenFilter);
+            sirenFilter.connect(sirenGain);
+            sirenGain.connect(this.ctx.destination);
+
+            sirenOsc1.start(now + 0.05);
+            sirenOsc2.start(now + 0.05);
+            sirenOsc1.stop(now + 0.9);
+            sirenOsc2.stop(now + 0.9);
+        } catch (e) {}
+
+        // Stage 4: Debris Crackle & Lowpass Noise Explosion
+        try {
+            const bufferSize = Math.floor(this.ctx.sampleRate * 1.4);
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                const decay = Math.pow(1 - i / bufferSize, 1.8);
+                const pop = (Math.random() > 0.97 ? (Math.random() * 2 - 1) * 1.5 : 0);
+                data[i] = ((Math.random() * 2 - 1) + pop) * decay;
+            }
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+
+            const noiseFilter = this.ctx.createBiquadFilter();
+            noiseFilter.type = 'lowpass';
+            noiseFilter.frequency.setValueAtTime(900, now);
+            noiseFilter.frequency.exponentialRampToValueAtTime(40, now + 1.4);
+
+            const noiseGain = this.ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.38, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(this.ctx.destination);
+
+            noise.start(now);
+        } catch (e) {}
+
+        // Stage 5: Game Over Tragic Minor Chords (if 0 lives left) or Minor Drop Tone
+        try {
+            if (isGameOver) {
+                const chordTime = now + 0.45;
+                const notes = [261.63, 311.13, 392.00, 523.25]; // C4, Eb4, G4, C5 (C Minor)
+                notes.forEach((freq) => {
+                    const chordOsc = this.ctx.createOscillator();
+                    const chordGain = this.ctx.createGain();
+
+                    chordOsc.type = 'sawtooth';
+                    chordOsc.frequency.setValueAtTime(freq, chordTime);
+                    chordOsc.frequency.exponentialRampToValueAtTime(freq * 0.98, chordTime + 1.2);
+
+                    const chordFilter = this.ctx.createBiquadFilter();
+                    chordFilter.type = 'lowpass';
+                    chordFilter.frequency.setValueAtTime(1200, chordTime);
+                    chordFilter.frequency.exponentialRampToValueAtTime(150, chordTime + 1.2);
+
+                    chordGain.gain.setValueAtTime(0, chordTime);
+                    chordGain.gain.linearRampToValueAtTime(0.12, chordTime + 0.08);
+                    chordGain.gain.exponentialRampToValueAtTime(0.001, chordTime + 1.2);
+
+                    chordOsc.connect(chordFilter);
+                    chordFilter.connect(chordGain);
+                    chordGain.connect(this.ctx.destination);
+
+                    chordOsc.start(chordTime);
+                    chordOsc.stop(chordTime + 1.2);
+                });
+            } else {
+                const dropTime = now + 0.4;
+                const dropOsc = this.ctx.createOscillator();
+                const dropGain = this.ctx.createGain();
+                dropOsc.type = 'triangle';
+                dropOsc.frequency.setValueAtTime(329.63, dropTime);
+                dropOsc.frequency.setValueAtTime(261.63, dropTime + 0.15);
+
+                dropGain.gain.setValueAtTime(0.2, dropTime);
+                dropGain.gain.exponentialRampToValueAtTime(0.001, dropTime + 0.5);
+
+                dropOsc.connect(dropGain);
+                dropGain.connect(this.ctx.destination);
+                dropOsc.start(dropTime);
+                dropOsc.stop(dropTime + 0.5);
+            }
+        } catch (e) {}
     }
+
 
     // Portal Active / Level Clear Fanfare
     playPortalWarp() {

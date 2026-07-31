@@ -201,6 +201,8 @@ class Game {
     startLevel(index) {
         this.isCustomLevel = false;
         this.currentLevelIndex = index;
+        this.deathSequenceTimer = 0;
+        this.isDeathHandled = false;
         const levelData = CAMPAIGN_LEVELS[index];
 
         this.tileMap.loadLevelData(levelData);
@@ -399,40 +401,50 @@ class Game {
     update(dt) {
         if (this.gameState !== GAME_STATES.PLAYING) return;
 
-        // 1. Update TileMap
-        this.tileMap.update(dt, this.player, this.enemyManager);
+        // Time Dilation scale during dramatic player death sequence
+        let effectiveDt = dt;
+        if (this.player.isDead) {
+            this.deathSequenceTimer += dt;
+            // First 0.25s of death runs in slow-motion (0.15x speed), smoothly scaling back to 1.0x
+            if (this.deathSequenceTimer < 0.25) {
+                effectiveDt = dt * 0.15;
+            } else if (this.deathSequenceTimer < 0.6) {
+                effectiveDt = dt * 0.5;
+            }
+
+            this.audio.stopThrust();
+            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
+
+            // After 1.8 seconds of explosion physics, perform state transition once
+            if (this.deathSequenceTimer >= 1.8 && !this.isDeathHandled) {
+                this.isDeathHandled = true;
+                if (this.player.lives <= 0) {
+                    this.gameState = GAME_STATES.GAME_OVER;
+                    document.getElementById('gameOverStats').textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
+                    this.showDialog('dlgGameOver');
+                } else {
+                    this.startLevel(this.currentLevelIndex);
+                }
+            }
+        }
+
+        // 1. Update TileMap (debris physics, particles)
+        this.tileMap.update(effectiveDt, this.player, this.enemyManager);
 
         // 2. Update Player
-        this.player.update(dt, this.input.keys, this.enemyManager);
+        this.player.update(effectiveDt, this.input.keys, this.enemyManager);
 
         // 3. Update Enemies
-        this.enemyManager.update(dt, this.player);
+        this.enemyManager.update(effectiveDt, this.player);
 
         // 4. Check Level Clear Condition (Player enters EXIT_PORTAL when all emeralds collected)
-        if (this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds) {
+        if (!this.player.isDead && this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds) {
             const playerCol = Math.floor((this.player.x + this.player.width / 2) / TILE_SIZE);
             const playerRow = Math.floor((this.player.y + this.player.height / 2) / TILE_SIZE);
             
             if (this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL) {
                 this.triggerLevelComplete();
             }
-        }
-
-        // 5. Check Player Death / Game Over
-        if (this.player.isDead) {
-            this.audio.stopThrust();
-            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
-            setTimeout(() => {
-                if (this.player.lives <= 0) {
-                    this.gameState = GAME_STATES.GAME_OVER;
-                    document.getElementById('gameOverStats').textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
-                    this.showDialog('dlgGameOver');
-                } else {
-                    // Respawn at level start
-                    const spawnTile = CAMPAIGN_LEVELS[this.currentLevelIndex]?.grid;
-                    this.startLevel(this.currentLevelIndex);
-                }
-            }, 1200);
         }
 
         // Update HUD display

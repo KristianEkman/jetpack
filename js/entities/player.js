@@ -524,8 +524,15 @@ export class Player {
         this.stuckTimer = 0;
         if (this.audio.stopThrust) this.audio.stopThrust();
         if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
-        this.audio.playExplosion();
-        this.tileMap.addSparkles(this.x + 11, this.y + 14, '#ff0055', 25);
+
+        const isGameOver = this.lives <= 0;
+        if (this.audio.playExplosion) {
+            this.audio.playExplosion(isGameOver);
+        }
+
+        if (this.tileMap) {
+            this.tileMap.addDeathExplosion(this.x, this.y, this.facingRight);
+        }
     }
 
     checkStuck(dt) {

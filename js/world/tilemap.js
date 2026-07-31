@@ -42,14 +42,16 @@ export class TileMap {
         // Teleporters array: list of tile indices
         this.teleporters = [];
 
-        // Particles system
+        // Particles & Debris System
         this.particles = [];
+        this.debris = [];
     }
 
     loadLevelData(levelData) {
         this.grid = [...levelData.grid];
         this.dissolvedBricks = [];
         this.particles = [];
+        this.debris = [];
         this.collectedEmeralds = 0;
         this.countTotalEmeralds();
         this.rebuildTeleporters();
@@ -227,12 +229,183 @@ export class TileMap {
             p.x += p.vx;
             p.y += p.vy;
             p.life -= dt;
-            p.size = Math.max(0, p.size - dt * 2);
+
+            if (p.isSmoke) {
+                p.size = Math.min(10, p.size + dt * 6);
+                p.vy -= dt * 12; // Gently float upward
+            } else {
+                p.size = Math.max(0, p.size - dt * 2);
+            }
 
             if (p.life <= 0) {
                 this.particles.splice(i, 1);
             }
         }
+
+        // Update Debris Physics & Particle Spawning
+        for (let i = this.debris.length - 1; i >= 0; i--) {
+            const d = this.debris[i];
+            d.life -= dt;
+            if (d.life <= 0) {
+                this.debris.splice(i, 1);
+                continue;
+            }
+
+            if (d.type === 'shockwave') {
+                d.radius += d.speed * dt;
+                continue;
+            }
+
+            // Gravity & Velocity
+            if (d.gravity) {
+                d.vy += d.gravity * dt;
+            }
+            d.x += d.vx * dt;
+            d.y += d.vy * dt;
+            if (d.rotSpeed) {
+                d.rot += d.rotSpeed * dt;
+            }
+
+            // Tile Collision & Bouncing for physical debris
+            if (d.bounce) {
+                const col = Math.floor(d.x / TILE_SIZE);
+                const row = Math.floor(d.y / TILE_SIZE);
+                if (this.isSolid(col, row)) {
+                    d.vy = -d.vy * d.bounce;
+                    d.vx *= 0.65;
+                    d.y += d.vy * dt * 2;
+                    d.rotSpeed *= -0.4;
+                    if (Math.abs(d.vy) < 20) d.vy = 0;
+                }
+            }
+        }
+    }
+
+    addDeathExplosion(x, y, facingRight = true) {
+        const packX = facingRight ? x - 4 : x + 18;
+        const packY = y + 6;
+
+        // 1. JETPACK BREAKING INTO PARTS:
+
+        // A) Jetpack Top Casing (Grey metallic block 6x8)
+        this.debris.push({
+            type: 'jetpack_top',
+            x: packX,
+            y: packY,
+            vx: (facingRight ? -70 : 70) + (Math.random() - 0.5) * 30,
+            vy: -150 - Math.random() * 40,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 14,
+            gravity: 450,
+            life: 2.0,
+            maxLife: 2.0,
+            bounce: 0.5
+        });
+
+        // B) Jetpack Bottom Casing (Grey block 6x8)
+        this.debris.push({
+            type: 'jetpack_bottom',
+            x: packX,
+            y: packY + 8,
+            vx: (facingRight ? -40 : 40) + (Math.random() - 0.5) * 40,
+            vy: -110 - Math.random() * 40,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 16,
+            gravity: 480,
+            life: 2.0,
+            maxLife: 2.0,
+            bounce: 0.5
+        });
+
+        // C) Red Fuel Cell Tank (Red block 4x4)
+        this.debris.push({
+            type: 'fuel_cell',
+            x: packX + 1,
+            y: packY + 2,
+            vx: (facingRight ? -110 : 110) + (Math.random() - 0.5) * 50,
+            vy: -180 - Math.random() * 50,
+            rot: 0,
+            rotSpeed: (facingRight ? -1 : 1) * (15 + Math.random() * 10),
+            gravity: 500,
+            life: 2.0,
+            maxLife: 2.0,
+            bounce: 0.6
+        });
+
+        // D) Detached Thruster Nozzle (Dark metal nozzle 4x3)
+        this.debris.push({
+            type: 'nozzle',
+            x: packX + 1,
+            y: packY + 14,
+            vx: (facingRight ? -30 : 30) + (Math.random() - 0.5) * 50,
+            vy: -90 - Math.random() * 30,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 20,
+            gravity: 520,
+            life: 1.8,
+            maxLife: 1.8,
+            bounce: 0.4
+        });
+
+        // 2. CHARACTER / SUIT PARTS:
+
+        // A) Helmet (White dome + blue visor)
+        this.debris.push({
+            type: 'helmet',
+            x: x + 11,
+            y: y + 6,
+            vx: (facingRight ? 30 : -30) + (Math.random() - 0.5) * 40,
+            vy: -130 - Math.random() * 40,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 10,
+            gravity: 450,
+            life: 2.0,
+            maxLife: 2.0,
+            bounce: 0.55
+        });
+
+        // B) Cyan Suit Torso (Cyan block 14x12)
+        this.debris.push({
+            type: 'suit',
+            x: x + 4,
+            y: y + 8,
+            vx: (Math.random() - 0.5) * 30,
+            vy: -60 - Math.random() * 30,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 6,
+            gravity: 500,
+            life: 1.8,
+            maxLife: 1.8,
+            bounce: 0.4
+        });
+
+        // C) Boots (Left & Right boots)
+        this.debris.push({
+            type: 'boot',
+            x: x + 4,
+            y: y + 22,
+            vx: -35 + (Math.random() - 0.5) * 20,
+            vy: -80 - Math.random() * 30,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 12,
+            gravity: 550,
+            life: 1.8,
+            maxLife: 1.8,
+            bounce: 0.5
+        });
+        this.debris.push({
+            type: 'boot',
+            x: x + 13,
+            y: y + 22,
+            vx: 35 + (Math.random() - 0.5) * 20,
+            vy: -90 - Math.random() * 30,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 12,
+            gravity: 550,
+            life: 1.8,
+            maxLife: 1.8,
+            bounce: 0.5
+        });
     }
 
     addSparkles(x, y, color = '#00ffcc', count = 8) {
@@ -300,6 +473,81 @@ export class TileMap {
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // Render Debris Objects Layer (Helmet, Jetpack components, Fuel Cell, Suit, Boots)
+        for (let d of this.debris) {
+            const alpha = Math.max(0, Math.min(1, d.life / (d.maxLife || 1)));
+            ctx.save();
+            ctx.globalAlpha = alpha;
+
+            if (d.type === 'helmet') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                // Dome
+                ctx.fillStyle = '#ecf0f1';
+                ctx.beginPath();
+                ctx.arc(0, 0, 7, 0, Math.PI * 2);
+                ctx.fill();
+                // Visor
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(0, -3, 6, 5);
+            } else if (d.type === 'jetpack_top') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                // Grey Jetpack Top Casing Part
+                ctx.fillStyle = '#7f8c8d';
+                ctx.fillRect(-3, -4, 6, 8);
+                ctx.fillStyle = '#95a5a6';
+                ctx.fillRect(-2, -3, 2, 6);
+                // Broken Jagged Edge Line
+                ctx.strokeStyle = '#34495e';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(-3, 4);
+                ctx.lineTo(-1, 2);
+                ctx.lineTo(1, 4);
+                ctx.lineTo(3, 2);
+                ctx.stroke();
+            } else if (d.type === 'jetpack_bottom') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                // Grey Jetpack Bottom Casing Part
+                ctx.fillStyle = '#7f8c8d';
+                ctx.fillRect(-3, -4, 6, 8);
+                // Thruster Nozzle Base
+                ctx.fillStyle = '#34495e';
+                ctx.fillRect(-2, 4, 4, 3);
+            } else if (d.type === 'fuel_cell') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                // Red Fuel Cell Tank Component
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(-2.5, -2.5, 5, 5);
+                ctx.strokeStyle = '#c0392b';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(-2.5, -2.5, 5, 5);
+            } else if (d.type === 'nozzle') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                ctx.fillStyle = '#34495e';
+                ctx.fillRect(-2, -1.5, 4, 3);
+            } else if (d.type === 'suit') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                // Cyan Suit Torso
+                ctx.fillStyle = '#00ffcc';
+                ctx.fillRect(-7, -6, 14, 12);
+                ctx.fillStyle = '#00e5ff';
+                ctx.fillRect(-5, -4, 10, 4);
+            } else if (d.type === 'boot') {
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                ctx.fillStyle = '#2563eb';
+                ctx.fillRect(-3, -1.5, 6, 3);
+            }
+
+            ctx.restore();
         }
     }
 
