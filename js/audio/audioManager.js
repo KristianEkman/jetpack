@@ -84,8 +84,8 @@ export class AudioManager {
             }
             if (this.currentTrack.startsWith('game')) {
                 this.startGameMusic(this.currentLevel || 0);
-            } else if (!this.sequencer.isPlayingMusic) {
-                this.startMenuMusic();
+            } else {
+                this.stopMusic();
             }
         };
         if (typeof window !== 'undefined') {

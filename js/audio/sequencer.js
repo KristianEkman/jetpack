@@ -35,20 +35,7 @@ export class MusicSequencer {
     }
 
     startMenuMusic(forceReset = false) {
-        if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume().then(() => {
-                this.nextStepTime = this.ctx.currentTime + 0.05;
-            });
-        }
-        if (!forceReset && this.currentTrack === 'menu' && this.isPlayingMusic) {
-            if (this.nextStepTime < this.ctx.currentTime) {
-                this.nextStepTime = this.ctx.currentTime + 0.05;
-            }
-            return;
-        }
         this.stopMusic();
-        this.currentTrack = 'menu';
-        this.startMusic();
     }
 
     startGameMusic(levelIndex = 0) {
@@ -117,8 +104,8 @@ export class MusicSequencer {
             this.nextStepTime = this.ctx.currentTime + 0.05;
         }
 
-        const bpm = this.currentTrack === 'menu' ? 112 : (this.currentLevel === 1 ? 132 : (this.currentLevel === 2 ? 116 : (this.currentLevel === 3 ? 110 : 96)));
-        const maxSteps = this.currentTrack === 'menu' ? 64 : 192;
+        const bpm = this.currentTrack === 'menu' ? 100 : (this.currentLevel === 1 ? 132 : (this.currentLevel === 2 ? 110 : (this.currentLevel === 3 ? 96 : 112)));
+        const maxSteps = 192;
         const stepDuration = (60 / bpm) / 4;
 
         while (this.nextStepTime < this.ctx.currentTime + 0.1) {
@@ -139,41 +126,52 @@ export class MusicSequencer {
     }
 
     playMenuStep(step, time, stepDuration) {
-        // 1. Heroic 8-Bit Retro Arcade Lead (Chorused Square/Saw Pulse)
+        // 1. Soaring Legato Space Lead (Lush Warm Sine + Triangle Chorus Synth)
         const leadFreq = MENU_CHIME_PATTERN[step];
         if (leadFreq) {
             const osc1 = this.ctx.createOscillator();
             const osc2 = this.ctx.createOscillator();
+            const osc3 = this.ctx.createOscillator();
             const filter = this.ctx.createBiquadFilter();
             const gain = this.ctx.createGain();
 
-            osc1.type = 'square';
+            // Pure fundamental
+            osc1.type = 'sine';
             osc1.frequency.setValueAtTime(leadFreq, time);
 
-            osc2.type = 'sawtooth';
-            osc2.frequency.setValueAtTime(leadFreq * 1.003, time);
+            // Warm detuned body for smooth legato voice
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(leadFreq * 1.0015, time);
+
+            // High octave celestial shimmer
+            osc3.type = 'sine';
+            osc3.frequency.setValueAtTime(leadFreq * 2.0, time);
 
             filter.type = 'lowpass';
-            filter.Q.setValueAtTime(3.0, time);
-            filter.frequency.setValueAtTime(3200, time);
-            filter.frequency.exponentialRampToValueAtTime(1000, time + stepDuration * 0.8);
+            filter.Q.setValueAtTime(2.2, time);
+            filter.frequency.setValueAtTime(3600, time);
+            filter.frequency.exponentialRampToValueAtTime(1200, time + stepDuration * 3.0);
 
-            gain.gain.setValueAtTime(0.001, time);
-            gain.gain.linearRampToValueAtTime(0.15, time + 0.005);
-            gain.gain.exponentialRampToValueAtTime(0.003, time + stepDuration * 0.85);
+            // Legato anti-click attack & long overlapping sustain envelope
+            gain.gain.setValueAtTime(0.0001, time);
+            gain.gain.linearRampToValueAtTime(0.13, time + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.002, time + stepDuration * 3.2);
 
             osc1.connect(filter);
             osc2.connect(filter);
+            osc3.connect(filter);
             filter.connect(gain);
             gain.connect(this.bgmGain);
 
             osc1.start(time);
             osc2.start(time);
-            osc1.stop(time + stepDuration * 0.85);
-            osc2.stop(time + stepDuration * 0.85);
+            osc3.start(time);
+            osc1.stop(time + stepDuration * 3.3);
+            osc2.stop(time + stepDuration * 3.3);
+            osc3.stop(time + stepDuration * 3.3);
         }
 
-        // 2. Driving 8-Bit Octave Synth Bass
+        // 2. Deep Legato Sub-Bass Waves (Continuous Low-End Support)
         const bassFreq = MENU_BASS_PATTERN[step];
         if (bassFreq) {
             const osc = this.ctx.createOscillator();
@@ -184,75 +182,41 @@ export class MusicSequencer {
             osc.frequency.setValueAtTime(bassFreq, time);
 
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1100, time);
+            filter.Q.setValueAtTime(1.8, time);
+            filter.frequency.setValueAtTime(450, time);
 
-            gain.gain.setValueAtTime(0.001, time);
-            gain.gain.linearRampToValueAtTime(0.22, time + 0.004);
-            gain.gain.exponentialRampToValueAtTime(0.005, time + stepDuration * 0.8);
+            // Smooth legato swell attack & extended sustain tail
+            gain.gain.setValueAtTime(0.0001, time);
+            gain.gain.linearRampToValueAtTime(0.22, time + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.004, time + stepDuration * 3.5);
 
             osc.connect(filter);
             filter.connect(gain);
             gain.connect(this.bgmGain);
 
             osc.start(time);
-            osc.stop(time + stepDuration * 0.8);
+            osc.stop(time + stepDuration * 3.6);
         }
 
-        // 3. Upbeat Arcade Title Drums (Kick, Snare & Hi-Hat ticks)
-        if (step % 4 === 0) {
-            const kickOsc = this.ctx.createOscillator();
-            const kickGain = this.ctx.createGain();
-
-            kickOsc.type = 'sine';
-            kickOsc.frequency.setValueAtTime(135, time);
-            kickOsc.frequency.exponentialRampToValueAtTime(32, time + 0.07);
-
-            kickGain.gain.setValueAtTime(0.30, time);
-            kickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.07);
-
-            kickOsc.connect(kickGain);
-            kickGain.connect(this.bgmGain);
-
-            kickOsc.start(time);
-            kickOsc.stop(time + 0.07);
-        }
-
-        if (step % 8 === 4 && this.noiseBuffer) {
+        // 3. Ethereal Cosmic Dust / Solar Shimmer (Soft Highpass Noise Sweep)
+        if (step % 16 === 0 && this.noiseBuffer) {
             const noise = this.ctx.createBufferSource();
             noise.buffer = this.noiseBuffer;
             const filter = this.ctx.createBiquadFilter();
             filter.type = 'highpass';
-            filter.frequency.setValueAtTime(1200, time);
+            filter.frequency.setValueAtTime(8000, time);
 
             const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0.18, time);
-            gain.gain.exponentialRampToValueAtTime(0.005, time + 0.08);
+            gain.gain.setValueAtTime(0.0001, time);
+            gain.gain.linearRampToValueAtTime(0.015, time + 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.8);
 
             noise.connect(filter);
             filter.connect(gain);
             gain.connect(this.bgmGain);
 
             noise.start(time);
-            noise.stop(time + 0.08);
-        }
-
-        if (step % 2 === 0 && this.noiseBuffer) {
-            const noise = this.ctx.createBufferSource();
-            noise.buffer = this.noiseBuffer;
-            const filter = this.ctx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.setValueAtTime(7000, time);
-
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0.05, time);
-            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
-
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(this.bgmGain);
-
-            noise.start(time);
-            noise.stop(time + 0.02);
+            noise.stop(time + 0.8);
         }
     }
 
