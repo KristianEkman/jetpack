@@ -32,7 +32,7 @@ try {
     // 3. Socket.IO Client 1 Connection & Handshake
     console.log('3️⃣  Testing Socket.IO Client Connection & Handshake...');
     client1 = ioClient(SERVER_URL, { forceNew: true });
-    
+
     await new Promise((resolve) => client1.on('connect', resolve));
     assert.ok(client1.id, 'Client 1 should receive a valid socket ID');
     console.log(`   ✅ Client 1 connected with socket ID: ${client1.id}`);
@@ -101,7 +101,7 @@ try {
     // Collect snapshots for ~150ms (~9 ticks)
     await new Promise((resolve) => setTimeout(resolve, 150));
     assert.ok(snapshotsReceived.length >= 3, `Should receive at least 3 snapshot ticks (received ${snapshotsReceived.length})`);
-    
+
     const latestSnapshot = snapshotsReceived[snapshotsReceived.length - 1];
     assert.equal(latestSnapshot.roomId, roomId);
     assert.equal(latestSnapshot.players.length, 2);

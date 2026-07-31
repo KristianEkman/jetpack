@@ -41,6 +41,39 @@ export class GameLoop {
                 room.tileMap.update(this.dt);
             }
 
+            // 1b. Handle player death timers & respawn
+            for (const [socketId, playerEntity] of room.players.entries()) {
+                if (playerEntity.isDead) {
+                    // Initialize death timer if not present
+                    if (playerEntity._deathTimer === undefined) {
+                        playerEntity._deathTimer = 0;
+                    }
+                    playerEntity._deathTimer += this.dt;
+
+                    // After 2.0s death animation, respawn if player has lives left
+                    if (playerEntity._deathTimer >= 2.0 && playerEntity.lives > 0) {
+                        // Find SPAWN tile position
+                        let spawnX = 128, spawnY = 100;
+                        if (room.tileMap) {
+                            for (let r = 0; r < room.tileMap.rows; r++) {
+                                for (let c = 0; c < room.tileMap.cols; c++) {
+                                    if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
+                                        spawnX = c * TILE_SIZE + 4;
+                                        spawnY = r * TILE_SIZE + 2;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        playerEntity.spawn(spawnX, spawnY);
+                        playerEntity._deathTimer = 0;
+                    }
+                } else {
+                    // Reset timer when alive
+                    playerEntity._deathTimer = 0;
+                }
+            }
+
             // 2. Check Level Clear Condition (Exit Portal reached with all emeralds)
             if (room.status === 'playing' && room.tileMap) {
                 const allEmeraldsCaught = (room.tileMap.totalEmeralds > 0 && room.tileMap.collectedEmeralds >= room.tileMap.totalEmeralds) ||

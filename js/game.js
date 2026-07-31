@@ -351,7 +351,7 @@ class Game {
                         this.customMapDataPayload = JSON.parse(saved);
                         if (statusText) statusText.textContent = `Using Editor map: "${this.customMapDataPayload.name || 'Custom Level'}"`;
                     }
-                } catch (e) {}
+                } catch (e) { }
             } else {
                 uploadGroup?.classList.add('hidden');
             }
@@ -401,7 +401,7 @@ class Game {
                     try {
                         const saved = localStorage.getItem('jetpack_custom_level');
                         if (saved) this.customMapDataPayload = JSON.parse(saved);
-                    } catch (e) {}
+                    } catch (e) { }
                 }
                 if (!this.customMapDataPayload) {
                     alert('Please upload a valid custom map JSON file or build one in the Level Editor!');
@@ -877,10 +877,19 @@ class Game {
                     this.gameState = GAME_STATES.GAME_OVER;
                     document.getElementById('gameOverStats').textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
                     this.showDialog('dlgGameOver');
+                } else if (this.isMultiplayer) {
+                    // In multiplayer, don't reload the level — the server will
+                    // respawn us via snapshot. Just reset the death animation state
+                    // so we're ready to accept the server's respawn.
+                    this.deathSequenceTimer = 0;
                 } else {
                     this.startLevel(this.currentLevelIndex);
                 }
             }
+        } else if (this.isDeathHandled) {
+            // Player respawned (isDead transitioned to false) — reset death state
+            this.deathSequenceTimer = 0;
+            this.isDeathHandled = false;
         }
 
         // 1. Update TileMap (debris physics, particles)
@@ -896,7 +905,7 @@ class Game {
         if (!this.player.isDead && this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds) {
             const playerCol = Math.floor((this.player.x + this.player.width / 2) / TILE_SIZE);
             const playerRow = Math.floor((this.player.y + this.player.height / 2) / TILE_SIZE);
-            
+
             if (this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL) {
                 this.triggerLevelComplete();
             }
@@ -959,7 +968,7 @@ class Game {
 
     render(dt) {
         // Skip continuous canvas rendering in menu, pause, or game over states to eliminate background CPU/GPU usage
-        if (this.gameState === GAME_STATES.PAUSED || this.gameState === GAME_STATES.MENU || 
+        if (this.gameState === GAME_STATES.PAUSED || this.gameState === GAME_STATES.MENU ||
             this.gameState === GAME_STATES.GAME_OVER || this.gameState === GAME_STATES.LEVEL_COMPLETE) {
             if (this.isCanvasRenderedForState) return;
             this.isCanvasRenderedForState = true;

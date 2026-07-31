@@ -73,10 +73,15 @@ export class PlayerManager {
                 });
             }
 
-            // Skip overwriting local player with server state to prevent flicker.
-            // Local player runs its own physics; server snapshots are 1-2 frames behind
-            // and would cause visible position/fuel/score jitter.
-            if (socketId !== this.localSocketId) {
+            // For the local player, only apply server state when the server signals
+            // a respawn (isDead transitions from true → false). Otherwise skip to
+            // prevent flicker — the local player runs its own physics.
+            if (socketId === this.localSocketId) {
+                if (player.isDead && pData.isDead === false) {
+                    // Server has respawned us — apply position, state, and fuel
+                    player.applySnapshot(pData);
+                }
+            } else {
                 player.applySnapshot(pData);
             }
         }
