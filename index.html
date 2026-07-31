@@ -52,18 +52,19 @@
                     </div>
                 </div>
 
-                <div class="hud-item fuel-item">
-                    <span class="hud-label">JETPACK FUEL</span>
-                    <div class="fuel-bar-container">
-                        <div id="fuelBarFill" class="fuel-bar-fill"></div>
-                        <span id="fuelText" class="fuel-text">100%</span>
+                <div class="fuel-buttons-wrapper">
+                    <div class="hud-buttons-row">
+                        <button id="btnPause" class="btn-icon" title="Pause Game (Esc)">⏸️</button>
+                        <button id="btnSound" class="btn-icon" title="Mute/Unmute Audio">🔊</button>
+                        <button id="btnCRT" class="btn-icon" title="Toggle CRT Retro Filter">📺</button>
                     </div>
-                </div>
-
-                <div class="hud-item">
-                    <button id="btnPause" class="btn-icon" title="Pause Game (Esc)">⏸️</button>
-                    <button id="btnSound" class="btn-icon" title="Mute/Unmute Audio">🔊</button>
-                    <button id="btnCRT" class="btn-icon" title="Toggle CRT Retro Filter">📺</button>
+                    <div class="hud-item fuel-item">
+                        <span class="hud-label">JETPACK FUEL</span>
+                        <div class="fuel-bar-container">
+                            <div id="fuelBarFill" class="fuel-bar-fill"></div>
+                            <span id="fuelText" class="fuel-text">100%</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -99,10 +100,6 @@
 
         <!-- Level Editor Floating Toolbar (Visible only in Level Editor Mode) -->
         <div id="editorToolbar" class="editor-toolbar hidden">
-            <div class="editor-header">
-                <span>LEVEL EDITOR TOOLBAR</span>
-                <span id="editorStatusText" class="editor-status">Mode: Painting</span>
-            </div>
 
             <div id="tilePalette" class="tile-palette">
                 <!-- Dynamically populated tile palette items -->
@@ -180,7 +177,8 @@
                             tanks.</li>
                         <li><strong>Phase Shifter ⚡:</strong> Temporarily dissolves phaseable brick walls to create
                             tunnels. Blocks rebuild after a delay!</li>
-                        <li><strong>Teleporters 🔮:</strong> Walk or land on any Teleporter Pad to instantly warp across linked nodes.</li>
+                        <li><strong>Teleporters 🔮:</strong> Walk or land on any Teleporter Pad to instantly warp across
+                            linked nodes.</li>
                         <li><strong>Hazards ☣️:</strong> Avoid Spikes, Energy Drain fields, Flitzers, and Homing
                             Missiles.</li>
                     </ul>
