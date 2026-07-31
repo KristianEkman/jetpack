@@ -20,7 +20,10 @@ export const PALETTE = [
     { type: TILES.GOLD, name: 'Gold Coin', icon: '🪙', color: '#f1c40f' },
     { type: TILES.SPAWN, name: 'Player Spawn', icon: '🚀', color: '#00ffcc' },
     { type: TILES.EXIT_PORTAL, name: 'Exit Portal', icon: '🌀', color: '#ff00ff' },
-    { type: TILES.TELEPORTER, name: 'Teleporter', icon: '🔮', color: '#9b59b6' }
+    { type: TILES.TELEPORTER, name: 'Teleporter', icon: '🔮', color: '#9b59b6' },
+    { type: TILES.ENEMY_FLITZER, name: 'Flitzer Enemy', icon: '👿', color: '#ff0055' },
+    { type: TILES.ENEMY_MISSILE, name: 'Homing Missile', icon: '🚀', color: '#ff5500' },
+    { type: TILES.ENEMY_TURRET, name: 'Turret Enemy', icon: '🤖', color: '#e74c3c' }
 ];
 
 export class LevelEditor {

@@ -20,7 +20,10 @@ const CHAR_TO_TILE = {
     'G': TILES.GOLD,
     'S': TILES.SPAWN,
     'O': TILES.EXIT_PORTAL,
-    'T': TILES.TELEPORTER
+    'T': TILES.TELEPORTER,
+    '1': TILES.ENEMY_FLITZER,
+    '2': TILES.ENEMY_MISSILE,
+    '3': TILES.ENEMY_TURRET
 };
 
 function parseLevelString(str) {

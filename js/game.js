@@ -231,6 +231,7 @@ class Game {
         if (levelData.turrets) {
             levelData.turrets.forEach(t => this.enemyManager.addTurret(t.x, t.y, t.fireInterval));
         }
+        this.spawnEnemiesFromGrid();
 
         this.gameState = GAME_STATES.PLAYING;
         this.audio.startGameMusic(index);
@@ -298,12 +299,28 @@ class Game {
         }
         this.tileMap.totalEmeralds = total;
         this.player.spawn(spawnX, spawnY);
+        this.spawnEnemiesFromGrid();
 
         this.gameState = GAME_STATES.PLAYING;
         this.audio.startGameMusic(0);
         document.getElementById('editorToolbar').classList.add('hidden');
         this.closeAllDialogs();
         this.showBanner('PLAYTEST CUSTOM LEVEL');
+    }
+
+    spawnEnemiesFromGrid() {
+        for (let r = 0; r < this.tileMap.rows; r++) {
+            for (let c = 0; c < this.tileMap.cols; c++) {
+                const t = this.tileMap.getTile(c, r);
+                if (t === TILES.ENEMY_FLITZER) {
+                    this.enemyManager.addFlitzer(c * TILE_SIZE + 6, r * TILE_SIZE + 6, 120, 0);
+                } else if (t === TILES.ENEMY_MISSILE) {
+                    this.enemyManager.addHomingMissile(c * TILE_SIZE + 8, r * TILE_SIZE + 8);
+                } else if (t === TILES.ENEMY_TURRET) {
+                    this.enemyManager.addTurret(c * TILE_SIZE + 4, r * TILE_SIZE + 4, 2.0);
+                }
+            }
+        }
     }
 
     exportLevelJSON() {
@@ -516,7 +533,7 @@ class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Render TileMap World
-        this.tileMap.render(this.ctx);
+        this.tileMap.render(this.ctx, this.gameState === GAME_STATES.LEVEL_EDITOR);
 
         // Render Enemies
         this.enemyManager.render(this.ctx, this.player);

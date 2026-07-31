@@ -22,7 +22,10 @@ export const TILES = {
     GOLD: 12,
     SPAWN: 13,
     EXIT_PORTAL: 14,
-    TELEPORTER: 15
+    TELEPORTER: 15,
+    ENEMY_FLITZER: 16,
+    ENEMY_MISSILE: 17,
+    ENEMY_TURRET: 18
 };
 
 export class TileMap {
@@ -425,7 +428,7 @@ export class TileMap {
     }
 
     // Canvas Render Engine for TileMap
-    render(ctx) {
+    render(ctx, isEditor = false) {
         ctx.clearRect(0, 0, this.cols * TILE_SIZE, this.rows * TILE_SIZE);
 
         // Draw Background Grid Lines (Single batched path stroke for high performance)
@@ -447,6 +450,7 @@ export class TileMap {
             for (let c = 0; c < this.cols; c++) {
                 const tile = this.getTile(c, r);
                 if (tile === TILES.AIR) continue;
+                if (!isEditor && (tile === TILES.ENEMY_FLITZER || tile === TILES.ENEMY_MISSILE || tile === TILES.ENEMY_TURRET)) continue;
 
                 const x = c * TILE_SIZE;
                 const y = r * TILE_SIZE;
@@ -1070,6 +1074,103 @@ export class TileMap {
                 ctx.beginPath();
                 ctx.arc(cx, cy, 2.5 + pulse * 1, 0, Math.PI * 2);
                 ctx.fill();
+                break;
+            }
+
+            case TILES.ENEMY_FLITZER: {
+                // Flitzer Preview Icon in Level Editor
+                const cx = x + 16;
+                const cy = y + 16;
+                ctx.save();
+                // Aura
+                ctx.fillStyle = 'rgba(255, 0, 85, 0.4)';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+                ctx.fill();
+                // Core
+                ctx.fillStyle = '#ff0033';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // Eyes
+                ctx.fillStyle = '#ffee00';
+                ctx.fillRect(cx - 5, cy - 3, 3, 3);
+                ctx.fillRect(cx + 2, cy - 3, 3, 3);
+                // Spikes
+                ctx.fillStyle = '#ff0055';
+                ctx.beginPath();
+                ctx.moveTo(cx - 10, cy); ctx.lineTo(cx - 6, cy - 4); ctx.lineTo(cx - 6, cy + 4);
+                ctx.moveTo(cx + 10, cy); ctx.lineTo(cx + 6, cy - 4); ctx.lineTo(cx + 6, cy + 4);
+                ctx.fill();
+                ctx.restore();
+                break;
+            }
+
+            case TILES.ENEMY_MISSILE: {
+                // Homing Missile Preview Icon in Level Editor
+                const cx = x + 16;
+                const cy = y + 16;
+                ctx.save();
+                ctx.translate(cx, cy);
+                // Body
+                ctx.fillStyle = '#1c040d';
+                ctx.beginPath();
+                ctx.moveTo(10, 0); ctx.lineTo(3, -6); ctx.lineTo(-8, -5); ctx.lineTo(-8, 5); ctx.lineTo(3, 6);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#ff0044';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+                // Fins
+                ctx.fillStyle = '#4a081a';
+                ctx.fillRect(-8, -8, 4, 3);
+                ctx.fillRect(-8, 5, 4, 3);
+                // Lens
+                ctx.fillStyle = '#ff0033';
+                ctx.beginPath(); ctx.arc(4, 0, 2.5, 0, Math.PI * 2); ctx.fill();
+                // Flame preview
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.moveTo(-8, -3); ctx.lineTo(-13, 0); ctx.lineTo(-8, 3);
+                ctx.fill();
+                ctx.restore();
+                break;
+            }
+
+            case TILES.ENEMY_TURRET: {
+                // Turret Preview Icon in Level Editor
+                const cx = x + 16;
+                const cy = y + 16;
+                ctx.save();
+                // Base
+                ctx.fillStyle = '#1e272e';
+                ctx.fillRect(x + 4, y + 12, 24, 16);
+                ctx.strokeStyle = '#485460';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 4, y + 12, 24, 16);
+                // Hazard Stripes
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(x + 6, y + 22, 4, 4);
+                ctx.fillRect(x + 14, y + 22, 4, 4);
+                ctx.fillRect(x + 22, y + 22, 4, 4);
+                // Barrels
+                ctx.fillStyle = '#0f171e';
+                ctx.fillRect(cx - 2, y + 2, 4, 10);
+                // Dome
+                ctx.fillStyle = '#2c3e50';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+                // Lens
+                ctx.fillStyle = '#ff0033';
+                ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
                 break;
             }
         }
