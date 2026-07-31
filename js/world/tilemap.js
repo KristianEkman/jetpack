@@ -393,142 +393,169 @@ export class TileMap {
                 ctx.fillText('⚡', x + 8, y + 22);
                 break;
 
-            case TILES.EMERALD:
-                // Premium 3D Brilliant-Cut Emerald Gem with Radiant Aura & Sparkle Glint
+            case TILES.EMERALD: {
+                // 3D Brilliant-Cut Diamond Gem with Emerald Radiant Aura (matches HUD icon)
                 const hoverOffset = Math.sin(Date.now() / 250) * 1.5;
                 const cx = x + 16;
                 const cy = y + 16 + hoverOffset;
                 const pulseGlow = (Math.sin(Date.now() / 180) + 1) * 0.5;
 
-                // 1. Multi-layered Radiant Ambient Aura
-                const outerGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 18 + pulseGlow * 3);
-                outerGlow.addColorStop(0, `rgba(0, 255, 136, ${0.4 + pulseGlow * 0.2})`);
-                outerGlow.addColorStop(0.5, `rgba(0, 255, 204, ${0.15 + pulseGlow * 0.1})`);
+                // 1. Multi-layered Luminous Emerald Ambient Aura (matching HUD green glow)
+                const glowRadius = 17 + pulseGlow * 2.5;
+                const outerGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+                outerGlow.addColorStop(0, `rgba(0, 255, 136, ${0.5 + pulseGlow * 0.25})`);
+                outerGlow.addColorStop(0.5, `rgba(0, 255, 204, ${0.2 + pulseGlow * 0.15})`);
                 outerGlow.addColorStop(1, 'rgba(0, 255, 136, 0)');
                 ctx.fillStyle = outerGlow;
                 ctx.beginPath();
-                ctx.arc(cx, cy, 18 + pulseGlow * 3, 0, Math.PI * 2);
+                ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 3D Gem Coordinates
-                const pT  = { x: cx, y: cy - 13 };       // Top vertex
-                const pUL = { x: cx - 9, y: cy - 5 };     // Upper left shoulder
-                const pUR = { x: cx + 9, y: cy - 5 };     // Upper right shoulder
-                const pML = { x: cx - 13, y: cy + 1 };    // Mid left girdle
-                const pMR = { x: cx + 13, y: cy + 1 };    // Mid right girdle
-                const pB  = { x: cx, y: cy + 13 };       // Bottom culet
-                const pC  = { x: cx, y: cy - 2 };        // Center facet vertex
+                // 2. Medium-Large Brilliant Diamond Geometry (Flat top table, angled crown shoulders, wide girdle, deep pavilion)
+                // Width = 22px (from cx - 11 to cx + 11), Height = 21px (from cy - 10 to cy + 11)
+                const pTL = { x: cx - 6.5, y: cy - 10 };   // Top Left table corner
+                const pTR = { x: cx + 6.5, y: cy - 10 };   // Top Right table corner
+                const pML = { x: cx - 11,  y: cy - 3 };    // Mid Left girdle
+                const pMR = { x: cx + 11,  y: cy - 3 };    // Mid Right girdle
+                const pB  = { x: cx,       y: cy + 11 };   // Bottom culet tip
+                const pC  = { x: cx,       y: cy - 2 };    // Center junction facet
 
-                // 2. Pavilion Lower Facets (Deep Shaded Emerald Base for 3D Depth)
-                // Bottom-left facet
-                ctx.fillStyle = '#004d25';
+                const pCrownL = { x: cx - 3.5, y: cy - 3 }; // Inner girdle left
+                const pCrownR = { x: cx + 3.5, y: cy - 3 }; // Inner girdle right
+
+                // 3. Lower Pavilion Facets (Deep Blue Shading for 3D depth)
+                // Outer Left Pavilion Facet (Dark Sapphire)
+                ctx.fillStyle = '#003c73';
                 ctx.beginPath();
                 ctx.moveTo(pML.x, pML.y);
+                ctx.lineTo(pCrownL.x, pCrownL.y);
+                ctx.lineTo(pB.x, pB.y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Mid Left Pavilion Facet (Deep Ocean Blue)
+                ctx.fillStyle = '#00549e';
+                ctx.beginPath();
+                ctx.moveTo(pCrownL.x, pCrownL.y);
                 ctx.lineTo(pC.x, pC.y);
                 ctx.lineTo(pB.x, pB.y);
                 ctx.closePath();
                 ctx.fill();
 
-                // Bottom-right facet
-                ctx.fillStyle = '#006b32';
+                // Mid Right Pavilion Facet (Cobalt Blue)
+                ctx.fillStyle = '#006ec7';
+                ctx.beginPath();
+                ctx.moveTo(pCrownR.x, pCrownR.y);
+                ctx.lineTo(pC.x, pC.y);
+                ctx.lineTo(pB.x, pB.y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Outer Right Pavilion Facet (Vibrant Royal Blue)
+                ctx.fillStyle = '#0085ed';
                 ctx.beginPath();
                 ctx.moveTo(pMR.x, pMR.y);
-                ctx.lineTo(pC.x, pC.y);
+                ctx.lineTo(pCrownR.x, pCrownR.y);
                 ctx.lineTo(pB.x, pB.y);
                 ctx.closePath();
                 ctx.fill();
 
-                // 3. Crown Side Facets (Vibrant Metallic Emerald Green)
-                // Mid-left crown
-                ctx.fillStyle = '#00a84e';
+                // 4. Crown Side Facets (Cyan & Sky Blue)
+                // Far Left Crown Facet
+                ctx.fillStyle = '#009ee3';
                 ctx.beginPath();
-                ctx.moveTo(pUL.x, pUL.y);
+                ctx.moveTo(pTL.x, pTL.y);
                 ctx.lineTo(pML.x, pML.y);
+                ctx.lineTo(pCrownL.x, pCrownL.y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Upper Left Crown Facet
+                ctx.fillStyle = '#1ad1ff';
+                ctx.beginPath();
+                ctx.moveTo(pTL.x, pTL.y);
+                ctx.lineTo(pCrownL.x, pCrownL.y);
                 ctx.lineTo(pC.x, pC.y);
                 ctx.closePath();
                 ctx.fill();
 
-                // Mid-right crown
-                ctx.fillStyle = '#00cc5f';
+                // Upper Right Crown Facet
+                ctx.fillStyle = '#4de1ff';
                 ctx.beginPath();
-                ctx.moveTo(pUR.x, pUR.y);
+                ctx.moveTo(pTR.x, pTR.y);
+                ctx.lineTo(pC.x, pC.y);
+                ctx.lineTo(pCrownR.x, pCrownR.y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Far Right Crown Facet
+                ctx.fillStyle = '#00c3ff';
+                ctx.beginPath();
+                ctx.moveTo(pTR.x, pTR.y);
+                ctx.lineTo(pCrownR.x, pCrownR.y);
                 ctx.lineTo(pMR.x, pMR.y);
-                ctx.lineTo(pC.x, pC.y);
                 ctx.closePath();
                 ctx.fill();
 
-                // Top-left crown
-                ctx.fillStyle = '#00ff77';
-                ctx.beginPath();
-                ctx.moveTo(pT.x, pT.y);
-                ctx.lineTo(pUL.x, pUL.y);
-                ctx.lineTo(pC.x, pC.y);
-                ctx.closePath();
-                ctx.fill();
-
-                // Top-right crown (bright light source side)
-                ctx.fillStyle = '#42ff9e';
-                ctx.beginPath();
-                ctx.moveTo(pT.x, pT.y);
-                ctx.lineTo(pUR.x, pUR.y);
-                ctx.lineTo(pC.x, pC.y);
-                ctx.closePath();
-                ctx.fill();
-
-                // 4. Center Table Facet (Brightest Reflective Crystal Highlight)
-                const tableGrad = ctx.createLinearGradient(pUL.x, pT.y, pUR.x, pC.y);
+                // 5. Top Table Facet (Bright Reflective Diamond Surface)
+                const tableGrad = ctx.createLinearGradient(pTL.x, pTL.y, pTR.x, pC.y);
                 tableGrad.addColorStop(0, '#ffffff');
-                tableGrad.addColorStop(0.4, '#aaffdd');
-                tableGrad.addColorStop(1, '#00ff88');
+                tableGrad.addColorStop(0.35, '#cceeff');
+                tableGrad.addColorStop(0.7, '#80dfff');
+                tableGrad.addColorStop(1, '#33ccff');
                 ctx.fillStyle = tableGrad;
                 ctx.beginPath();
-                ctx.moveTo(pT.x, pT.y);
-                ctx.lineTo(pUR.x, pUR.y);
+                ctx.moveTo(pTL.x, pTL.y);
+                ctx.lineTo(pTR.x, pTR.y);
                 ctx.lineTo(pC.x, pC.y);
-                ctx.lineTo(pUL.x, pUL.y);
                 ctx.closePath();
                 ctx.fill();
 
-                // 5. Crisp Facet Edges & Outline
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+                // 6. Crisp Facet Edges & Perimeter Outlines
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                // Outer perimeter
-                ctx.moveTo(pT.x, pT.y);
-                ctx.lineTo(pUR.x, pUR.y);
+                // Perimeter
+                ctx.moveTo(pTL.x, pTL.y);
+                ctx.lineTo(pTR.x, pTR.y);
                 ctx.lineTo(pMR.x, pMR.y);
                 ctx.lineTo(pB.x, pB.y);
                 ctx.lineTo(pML.x, pML.y);
-                ctx.lineTo(pUL.x, pUL.y);
                 ctx.closePath();
-                // Inner facet spokes
-                ctx.moveTo(pC.x, pC.y); ctx.lineTo(pT.x, pT.y);
+                // Facet inner lines
+                ctx.moveTo(pTL.x, pTL.y); ctx.lineTo(pCrownL.x, pCrownL.y); ctx.lineTo(pB.x, pB.y);
+                ctx.moveTo(pTR.x, pTR.y); ctx.lineTo(pCrownR.x, pCrownR.y); ctx.lineTo(pB.x, pB.y);
+                ctx.moveTo(pML.x, pML.y); ctx.lineTo(pCrownL.x, pCrownL.y);
+                ctx.moveTo(pMR.x, pMR.y); ctx.lineTo(pCrownR.x, pCrownR.y);
+                ctx.moveTo(pCrownL.x, pCrownL.y); ctx.lineTo(pC.x, pC.y); ctx.lineTo(pCrownR.x, pCrownR.y);
+                ctx.moveTo(pTL.x, pTL.y); ctx.lineTo(pC.x, pC.y); ctx.lineTo(pTR.x, pTR.y);
                 ctx.moveTo(pC.x, pC.y); ctx.lineTo(pB.x, pB.y);
-                ctx.moveTo(pC.x, pC.y); ctx.lineTo(pML.x, pML.y);
-                ctx.moveTo(pC.x, pC.y); ctx.lineTo(pMR.x, pMR.y);
-                ctx.moveTo(pC.x, pC.y); ctx.lineTo(pUL.x, pUL.y);
-                ctx.moveTo(pC.x, pC.y); ctx.lineTo(pUR.x, pUR.y);
                 ctx.stroke();
 
-                // 6. Dynamic Star Flare Glint (Top-Left Highlight Vertex)
-                const flareTime = Date.now() / 200;
-                const flareSize = (Math.sin(flareTime) + 1) * 2.5 + 2;
-                const flareAlpha = (Math.sin(flareTime) + 1) * 0.4 + 0.4;
-                const fx = pUL.x + 1;
-                const fy = pUL.y + 1;
+                // 7. Dynamic Star Flare Sparkle on Top-Left Corner
+                const flareTime = Date.now() / 180;
+                const flareSize = (Math.sin(flareTime) + 1) * 3 + 2.5;
+                const flareAlpha = (Math.sin(flareTime) + 1) * 0.4 + 0.5;
+                const fx = pTL.x + 1;
+                const fy = pTL.y + 1;
 
                 ctx.strokeStyle = `rgba(255, 255, 255, ${flareAlpha})`;
-                ctx.lineWidth = 1.2;
+                ctx.lineWidth = 1.3;
                 ctx.beginPath();
                 ctx.moveTo(fx - flareSize, fy); ctx.lineTo(fx + flareSize, fy);
                 ctx.moveTo(fx, fy - flareSize); ctx.lineTo(fx, fy + flareSize);
+                // Diagonal rays for 8-point sparkle effect
+                const diag = flareSize * 0.6;
+                ctx.moveTo(fx - diag, fy - diag); ctx.lineTo(fx + diag, fy + diag);
+                ctx.moveTo(fx + diag, fy - diag); ctx.lineTo(fx - diag, fy + diag);
                 ctx.stroke();
 
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.arc(fx, fy, 1.2, 0, Math.PI * 2);
+                ctx.arc(fx, fy, 1.5, 0, Math.PI * 2);
                 ctx.fill();
                 break;
+            }
 
             case TILES.FUEL: {
                 // Instantly Recognizable Classic Jerrycan Fuel Canister

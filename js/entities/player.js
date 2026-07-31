@@ -439,11 +439,13 @@ export class Player {
                         (this.tileMap.totalEmeralds > 0 && this.tileMap.collectedEmeralds === this.tileMap.totalEmeralds);
                     if (isAllCaught) {
                         this.audio.playAllDiamondsCaught();
+                        this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00e5ff', 25);
                         this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ff77', 25);
-                        this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffd700', 25);
+                        this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#ffd700', 20);
                     } else {
                         this.audio.playEmeraldPickup();
-                        this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ff77', 12);
+                        this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00e5ff', 12);
+                        this.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, '#00ff77', 10);
                     }
                 } else if (tile === TILES.FUEL) {
                     this.tileMap.setTile(col, row, TILES.AIR);
@@ -669,9 +671,38 @@ export class Player {
 
         ctx.save();
 
+        // Legs & Vertical Walking Bounce (Animate legs and bob vertically when walking on ground to eliminate gliding look)
+        const isMovingOnGround = this.isGrounded && !this.isThrusting && !this.isClimbing && Math.abs(this.vx) > 5;
+        
+        let strideX = 0;
+        let liftY1 = 0;
+        let liftY2 = 0;
+        let walkBobY = 0;
+
+        if (isMovingOnGround) {
+            const speedRatio = Math.min(1.5, Math.abs(this.vx) / 100);
+            const walkSpeed = 14 * Math.max(0.5, speedRatio);
+            const legSwing = Math.sin(this.animTimer * walkSpeed);
+            strideX = legSwing * 3.5;
+            liftY1 = Math.max(0, legSwing) * 2;
+            liftY2 = Math.max(0, -legSwing) * 2;
+            // Vertical bobbing motion synchronized with walk step cycle
+            walkBobY = Math.abs(Math.sin(this.animTimer * walkSpeed)) * 2.0;
+        }
+
         // Draw Jetman Character Sprite (Canvas Vector Graphics)
         const px = this.x;
-        const py = this.y;
+        const py = this.y - walkBobY;
+
+        // Back Leg (Light slate blue for depth and high visibility)
+        ctx.fillStyle = '#3b82f6';
+        const leg1X = px + 4 + strideX;
+        const leg1Height = 6 - liftY1;
+        ctx.fillRect(leg1X, py + 22, 5, leg1Height);
+        // Back Boot
+        ctx.fillStyle = '#1d4ed8';
+        const boot1X = this.facingRight ? leg1X : leg1X - 1;
+        ctx.fillRect(boot1X, py + 22 + leg1Height - 2, 6, 2);
 
         // Jetpack Unit on back
         ctx.fillStyle = '#7f8c8d';
@@ -694,32 +725,6 @@ export class Player {
         ctx.fillStyle = '#3498db';
         const visorX = this.facingRight ? px + 11 : px + 5;
         ctx.fillRect(visorX, py + 3, 6, 5);
-
-        // Legs (Animate walking legs when moving on ground; keep static when flying, falling, or standing still)
-        const isMovingOnGround = this.isGrounded && !this.isThrusting && !this.isClimbing && Math.abs(this.vx) > 5;
-        
-        let strideX = 0;
-        let liftY1 = 0;
-        let liftY2 = 0;
-
-        if (isMovingOnGround) {
-            const speedRatio = Math.min(1.5, Math.abs(this.vx) / 100);
-            const walkSpeed = 14 * Math.max(0.5, speedRatio);
-            const legSwing = Math.sin(this.animTimer * walkSpeed);
-            strideX = legSwing * 3.5;
-            liftY1 = Math.max(0, legSwing) * 2;
-            liftY2 = Math.max(0, -legSwing) * 2;
-        }
-
-        // Back Leg (Light slate blue for depth and high visibility)
-        ctx.fillStyle = '#3b82f6';
-        const leg1X = px + 4 + strideX;
-        const leg1Height = 6 - liftY1;
-        ctx.fillRect(leg1X, py + 22, 5, leg1Height);
-        // Back Boot
-        ctx.fillStyle = '#1d4ed8';
-        const boot1X = this.facingRight ? leg1X : leg1X - 1;
-        ctx.fillRect(boot1X, py + 22 + leg1Height - 2, 6, 2);
 
         // Front Leg (Bright sky blue for maximum visibility)
         ctx.fillStyle = '#60a5fa';
