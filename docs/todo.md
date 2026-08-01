@@ -1,5 +1,6 @@
- - [x] shoting on phasebrick does not destroys them on other clients. 
- - [ ] Problems when re-joining a game. Restrctions or fixes.
+ - [x] shoting on phasebrick does not destroys them on other clients.
+ - [ ] Save used name and color in local storage
+ - [x] Prevent joining in-progress games & hide them from public room list
  - [ ] display git commit hash version and date time in the game. Bottom right corner.
  - [ ] optimize performance hot spots
  - [ ] refactor and remove duplicate or unused code

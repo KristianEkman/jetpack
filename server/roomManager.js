@@ -134,12 +134,16 @@ export class RoomManager {
             return { success: false, error: 'Room not found' };
         }
 
-        if (room.players.size >= room.maxPlayers) {
-            return { success: false, error: 'Room is full' };
-        }
-
         if (room.players.has(socketId)) {
             return { success: true, room: this.serializeRoom(room), player: room.playerConfigs.get(socketId) };
+        }
+
+        if (room.status !== 'lobby') {
+            return { success: false, error: 'Game in progress' };
+        }
+
+        if (room.players.size >= room.maxPlayers) {
+            return { success: false, error: 'Room is full' };
         }
 
         const playerConfig = this.addPlayerToRoom(room, socketId, playerOptions);
@@ -257,6 +261,7 @@ export class RoomManager {
     listRooms() {
         const list = [];
         for (const room of this.rooms.values()) {
+            if (room.status !== 'lobby') continue;
             list.push({
                 id: room.id,
                 playerCount: room.players.size,

@@ -130,6 +130,23 @@ try {
     assert.equal(room.status, 'playing');
     console.log('   ✅ Match started successfully.');
 
+    // Verify late-join prevention and room list hiding
+    const client3 = ioClient(SERVER_URL, { forceNew: true });
+    await new Promise((resolve) => client3.on('connect', resolve));
+    const lateJoinResult = await new Promise((resolve) => {
+        client3.emit('join_room', { roomId: roomId, playerName: 'LateComer' }, resolve);
+    });
+    assert.equal(lateJoinResult.success, false);
+    assert.equal(lateJoinResult.error, 'Game in progress');
+    console.log('   ✅ Late-join attempt rejected for in-progress game.');
+
+    const roomList = await new Promise((resolve) => {
+        client3.emit('list_rooms', resolve);
+    });
+    assert.equal(roomList.some(r => r.id === roomId), false, 'Playing room should not appear in public room list');
+    console.log('   ✅ In-progress room hidden from public room list.');
+    client3.disconnect();
+
     // Client 2 completes level
     let client1LevelCompleteEvent = null;
     const levelCompletePromise = new Promise((resolve) => {
