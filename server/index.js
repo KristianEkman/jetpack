@@ -152,6 +152,32 @@ io.on('connection', (socket) => {
         socket.emit('room_list', list);
     });
 
+function initRoomEnemies(room, levelData) {
+    if (!room.enemyManager) return;
+    room.enemyManager.clear();
+    if (levelData.flitzers) {
+        levelData.flitzers.forEach(f => room.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
+    }
+    if (levelData.missiles) {
+        levelData.missiles.forEach(m => room.enemyManager.addHomingMissile(m.x, m.y));
+    }
+    if (levelData.turrets) {
+        levelData.turrets.forEach(t => room.enemyManager.addTurret(t.x, t.y, t.fireInterval));
+    }
+    for (let r = 0; r < room.tileMap.rows; r++) {
+        for (let c = 0; c < room.tileMap.cols; c++) {
+            const tile = room.tileMap.getTile(c, r);
+            if (tile === TILES.ENEMY_FLITZER) {
+                room.enemyManager.addFlitzer(c * 32 + 6, r * 32 + 6, 100, 100);
+            } else if (tile === TILES.ENEMY_MISSILE) {
+                room.enemyManager.addHomingMissile(c * 32 + 8, r * 32 + 8);
+            } else if (tile === TILES.ENEMY_TURRET) {
+                room.enemyManager.addTurret(c * 32 + 4, r * 32 + 4, 2.0);
+            }
+        }
+    }
+}
+
     // Start Multiplayer Match (Host only)
     socket.on(GAME_EVENTS.START_MATCH || 'start_match', (data = {}, callback) => {
         const room = roomManager.getRoomBySocketId(socket.id);
@@ -173,6 +199,7 @@ io.on('connection', (socket) => {
         // Re-load level tileMap data on server at match start
         const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
         room.tileMap.loadLevelData(levelData);
+        initRoomEnemies(room, levelData);
 
         // Find spawn points from SPAWN tile or default
         let spawnX = 128;
@@ -210,17 +237,19 @@ io.on('connection', (socket) => {
     // Player Input Handler (Client -> Server)
     socket.on(GAME_EVENTS.PLAYER_INPUT || 'player_input', (inputState) => {
         const room = roomManager.getRoomBySocketId(socket.id);
-        if (!room) return;
+        if (!room || !inputState) return;
 
-        const playerEntity = room.players.get(socket.id);
         const config = room.playerConfigs.get(socket.id);
+        if (!config) return;
 
-        if (playerEntity && inputState) {
-            if (config && inputState.sequenceId !== undefined) {
-                config.lastSequenceId = inputState.sequenceId;
-            }
-            // Execute input update on player entity
-            playerEntity.update(gameLoop.dt, inputState, null);
+        const sequenceId = inputState.sequenceId || 0;
+        if (sequenceId <= (config.lastReceivedSequenceId || 0)) return;
+
+        config.lastReceivedSequenceId = sequenceId;
+        config.lastSequenceId = sequenceId;
+        config.pendingInputs.push(inputState);
+        if (config.pendingInputs.length > 30) {
+            config.pendingInputs.shift();
         }
     });
 
@@ -265,6 +294,10 @@ io.on('connection', (socket) => {
         }
 
         room.destroyedEnemyIds.add(enemyId);
+
+        if (room.enemyManager) {
+            room.enemyManager.removeEnemyById(enemyId);
+        }
 
         io.to(room.id).emit(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', {
             enemyId,
@@ -323,6 +356,7 @@ io.on('connection', (socket) => {
 
         const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
         room.tileMap.loadLevelData(levelData);
+        initRoomEnemies(room, levelData);
 
         let spawnX = 128;
         let spawnY = 100;

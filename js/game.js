@@ -129,8 +129,10 @@ class Game {
         let effectiveDt = dt;
 
         if (this.isMultiplayer) {
-            this.network.sendInput(this.input.serializeInputState());
+            const inputState = this.input.serializeInputState(null, this.player);
+            this.network.sendInput(inputState);
             this.playerManager.update(effectiveDt);
+            this.enemyManager.interpolateEnemies(effectiveDt);
         }
 
         if (this.player.isDead) {
@@ -163,15 +165,18 @@ class Game {
         }
 
         const wasAlive = !this.player.isDead;
+        const currentInput = this.input.serializeInputState();
 
         // 1. Update TileMap
         this.tileMap.update(effectiveDt, this.player, this.enemyManager);
 
-        // 2. Update Player
-        this.player.update(effectiveDt, this.input.keys, this.enemyManager);
+        // 2. Update Player (pass full input state)
+        this.player.update(effectiveDt, currentInput, this.enemyManager);
 
-        // 3. Update Enemies
-        this.enemyManager.update(effectiveDt, this.player);
+        // 3. Update Enemies (Singleplayer = local AI update, Multiplayer = server authoritative interpolation)
+        if (!this.isMultiplayer) {
+            this.enemyManager.update(effectiveDt, this.player);
+        }
 
         // 4. Notify server if local player died this frame
         if (this.isMultiplayer && wasAlive && this.player.isDead) {
@@ -197,7 +202,7 @@ class Game {
         this.uiManager.updateHUD();
     }
 
-    render(dt) {
+    render(dt, alpha = 1) {
         if (this.gameState === GAME_STATES.PAUSED || this.gameState === GAME_STATES.MENU ||
             this.gameState === GAME_STATES.GAME_OVER || this.gameState === GAME_STATES.LEVEL_COMPLETE) {
             if (this.isCanvasRenderedForState) return;

@@ -2,7 +2,7 @@
    NETWORK MANAGER MODULE (Socket.IO Multiplayer Sync)
    ========================================================================== */
 
-import { GAME_EVENTS } from '../shared/constants.js';
+import { GAME_EVENTS, NETWORK_SETTINGS } from '../shared/constants.js';
 
 export class NetworkManager {
     constructor() {
@@ -11,6 +11,12 @@ export class NetworkManager {
         this.socketId = null;
         this.currentRoom = null;
         this.lastPing = 0;
+        this.jitter = 0;
+        this.pingHistory = [];
+        this.interpolationDelay = NETWORK_SETTINGS?.DEFAULT_INTERPOLATION_DELAY || 100;
+        this.lastSentInput = null;
+        this.lastInputTime = 0;
+        this.pingTimer = null;
 
         // Callback hooks
         this.onRoomCreatedCb = null;
@@ -31,7 +37,6 @@ export class NetworkManager {
     connect(serverUrl = window.location.origin) {
         if (this.socket) return;
 
-        // Use global io script if loaded via HTML or fallback
         const ioFactory = typeof window !== 'undefined' ? (window.io || (window.SocketIO && window.SocketIO.io)) : null;
         if (!ioFactory) {
             console.warn('Socket.IO client library not found on window. Ensure socket.io script is loaded.');
@@ -47,13 +52,7 @@ export class NetworkManager {
             this.isConnected = true;
             this.socketId = this.socket.id;
             console.log(`🌐 Connected to Multiplayer Server (Socket ID: ${this.socketId})`);
-
-            // Measure ping latency
-            const startTime = Date.now();
-            this.socket.emit('ping_handshake', () => {
-                this.lastPing = Date.now() - startTime;
-                console.log(`⚡ Server Ping Latency: ${this.lastPing}ms`);
-            });
+            this.startPingMonitor();
         });
 
         this.socket.on('disconnect', () => {
@@ -197,9 +196,48 @@ export class NetworkManager {
         });
     }
 
+    startPingMonitor() {
+        if (this.pingTimer) clearInterval(this.pingTimer);
+        this.pingTimer = setInterval(() => {
+            if (!this.socket || !this.isConnected) return;
+            const startTime = Date.now();
+            this.socket.emit('ping_handshake', () => {
+                const rtt = Date.now() - startTime;
+                this.pingHistory.push(rtt);
+                if (this.pingHistory.length > 10) this.pingHistory.shift();
+
+                const avgRtt = this.pingHistory.reduce((a, b) => a + b, 0) / this.pingHistory.length;
+                const jitter = this.pingHistory.reduce((acc, p) => acc + Math.abs(p - avgRtt), 0) / this.pingHistory.length;
+
+                this.lastPing = Math.round(avgRtt);
+                this.jitter = Math.round(jitter);
+                this.interpolationDelay = Math.min(180, Math.max(80, Math.round(80 + jitter * 2)));
+            });
+        }, 2500);
+    }
+
     sendInput(inputState) {
-        if (!this.socket || !this.isConnected || !this.currentRoom) return;
-        this.socket.emit(GAME_EVENTS.PLAYER_INPUT || 'player_input', inputState);
+        if (!this.socket || !this.isConnected || !this.currentRoom || !inputState) return;
+
+        const now = Date.now();
+        const hasChanged = !this.lastSentInput ||
+            this.lastSentInput.left !== inputState.left ||
+            this.lastSentInput.right !== inputState.right ||
+            this.lastSentInput.up !== inputState.up ||
+            this.lastSentInput.down !== inputState.down ||
+            this.lastSentInput.thrust !== inputState.thrust ||
+            this.lastSentInput.phase !== inputState.phase ||
+            this.lastSentInput.suicide !== inputState.suicide ||
+            Math.abs((this.lastSentInput.x || 0) - (inputState.x || 0)) > 0.5 ||
+            Math.abs((this.lastSentInput.y || 0) - (inputState.y || 0)) > 0.5;
+
+        const heartbeatExpired = (now - this.lastInputTime) >= (NETWORK_SETTINGS?.INPUT_HEARTBEAT_INTERVAL || 50);
+
+        if (hasChanged || heartbeatExpired) {
+            this.lastSentInput = { ...inputState };
+            this.lastInputTime = now;
+            this.socket.emit(GAME_EVENTS.PLAYER_INPUT || 'player_input', inputState);
+        }
     }
 
     sendPlayerDied(reason = 'enemy') {

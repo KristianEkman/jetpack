@@ -82,8 +82,123 @@ export class EnemyManager {
         return this.enemies.splice(index, 1)[0];
     }
 
+    getClosestPlayer(enemy, playerInput) {
+        if (!playerInput) return null;
+        let playersList = [];
+        if (Array.isArray(playerInput)) {
+            playersList = playerInput;
+        } else if (playerInput instanceof Map) {
+            playersList = Array.from(playerInput.values());
+        } else if (playerInput.x !== undefined) {
+            playersList = [playerInput];
+        }
+
+        let closest = null;
+        let minDistSq = Infinity;
+        const ex = enemy.x + enemy.width / 2;
+        const ey = enemy.y + enemy.height / 2;
+
+        for (const p of playersList) {
+            if (!p || p.isDead) continue;
+            const px = p.x + p.width / 2;
+            const py = p.y + p.height / 2;
+            const distSq = (px - ex) * (px - ex) + (py - ey) * (py - ey);
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                closest = p;
+            }
+        }
+        return closest;
+    }
+
+    getLivingPlayers(playerInput) {
+        if (!playerInput) return [];
+        if (Array.isArray(playerInput)) {
+            return playerInput.filter(p => p && !p.isDead);
+        } else if (playerInput instanceof Map) {
+            return Array.from(playerInput.values()).filter(p => p && !p.isDead);
+        } else if (playerInput && playerInput.x !== undefined && !playerInput.isDead) {
+            return [playerInput];
+        }
+        return [];
+    }
+
+    serializeEnemies() {
+        return this.enemies.map(e => ({
+            id: e.id,
+            type: e.type,
+            x: Math.round(e.x * 100) / 100,
+            y: Math.round(e.y * 100) / 100,
+            vx: Math.round((e.vx || 0) * 100) / 100,
+            vy: Math.round((e.vy || 0) * 100) / 100,
+            animTimer: Math.round((e.animTimer || 0) * 100) / 100,
+            timer: Math.round((e.timer || 0) * 100) / 100,
+            fireInterval: e.fireInterval
+        }));
+    }
+
+    serializeProjectiles() {
+        return this.projectiles.map(p => ({
+            x: Math.round(p.x * 100) / 100,
+            y: Math.round(p.y * 100) / 100,
+            vx: Math.round(p.vx * 100) / 100,
+            vy: Math.round(p.vy * 100) / 100,
+            radius: p.radius,
+            life: p.life
+        }));
+    }
+
+    applyEnemySnapshot(snapshotEnemies, snapshotProjectiles) {
+        if (!Array.isArray(snapshotEnemies)) return;
+        const serverIds = new Set(snapshotEnemies.map(e => e.id));
+
+        for (const sEnemy of snapshotEnemies) {
+            let localEnemy = this.enemies.find(e => e.id === sEnemy.id);
+            if (!localEnemy) {
+                if (sEnemy.type === ENEMY_TYPES.FLITZER) {
+                    this.addFlitzer(sEnemy.x, sEnemy.y, sEnemy.vx, sEnemy.vy, sEnemy.id);
+                } else if (sEnemy.type === ENEMY_TYPES.HOMING_MISSILE) {
+                    this.addHomingMissile(sEnemy.x, sEnemy.y, sEnemy.id);
+                } else if (sEnemy.type === ENEMY_TYPES.TURRET) {
+                    this.addTurret(sEnemy.x, sEnemy.y, sEnemy.fireInterval || 2.0, sEnemy.id);
+                }
+                localEnemy = this.enemies.find(e => e.id === sEnemy.id);
+            }
+
+            if (localEnemy) {
+                localEnemy.targetX = sEnemy.x;
+                localEnemy.targetY = sEnemy.y;
+                localEnemy.vx = sEnemy.vx;
+                localEnemy.vy = sEnemy.vy;
+                if (sEnemy.timer !== undefined) localEnemy.timer = sEnemy.timer;
+            }
+        }
+
+        this.enemies = this.enemies.filter(e => serverIds.has(e.id));
+
+        if (Array.isArray(snapshotProjectiles)) {
+            this.projectiles = snapshotProjectiles.map(p => ({ ...p }));
+        }
+    }
+
+    interpolateEnemies(dt) {
+        for (const enemy of this.enemies) {
+            if (enemy.targetX !== undefined && enemy.targetY !== undefined) {
+                const dx = enemy.targetX - enemy.x;
+                const dy = enemy.targetY - enemy.y;
+                if (dx * dx + dy * dy > 4096) {
+                    enemy.x = enemy.targetX;
+                    enemy.y = enemy.targetY;
+                } else {
+                    enemy.x += dx * Math.min(1, dt * 15);
+                    enemy.y += dy * Math.min(1, dt * 15);
+                }
+            }
+        }
+    }
+
     update(dt, player) {
-        if (player && player.isDead) return;
+        const livingPlayers = this.getLivingPlayers(player);
 
         // 1. Update Enemies
         for (let enemy of this.enemies) {
@@ -118,10 +233,11 @@ export class EnemyManager {
                     );
                 }
             } else if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
-                // Tracking vector physics towards player
-                if (player) {
-                    const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
-                    const dy = (player.y + player.height / 2) - (enemy.y + enemy.height / 2);
+                // Tracking vector physics towards closest living player
+                const targetPlayer = this.getClosestPlayer(enemy, livingPlayers);
+                if (targetPlayer) {
+                    const dx = (targetPlayer.x + targetPlayer.width / 2) - (enemy.x + enemy.width / 2);
+                    const dy = (targetPlayer.y + targetPlayer.height / 2) - (enemy.y + enemy.height / 2);
                     const angle = Math.atan2(dy, dx);
 
                     enemy.vx = Math.cos(angle) * enemy.speed;
@@ -141,12 +257,13 @@ export class EnemyManager {
                     );
                 }
             } else if (enemy.type === ENEMY_TYPES.TURRET) {
-                // Fire periodic projectile
+                // Fire periodic projectile towards closest living player
                 enemy.timer += dt;
-                if (enemy.timer >= enemy.fireInterval && player) {
+                const targetPlayer = this.getClosestPlayer(enemy, livingPlayers);
+                if (enemy.timer >= enemy.fireInterval && targetPlayer) {
                     enemy.timer = 0;
-                    const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
-                    const dy = (player.y + player.height / 2) - (enemy.y + enemy.height / 2);
+                    const dx = (targetPlayer.x + targetPlayer.width / 2) - (enemy.x + enemy.width / 2);
+                    const dy = (targetPlayer.y + targetPlayer.height / 2) - (enemy.y + enemy.height / 2);
                     const angle = Math.atan2(dy, dx);
 
                     this.projectiles.push({
@@ -160,24 +277,27 @@ export class EnemyManager {
                 }
             }
 
-            // Check Collision with Player
-            if (player && this.checkAABB(enemy, player)) {
-                player.takeDamage();
+            // Check Collision with any living Player
+            for (const p of livingPlayers) {
+                if (this.checkAABB(enemy, p)) {
+                    p.takeDamage();
 
-                // Homing missiles are destroyed on impact
-                if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
-                    enemy.dead = true;
-                    // Explosion sparkles at impact point
-                    if (this.tileMap && this.tileMap.addSparkles) {
-                        for (let s = 0; s < 8; s++) {
-                            this.tileMap.addSparkles(
-                                enemy.x + enemy.width / 2 + (Math.random() * 16 - 8),
-                                enemy.y + enemy.height / 2 + (Math.random() * 16 - 8),
-                                '#ff5500',
-                                2
-                            );
+                    // Homing missiles are destroyed on impact
+                    if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
+                        enemy.dead = true;
+                        // Explosion sparkles at impact point
+                        if (this.tileMap && this.tileMap.addSparkles) {
+                            for (let s = 0; s < 8; s++) {
+                                this.tileMap.addSparkles(
+                                    enemy.x + enemy.width / 2 + (Math.random() * 16 - 8),
+                                    enemy.y + enemy.height / 2 + (Math.random() * 16 - 8),
+                                    '#ff5500',
+                                    2
+                                );
+                            }
                         }
                     }
+                    break;
                 }
             }
         }
@@ -197,13 +317,13 @@ export class EnemyManager {
             }
 
             // Check player hit
-            if (player) {
-                const dx = p.x - (player.x + player.width / 2);
-                const dy = p.y - (player.y + player.height / 2);
+            for (const targetPlayer of livingPlayers) {
+                const dx = p.x - (targetPlayer.x + targetPlayer.width / 2);
+                const dy = p.y - (targetPlayer.y + targetPlayer.height / 2);
                 if (Math.sqrt(dx * dx + dy * dy) < p.radius + 10) {
-                    player.takeDamage();
-                    this.projectiles.splice(i, 1);
-                    continue;
+                    targetPlayer.takeDamage();
+                    p.life = 0;
+                    break;
                 }
             }
 

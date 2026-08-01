@@ -55,8 +55,9 @@ export class GameLoop {
             this.accumulatedTime -= this.step;
         }
 
-        // Render current state
-        this.render(deltaTime);
+        // Render current state with fixed-step interpolation fraction
+        const alpha = this.step > 0 ? this.accumulatedTime / this.step : 1;
+        this.render(deltaTime, alpha);
 
         this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
     }

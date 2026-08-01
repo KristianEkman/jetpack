@@ -66,4 +66,10 @@ export const GAME_EVENTS = {
     ENEMY_DESTROYED: 'enemy_destroyed'
 };
 
-
+export const NETWORK_SETTINGS = {
+    SNAPSHOT_INTERVAL_TICKS: 3, // 60 Hz / 3 = 20 Hz snapshot rate
+    DEFAULT_INTERPOLATION_DELAY: 100, // ms render delay for remote entities
+    MAX_EXTRAPOLATION_TIME: 100, // ms max extrapolation duration when packets are late
+    SNAP_THRESHOLD_SQ: 64 * 64, // 4096 sq px max error distance before hard snap
+    INPUT_HEARTBEAT_INTERVAL: 100 // ms heartbeat rate when input unchanged
+};

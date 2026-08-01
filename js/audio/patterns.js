@@ -324,6 +324,99 @@ export const MELODY_PATTERN_L4 = [
     NOTES.C6, null, NOTES.C6, null, NOTES.C6, null, null, null
 ];
 
+
+// --- LEVEL 5 TRACK: "Piano Sonata No. 8 in A Minor, K.310 – I. Allegro maestoso"
+//     (Wolfgang Amadeus Mozart - 192-step dramatic fortepiano/chiptune adaptation) ---
+// The composition is public domain. This compact game arrangement follows the work's
+// forceful repeated-note character, A-minor harmony, rapid passagework, and cadential drive.
+export const BASS_PATTERN_L5 = [
+    // --- Phase 1: Stern A-minor broken-chord accompaniment (Steps 0 - 63) ---
+    // Bar 1: A minor
+    NOTES.A2, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3,
+    NOTES.A2, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.B2, NOTES.Gs2,
+    // Bar 2: E dominant
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
+    // Bar 3: F major / D minor colour
+    NOTES.F2, NOTES.C3, NOTES.F3, NOTES.A3, NOTES.C3, NOTES.A3, NOTES.F3, NOTES.C3,
+    NOTES.D2, NOTES.A2, NOTES.D3, NOTES.F3, NOTES.A3, NOTES.F3, NOTES.D3, NOTES.A2,
+    // Bar 4: Dominant return to A minor
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
+    NOTES.A2, NOTES.E3, NOTES.A3, NOTES.C3, NOTES.E3, NOTES.C3, NOTES.B2, NOTES.Gs2,
+
+    // --- Phase 2: Rapid Classical Alberti-bass drive (Steps 64 - 127) ---
+    // Bar 5: A minor rising pressure
+    NOTES.A2, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.E3,
+    NOTES.A2, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.E3,
+    // Bar 6: C major / G dominant
+    NOTES.C2, NOTES.G2, NOTES.E3, NOTES.G3, NOTES.C3, NOTES.G3, NOTES.E3, NOTES.G3,
+    NOTES.G2, NOTES.D3, NOTES.B2, NOTES.D3, NOTES.G3, NOTES.D3, NOTES.B2, NOTES.D3,
+    // Bar 7: D minor / F major sequence
+    NOTES.D2, NOTES.A2, NOTES.F3, NOTES.A3, NOTES.D3, NOTES.A3, NOTES.F3, NOTES.A3,
+    NOTES.F2, NOTES.C3, NOTES.A3, NOTES.C3, NOTES.F3, NOTES.C3, NOTES.A2, NOTES.C3,
+    // Bar 8: E7 dominant tension
+    NOTES.E2, NOTES.B2, NOTES.Gs3, NOTES.B3, NOTES.E3, NOTES.B3, NOTES.Gs3, NOTES.B3,
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
+
+    // --- Phase 3: Fortissimo drive and final cadence (Steps 128 - 191) ---
+    // Bar 9: Repeated A-minor pedal
+    NOTES.A2, NOTES.A2, NOTES.E3, NOTES.E3, NOTES.A3, NOTES.A3, NOTES.E3, NOTES.E3,
+    NOTES.C3, NOTES.C3, NOTES.E3, NOTES.E3, NOTES.B2, NOTES.B2, NOTES.Gs2, NOTES.Gs2,
+    // Bar 10: Sequential descent
+    NOTES.F2, NOTES.F2, NOTES.C3, NOTES.C3, NOTES.D2, NOTES.D2, NOTES.A2, NOTES.A2,
+    NOTES.E2, NOTES.E2, NOTES.B2, NOTES.B2, NOTES.E3, NOTES.E3, NOTES.Gs2, NOTES.Gs2,
+    // Bar 11: Dominant hammering
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.B2, NOTES.E2, NOTES.B2, NOTES.E3, NOTES.B2,
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
+    // Bar 12: A-minor cadence into the loop
+    NOTES.A2, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.B2, NOTES.Gs2,
+    NOTES.A2, null, NOTES.E2, null, NOTES.A2, null, NOTES.A2, null
+];
+
+export const MELODY_PATTERN_L5 = [
+    // --- Phase 1: Severe opening statement (Steps 0 - 63) ---
+    // Bar 1: Repeated-note, chord-top gesture
+    NOTES.A5, null, NOTES.A5, null, NOTES.E6, null, NOTES.E6, null,
+    NOTES.C6, null, NOTES.A5, null, NOTES.Gs5, null, NOTES.E5, null,
+    // Bar 2: Dominant answer
+    NOTES.A5, null, NOTES.C6, null, NOTES.B5, null, NOTES.A5, null,
+    NOTES.Gs5, null, NOTES.B5, null, NOTES.E6, null, null, null,
+    // Bar 3: Contrasting F-major/D-minor phrase
+    NOTES.F5, null, NOTES.A5, null, NOTES.C6, null, NOTES.A5, null,
+    NOTES.D6, null, NOTES.C6, null, NOTES.B5, null, NOTES.A5, null,
+    // Bar 4: Descending cadence
+    NOTES.E6, null, NOTES.D6, null, NOTES.C6, null, NOTES.B5, null,
+    NOTES.A5, null, NOTES.Gs5, null, NOTES.A5, null, null, null,
+
+    // --- Phase 2: Agile Classical passagework (Steps 64 - 127) ---
+    // Bar 5: A-minor ascending and descending run
+    NOTES.A4, NOTES.B4, NOTES.C5, NOTES.D5, NOTES.E5, NOTES.F5, NOTES.Gs5, NOTES.A5,
+    NOTES.Gs5, NOTES.F5, NOTES.E5, NOTES.D5, NOTES.C5, NOTES.B4, NOTES.A4, NOTES.E5,
+    // Bar 6: C-major sequence
+    NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.B5, NOTES.G5, NOTES.E5, NOTES.C5,
+    NOTES.D5, NOTES.F5, NOTES.G5, NOTES.B5, NOTES.A5, NOTES.F5, NOTES.D5, NOTES.B4,
+    // Bar 7: D-minor/F-major sequence
+    NOTES.D5, NOTES.F5, NOTES.A5, NOTES.D6, NOTES.C6, NOTES.A5, NOTES.F5, NOTES.D5,
+    NOTES.F5, NOTES.A5, NOTES.C6, NOTES.F6, NOTES.E6, NOTES.C6, NOTES.A5, NOTES.F5,
+    // Bar 8: Dominant trill-like tension
+    NOTES.E5, NOTES.F5, NOTES.E5, NOTES.Ds5, NOTES.E5, NOTES.F5, NOTES.E5, NOTES.Ds5,
+    NOTES.E5, NOTES.Gs5, NOTES.B5, NOTES.E6, NOTES.D6, NOTES.B5, NOTES.Gs5, NOTES.E5,
+
+    // --- Phase 3: Virtuoso climax and A-minor resolution (Steps 128 - 191) ---
+    // Bar 9: High-register repeated-note assault
+    NOTES.A5, NOTES.A5, NOTES.C6, NOTES.C6, NOTES.E6, NOTES.E6, NOTES.A6, NOTES.A6,
+    NOTES.Gs6, NOTES.F6, NOTES.E6, NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.Gs5,
+    // Bar 10: Rapid descending sequence
+    NOTES.F6, NOTES.E6, NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.Gs5, NOTES.F5,
+    NOTES.E5, NOTES.D5, NOTES.C5, NOTES.B4, NOTES.A4, NOTES.B4, NOTES.C5, NOTES.D5,
+    // Bar 11: Dominant hammering and ascent
+    NOTES.E5, null, NOTES.E5, null, NOTES.Gs5, null, NOTES.Gs5, null,
+    NOTES.B5, NOTES.C6, NOTES.D6, NOTES.E6, NOTES.F6, NOTES.E6, NOTES.D6, NOTES.B5,
+    // Bar 12: Final maestoso cadence into loop
+    NOTES.A5, NOTES.C6, NOTES.E6, NOTES.A6, NOTES.Gs6, NOTES.E6, NOTES.B5, NOTES.Gs5,
+    NOTES.A5, null, NOTES.E5, null, NOTES.A5, null, null, null
+];
+
 // --- MENU TRACK: "Cosmic Legato - Ambient Space Horizon" (192-step 100 BPM Legato Space Theme) ---
 // Key: C Minor Ambient Space (Legato Phrasing & Floating Melodic Lines)
 export const MENU_BASS_PATTERN = [

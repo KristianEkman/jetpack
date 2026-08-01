@@ -112,7 +112,13 @@ export class MultiplayerController {
 
         game.network.onWorldSnapshotCb = (snapshot) => {
             if (game.isMultiplayer && game.gameState === GAME_STATES.PLAYING) {
-                game.playerManager.updateFromSnapshot(snapshot.players);
+                if (game.network.interpolationDelay) {
+                    game.playerManager.interpolationDelay = game.network.interpolationDelay;
+                }
+                game.playerManager.updateFromSnapshot(snapshot);
+                if (snapshot.enemies) {
+                    game.enemyManager.applyEnemySnapshot(snapshot.enemies, snapshot.projectiles);
+                }
                 const localPlayer = game.playerManager.getLocalPlayer();
                 if (localPlayer) {
                     game.player = localPlayer;

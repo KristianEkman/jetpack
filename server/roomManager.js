@@ -4,6 +4,7 @@
 
 import { TileMap } from '../js/world/tilemap.js';
 import { Player } from '../js/entities/player.js';
+import { EnemyManager } from '../js/entities/enemy.js';
 import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
 
 const PLAYER_COLORS = ['#ff4444', '#44ff44', '#4488ff', '#ffff44', '#ff44ff', '#00ffff'];
@@ -50,6 +51,8 @@ export class RoomManager {
 
         tileMap.loadLevelData(levelData);
 
+        const enemyManager = new EnemyManager(tileMap);
+
         const room = {
             id: roomId,
             hostSocketId: hostSocketId,
@@ -58,6 +61,7 @@ export class RoomManager {
             customMapData: customMapData,
             mapName: mapName,
             tileMap: tileMap,
+            enemyManager: enemyManager,
             players: new Map(),        // socketId -> Player instance
             playerConfigs: new Map(),  // socketId -> metadata ({ id, name, color, isReady, isHost })
             status: 'lobby',          // 'lobby' | 'playing' | 'finished'
@@ -106,7 +110,10 @@ export class RoomManager {
             color: color,
             isReady: playerOptions.isHost || false,
             isHost: !!playerOptions.isHost,
-            lastSequenceId: 0
+            pendingInputs: [],
+            lastInput: null,
+            lastSequenceId: 0,
+            lastReceivedSequenceId: 0
         };
 
         room.players.set(socketId, playerEntity);

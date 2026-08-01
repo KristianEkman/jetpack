@@ -2,7 +2,7 @@
    SERVER FIXED TICK GAME LOOP (60 Hz Engine)
    ========================================================================== */
 
-import { GAME_EVENTS, TILE_SIZE, TILES } from '../js/shared/constants.js';
+import { GAME_EVENTS, TILE_SIZE, TILES, NETWORK_SETTINGS } from '../js/shared/constants.js';
 
 export class GameLoop {
     constructor(roomManager, io, tickRate = 60) {
@@ -41,7 +41,41 @@ export class GameLoop {
                 room.tileMap.update(this.dt);
             }
 
-            // 1b. Handle player death timers & respawn
+            // 1a. Advance player physics or sync client-authoritative position inside server tick
+            if (room.status === 'playing') {
+                for (const [socketId, playerEntity] of room.players.entries()) {
+                    const config = room.playerConfigs.get(socketId);
+                    if (config && !playerEntity.isDead) {
+                        const input = config.pendingInputs.shift() || config.lastInput;
+                        if (input) {
+                            if (typeof input.x === 'number' && typeof input.y === 'number') {
+                                playerEntity.x = input.x;
+                                playerEntity.y = input.y;
+                                playerEntity.vx = input.vx || 0;
+                                playerEntity.vy = input.vy || 0;
+                                if (input.facingRight !== undefined) playerEntity.facingRight = input.facingRight;
+                                if (input.isGrounded !== undefined) playerEntity.isGrounded = input.isGrounded;
+                                if (input.isThrusting !== undefined) playerEntity.isThrusting = input.isThrusting;
+                                if (input.isClimbing !== undefined) playerEntity.isClimbing = input.isClimbing;
+                                if (input.isPhasing !== undefined) playerEntity.isPhasing = input.isPhasing;
+                            } else {
+                                playerEntity.simulateMovement(this.dt, input, room.enemyManager);
+                            }
+                            config.lastInput = input;
+                            config.lastSequenceId = input.sequenceId || 0;
+                        }
+                        playerEntity.checkCollectibles();
+                    }
+                }
+            }
+
+            // 1b. Update server-authoritative enemies & check player collisions
+            if (room.status === 'playing' && room.enemyManager) {
+                const livingPlayers = Array.from(room.players.values()).filter(p => !p.isDead);
+                room.enemyManager.update(this.dt, livingPlayers);
+            }
+
+            // 1c. Handle player death timers & respawn
             for (const [socketId, playerEntity] of room.players.entries()) {
                 if (playerEntity.isDead) {
                     // Initialize death timer if not present
@@ -114,46 +148,50 @@ export class GameLoop {
                 }
             }
 
-            // 3. Build world snapshot
-            const snapshot = {
-                roomId: room.id,
-                tick: room.tickCount,
-                timestamp: Date.now(),
-                worldState: room.tileMap ? {
-                    collectedEmeralds: room.tileMap.collectedEmeralds,
-                    totalEmeralds: room.tileMap.totalEmeralds
-                } : null,
-                players: []
-            };
+            // 3. Build world snapshot (20 Hz snapshot emission)
+            const snapshotInterval = NETWORK_SETTINGS?.SNAPSHOT_INTERVAL_TICKS || 3;
+            if (room.tickCount % snapshotInterval === 0 && this.io) {
+                const snapshot = {
+                    roomId: room.id,
+                    tick: room.tickCount,
+                    timestamp: Date.now(),
+                    worldState: room.tileMap ? {
+                        collectedEmeralds: room.tileMap.collectedEmeralds,
+                        totalEmeralds: room.tileMap.totalEmeralds
+                    } : null,
+                    players: [],
+                    enemies: room.enemyManager ? room.enemyManager.serializeEnemies() : [],
+                    projectiles: room.enemyManager ? room.enemyManager.serializeProjectiles() : []
+                };
 
-            for (const [socketId, playerEntity] of room.players.entries()) {
-                const config = room.playerConfigs.get(socketId);
-                snapshot.players.push({
-                    socketId: socketId,
-                    id: playerEntity.id,
-                    name: config ? config.name : playerEntity.name,
-                    color: config ? config.color : playerEntity.color,
-                    x: Math.round(playerEntity.x * 100) / 100,
-                    y: Math.round(playerEntity.y * 100) / 100,
-                    vx: Math.round(playerEntity.vx * 100) / 100,
-                    vy: Math.round(playerEntity.vy * 100) / 100,
-                    fuel: Math.round(playerEntity.fuel * 10) / 10,
-                    lives: playerEntity.lives,
-                    score: playerEntity.score,
-                    facingRight: playerEntity.facingRight,
-                    isGrounded: playerEntity.isGrounded,
-                    isThrusting: playerEntity.isThrusting,
-                    isClimbing: playerEntity.isClimbing,
-                    isPhasing: playerEntity.isPhasing,
-                    isDead: playerEntity.isDead,
-                    lastSequenceId: config ? config.lastSequenceId : 0
-                });
-            }
+                for (const [socketId, playerEntity] of room.players.entries()) {
+                    const config = room.playerConfigs.get(socketId);
+                    snapshot.players.push({
+                        socketId: socketId,
+                        id: playerEntity.id,
+                        name: config ? config.name : playerEntity.name,
+                        color: config ? config.color : playerEntity.color,
+                        x: Math.round(playerEntity.x * 100) / 100,
+                        y: Math.round(playerEntity.y * 100) / 100,
+                        vx: Math.round(playerEntity.vx * 100) / 100,
+                        vy: Math.round(playerEntity.vy * 100) / 100,
+                        fuel: Math.round(playerEntity.fuel * 10) / 10,
+                        lives: playerEntity.lives,
+                        score: playerEntity.score,
+                        facingRight: playerEntity.facingRight,
+                        isGrounded: playerEntity.isGrounded,
+                        isThrusting: playerEntity.isThrusting,
+                        isClimbing: playerEntity.isClimbing,
+                        isPhasing: playerEntity.isPhasing,
+                        isDead: playerEntity.isDead,
+                        lastSequenceId: config ? config.lastSequenceId : 0
+                    });
+                }
 
-            // 4. Broadcast snapshot to room socket channel
-            if (this.io) {
-                this.io.to(room.id).emit(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', snapshot);
+                // Broadcast volatile 20 Hz snapshot (drops stale queued snapshots during congestion)
+                this.io.to(room.id).volatile.emit(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', snapshot);
             }
         }
     }
 }
+

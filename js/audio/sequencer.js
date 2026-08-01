@@ -7,6 +7,7 @@ import {
     BASS_PATTERN_L2, MELODY_PATTERN_L2,
     BASS_PATTERN_L3, MELODY_PATTERN_L3,
     BASS_PATTERN_L4, MELODY_PATTERN_L4,
+    BASS_PATTERN_L5, MELODY_PATTERN_L5,
     MENU_BASS_PATTERN, MENU_CHIME_PATTERN
 } from './patterns.js';
 
@@ -104,7 +105,9 @@ export class MusicSequencer {
             this.nextStepTime = this.ctx.currentTime + 0.05;
         }
 
-        const bpm = this.currentTrack === 'menu' ? 100 : (this.currentLevel === 1 ? 132 : (this.currentLevel === 2 ? 110 : (this.currentLevel === 3 ? 96 : 112)));
+        // Zero-based level indices: L1=0, L2=1, L3=2, L4=3, L5=4.
+        const gameBpms = [112, 132, 110, 96, 138];
+        const bpm = this.currentTrack === 'menu' ? 100 : (gameBpms[this.currentLevel] ?? 112);
         const maxSteps = 192;
         const stepDuration = (60 / bpm) / 4;
 
@@ -224,12 +227,14 @@ export class MusicSequencer {
         const isLevel2 = this.currentLevel === 1;
         const isLevel3 = this.currentLevel === 2;
         const isLevel4 = this.currentLevel === 3;
+        const isLevel5 = this.currentLevel === 4;
 
         // 1. Synth Bass Channel (L1: Chiptune Triangle / L2: Resonant Synth / L3: Galloping Bass / L4: Ragtime Stride Bass)
         let bassPattern = BASS_PATTERN;
         if (isLevel2) bassPattern = BASS_PATTERN_L2;
         if (isLevel3) bassPattern = BASS_PATTERN_L3;
         if (isLevel4) bassPattern = BASS_PATTERN_L4;
+        if (isLevel5) bassPattern = BASS_PATTERN_L5;
 
         const bassFreq = bassPattern[step];
         if (bassFreq) {
@@ -237,7 +242,7 @@ export class MusicSequencer {
             const gain = this.ctx.createGain();
             const filter = this.ctx.createBiquadFilter();
 
-            osc.type = (isLevel2 || isLevel3) ? 'sawtooth' : (isLevel4 ? 'triangle' : 'triangle');
+            osc.type = isLevel5 ? 'square' : ((isLevel2 || isLevel3) ? 'sawtooth' : 'triangle');
             osc.frequency.setValueAtTime(bassFreq, time);
 
             filter.type = 'lowpass';
@@ -249,6 +254,11 @@ export class MusicSequencer {
                 filter.Q.setValueAtTime(4.5, time);
                 filter.frequency.setValueAtTime(1400, time);
                 filter.frequency.exponentialRampToValueAtTime(250, time + stepDuration * 0.85);
+            } else if (isLevel5) {
+                // Level 5: clipped fortepiano/harpsichord-like bass transient.
+                filter.Q.setValueAtTime(2.8, time);
+                filter.frequency.setValueAtTime(1350, time);
+                filter.frequency.exponentialRampToValueAtTime(260, time + stepDuration * 0.78);
             } else if (isLevel4) {
                 filter.Q.setValueAtTime(2.0, time);
                 filter.frequency.setValueAtTime(1200, time);
@@ -257,7 +267,7 @@ export class MusicSequencer {
                 filter.frequency.setValueAtTime(800, time);
             }
 
-            gain.gain.setValueAtTime(isLevel4 ? 0.30 : (isLevel2 ? 0.24 : (isLevel3 ? 0.26 : 0.28)), time);
+            gain.gain.setValueAtTime(isLevel5 ? 0.23 : (isLevel4 ? 0.30 : (isLevel2 ? 0.24 : (isLevel3 ? 0.26 : 0.28))), time);
             gain.gain.exponentialRampToValueAtTime(0.01, time + stepDuration * 0.85);
 
             osc.connect(filter);
@@ -273,10 +283,46 @@ export class MusicSequencer {
         if (isLevel2) melodyPattern = MELODY_PATTERN_L2;
         if (isLevel3) melodyPattern = MELODY_PATTERN_L3;
         if (isLevel4) melodyPattern = MELODY_PATTERN_L4;
+        if (isLevel5) melodyPattern = MELODY_PATTERN_L5;
 
         const leadFreq = melodyPattern[step];
         if (leadFreq) {
-            if (isLevel4) {
+            if (isLevel5) {
+                // Level 5 Instrument: sharp Classical fortepiano / harpsichord hybrid.
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const harmonicGain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                const gain = this.ctx.createGain();
+
+                // Rounded body plus a quiet octave harmonic for a plucked keyboard attack.
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(leadFreq, time);
+                osc2.type = 'square';
+                osc2.frequency.setValueAtTime(leadFreq * 2, time);
+                harmonicGain.gain.setValueAtTime(0.16, time);
+
+                filter.type = 'lowpass';
+                filter.Q.setValueAtTime(3.0, time);
+                filter.frequency.setValueAtTime(3800, time);
+                filter.frequency.exponentialRampToValueAtTime(1050, time + stepDuration * 0.72);
+
+                // Fast hammer transient followed by a controlled Classical decay.
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.linearRampToValueAtTime(0.155, time + 0.004);
+                gain.gain.exponentialRampToValueAtTime(0.004, time + stepDuration * 0.82);
+
+                osc1.connect(filter);
+                osc2.connect(harmonicGain);
+                harmonicGain.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.bgmGain);
+
+                osc1.start(time);
+                osc2.start(time);
+                osc1.stop(time + stepDuration * 0.84);
+                osc2.stop(time + stepDuration * 0.84);
+            } else if (isLevel4) {
                 // Level 4 Instrument: Warm Ragtime Synth Lead (Smooth & Non-blippy)
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
@@ -399,23 +445,25 @@ export class MusicSequencer {
         }
 
         // 3. Retro Drums: Kick Drum
-        // Level 4 uses a classic 2/4 Ragtime stride kick on beats 1 and 3 (steps 0 and 8), avoiding 4-on-the-floor
-        const isKickStep = isLevel4 ? (step % 8 === 0) : (step % 4 === 0);
+        // L4 uses ragtime stride; L5 uses restrained timpani-like downbeats.
+        const isKickStep = (isLevel4 || isLevel5) ? (step % 8 === 0) : (step % 4 === 0);
         if (isKickStep) {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(isLevel4 ? 125 : 140, time);
-            osc.frequency.exponentialRampToValueAtTime(32, time + (isLevel4 ? 0.06 : 0.07));
+            const kickStart = isLevel5 ? 108 : (isLevel4 ? 125 : 140);
+            const kickLength = isLevel5 ? 0.11 : (isLevel4 ? 0.06 : 0.07);
+            osc.frequency.setValueAtTime(kickStart, time);
+            osc.frequency.exponentialRampToValueAtTime(32, time + kickLength);
 
-            gain.gain.setValueAtTime(isLevel4 ? 0.32 : 0.35, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + (isLevel4 ? 0.06 : 0.07));
+            gain.gain.setValueAtTime(isLevel5 ? 0.28 : (isLevel4 ? 0.32 : 0.35), time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + kickLength);
 
             osc.connect(gain);
             gain.connect(this.bgmGain);
 
             osc.start(time);
-            osc.stop(time + (isLevel4 ? 0.06 : 0.07));
+            osc.stop(time + kickLength);
         }
 
         // 4. Retro Drums: Snare Drum / Rimshot
@@ -491,7 +539,7 @@ export class MusicSequencer {
                 noise.stop(time + 0.022);
             } else {
                 filter.type = 'highpass';
-                filter.frequency.setValueAtTime(isLevel3 ? 8000 : (isLevel2 ? 7000 : 6000), time);
+                filter.frequency.setValueAtTime(isLevel3 ? 8000 : (isLevel2 ? 7000 : (isLevel5 ? 6500 : 6000)), time);
 
                 const gain = this.ctx.createGain();
                 const hatVol = ((isLevel2 || isLevel3) && step % 4 === 1) ? 0.04 : 0.06;

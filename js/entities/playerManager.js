@@ -1,8 +1,8 @@
-/* ==========================================================================
-   MULTI-PLAYER ENTITY MANAGER MODULE
-   ========================================================================== */
-
 import { Player } from './player.js';
+
+function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
 
 export class PlayerManager {
     constructor(audio = null, tileMap = null) {
@@ -10,6 +10,8 @@ export class PlayerManager {
         this.tileMap = tileMap;
         this.localSocketId = null;
         this.players = new Map(); // socketId -> Player instance
+        this.snapshotBuffer = [];
+        this.interpolationDelay = 100; // ms render delay for remote entities
     }
 
     setLocalSocketId(socketId) {
@@ -46,16 +48,31 @@ export class PlayerManager {
         if (this.localSocketId && this.players.has(this.localSocketId)) {
             return this.players.get(this.localSocketId);
         }
-        // Fallback to first player if localSocketId not set yet
         return this.players.values().next().value || null;
     }
 
-    updateFromSnapshot(snapshotPlayersList) {
-        if (!Array.isArray(snapshotPlayersList)) return;
+    updateFromSnapshot(snapshotPayload) {
+        if (!snapshotPayload) return;
+
+        const playersList = Array.isArray(snapshotPayload) ? snapshotPayload : (snapshotPayload.players || []);
+        const timestamp = snapshotPayload.timestamp || Date.now();
+        const tick = snapshotPayload.tick || 0;
+
+        // Save to snapshot buffer for remote player interpolation
+        this.snapshotBuffer.push({
+            tick,
+            timestamp,
+            players: playersList
+        });
+
+        // Maintain buffer size (~1.5s of snapshots)
+        if (this.snapshotBuffer.length > 30) {
+            this.snapshotBuffer.shift();
+        }
 
         const activeSocketIds = new Set();
 
-        for (const pData of snapshotPlayersList) {
+        for (const pData of playersList) {
             const socketId = pData.socketId || pData.id;
             if (!socketId) continue;
 
@@ -73,33 +90,35 @@ export class PlayerManager {
                 });
             }
 
-            // For the local player, run local physics and only apply server state when
-            // the server signals a respawn after acknowledging death.
+            // Local player prediction reconciliation & death/respawn tracking
             if (socketId === this.localSocketId) {
                 if (player.isDead) {
                     if (pData.isDead) {
-                        // Server acknowledges local player's death
                         player.serverAcknowledgedDeath = true;
                         if (pData.lives !== undefined) player.lives = pData.lives;
                     } else if (player.serverAcknowledgedDeath && pData.isDead === false) {
-                        // Server previously confirmed death and is NOW signaling a respawn!
                         player.applySnapshot(pData);
                         player.serverAcknowledgedDeath = false;
                     }
                 } else if (pData.isDead) {
-                    // Server forced death on local player
                     player.takeDamage();
                     player.serverAcknowledgedDeath = true;
                     if (pData.lives !== undefined) player.lives = pData.lives;
                 } else {
                     player.serverAcknowledgedDeath = false;
+                    // Position is driven strictly by local inputs; ignore WebSocket position snapshot updates
                 }
             } else {
-                player.applySnapshot(pData);
+                // Ensure metadata updates and initial position for remote players
+                if (pData.name) player.name = pData.name;
+                if (pData.color) player.color = pData.color;
+                if (this.snapshotBuffer.length <= 1) {
+                    player.applySnapshot(pData);
+                }
             }
         }
 
-        // Clean up disconnected players not in latest room snapshot
+        // Clean up disconnected players not in latest snapshot
         for (const sId of this.players.keys()) {
             if (!activeSocketIds.has(sId)) {
                 this.players.delete(sId);
@@ -108,12 +127,85 @@ export class PlayerManager {
     }
 
     update(dt) {
+        const renderTime = Date.now() - this.interpolationDelay;
+
+        // Find surrounding snapshots in buffer for remote player interpolation
+        let older = null;
+        let newer = null;
+
+        for (let i = this.snapshotBuffer.length - 1; i >= 0; i--) {
+            const snap = this.snapshotBuffer[i];
+            if (snap.timestamp <= renderTime) {
+                older = snap;
+                newer = this.snapshotBuffer[i + 1] || null;
+                break;
+            }
+        }
+
+        if (!older && this.snapshotBuffer.length > 0) {
+            older = this.snapshotBuffer[0];
+        }
+
+        const latestSnap = this.snapshotBuffer[this.snapshotBuffer.length - 1];
+
         for (const [sId, player] of this.players.entries()) {
-            if (sId !== this.localSocketId && !player.isLocal) {
-                player.animTimer += dt;
-                player.phaseBeamTimer = Math.max(0, player.phaseBeamTimer - dt);
-                player.phaseCooldown = Math.max(0, player.phaseCooldown - dt);
-                player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
+            if (sId === this.localSocketId || player.isLocal) continue;
+
+            player.animTimer += dt;
+            player.phaseBeamTimer = Math.max(0, player.phaseBeamTimer - dt);
+            player.phaseCooldown = Math.max(0, player.phaseCooldown - dt);
+            player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
+
+            if (older && newer && newer.timestamp > older.timestamp) {
+                // Smooth Snapshot Interpolation between older and newer snapshots
+                const t = Math.max(0, Math.min(1, (renderTime - older.timestamp) / (newer.timestamp - older.timestamp)));
+
+                const pOld = older.players.find(p => (p.socketId || p.id) === sId);
+                const pNew = newer.players.find(p => (p.socketId || p.id) === sId);
+
+                if (pOld && pNew) {
+                    const dx = pNew.x - pOld.x;
+                    const dy = pNew.y - pOld.y;
+
+                    if (dx * dx + dy * dy > 4096 || pOld.isDead !== pNew.isDead) {
+                        player.applySnapshot(pNew);
+                    } else {
+                        player.x = lerp(pOld.x, pNew.x, t);
+                        player.y = lerp(pOld.y, pNew.y, t);
+                        player.vx = lerp(pOld.vx, pNew.vx, t);
+                        player.vy = lerp(pOld.vy, pNew.vy, t);
+                        player.fuel = pNew.fuel;
+                        player.lives = pNew.lives;
+                        player.score = pNew.score;
+                        player.facingRight = pNew.facingRight;
+                        player.isGrounded = pNew.isGrounded;
+                        player.isThrusting = pNew.isThrusting;
+                        player.isClimbing = pNew.isClimbing;
+                        player.isPhasing = pNew.isPhasing;
+                        player.isDead = pNew.isDead;
+                    }
+                } else if (pNew) {
+                    player.applySnapshot(pNew);
+                }
+            } else if (latestSnap) {
+                // Extrapolation mode when snapshots are delayed
+                const pLatest = latestSnap.players.find(p => (p.socketId || p.id) === sId);
+                if (pLatest) {
+                    const extrapTime = Math.min(0.10, Math.max(0, (renderTime - latestSnap.timestamp) / 1000));
+                    player.x = pLatest.x + (pLatest.vx || 0) * extrapTime;
+                    player.y = pLatest.y + (pLatest.vy || 0) * extrapTime;
+                    player.vx = pLatest.vx || 0;
+                    player.vy = pLatest.vy || 0;
+                    player.fuel = pLatest.fuel;
+                    player.lives = pLatest.lives;
+                    player.score = pLatest.score;
+                    player.facingRight = pLatest.facingRight;
+                    player.isGrounded = pLatest.isGrounded;
+                    player.isThrusting = pLatest.isThrusting;
+                    player.isClimbing = pLatest.isClimbing;
+                    player.isPhasing = pLatest.isPhasing;
+                    player.isDead = pLatest.isDead;
+                }
             }
         }
     }
@@ -126,5 +218,6 @@ export class PlayerManager {
 
     clear() {
         this.players.clear();
+        this.snapshotBuffer = [];
     }
 }

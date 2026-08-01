@@ -58,6 +58,11 @@ export class Player {
         this.animTimer = 0;
         this.stuckTimer = 0;
         this.teleportCooldown = 0;
+
+        // Local prediction & reconciliation tracking
+        this.pendingInputs = [];
+        this.visualCorrectionX = 0;
+        this.visualCorrectionY = 0;
     }
 
     spawn(x, y) {
@@ -75,50 +80,27 @@ export class Player {
         this.stuckTimer = 0;
         this.teleportCooldown = 0;
         this.fuel = Math.max(this.fuel, 50); // Give minimum fuel on respawn
+        this.pendingInputs = [];
+        this.visualCorrectionX = 0;
+        this.visualCorrectionY = 0;
     }
 
-    update(dt, input, enemyManager) {
-        if (this.isDead) return;
+    simulateMovement(dt, input, enemyManager = null) {
+        if (this.isDead || !input) return;
 
-        if (input.suicide) {
-            this.takeDamage();
-            return;
-        }
-
-        this.animTimer += dt;
         this.phaseCooldown = Math.max(0, this.phaseCooldown - dt);
         this.phaseBeamTimer = Math.max(0, this.phaseBeamTimer - dt);
         this.teleportCooldown = Math.max(0, this.teleportCooldown - dt);
         this.isPhasing = this.phaseBeamTimer > 0;
 
-        // 1. Check current tile interaction (Climbing, Conveyor, Ice, Hazards)
+        // 1. Check current tile interaction (Climbing, Conveyor, Ice)
         const centerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
         const centerRow = Math.floor((this.y + this.height / 2) / TILE_SIZE);
         const feetRow = Math.floor((this.y + this.height + 1) / TILE_SIZE);
 
-        const currentTile = this.tileMap.getTile(centerCol, centerRow);
         const feetTile = this.tileMap.getTile(centerCol, feetRow);
-
         const onLadder = this.tileMap.isClimbable(centerCol, centerRow);
         const onIce = feetTile === TILES.ICE;
-
-        // Hazard check: Spikes or Energy Drain
-        if (currentTile === TILES.SPIKE || feetTile === TILES.SPIKE) {
-            this.audio?.stopEnergyDrain?.();
-            this.takeDamage();
-            return;
-        }
-        if (currentTile === TILES.ENERGY_DRAIN || feetTile === TILES.ENERGY_DRAIN) {
-            this.fuel = Math.max(0, this.fuel - 40 * dt);
-            this.audio?.startEnergyDrain?.();
-            if (Math.random() < 0.3) {
-                const px = this.x + Math.random() * this.width;
-                const py = this.y + Math.random() * this.height;
-                this.tileMap.addSparkles(px, py, '#ff0055', 1);
-            }
-        } else {
-            this.audio?.stopEnergyDrain?.();
-        }
 
         // 2. Movement Logic: Walking & Facing Direction
         const accel = onIce ? 400 : 1200;
@@ -158,16 +140,8 @@ export class Player {
             this.isThrusting = true;
             this.vy -= 1400 * dt; // Thrust acceleration upward
             this.fuel = Math.max(0, this.fuel - this.fuelBurnRate * dt);
-            
-            this.audio?.startThrust?.();
-
-            // Thrust particle effect
-            const px = this.facingRight ? this.x + 2 : this.x + this.width - 2;
-            const py = this.y + this.height - 4;
-            this.tileMap.addSparkles(px, py, '#ff6600', 2);
         } else {
             this.isThrusting = false;
-            this.audio?.stopThrust?.();
         }
 
         // 5. Gravity Physics
@@ -176,14 +150,12 @@ export class Player {
         }
         this.vy = Math.min(450, this.vy); // Terminal velocity
 
-        // 6. Phase Shifter / Laser Beam Firing Logic
+        // 6. Phase Shifter Raycast Simulation
         if (input.phase && this.phaseCooldown <= 0) {
             this.isPhasing = true;
-            this.phaseBeamTimer = 0.14; // Visually persistent beam duration
-            this.phaseCooldown = 0.12;  // Fire rate interval
-            this.audio?.playPhaseSound?.();
+            this.phaseBeamTimer = 0.14;
+            this.phaseCooldown = 0.12;
 
-            // Check if player is currently standing inside a phase brick tile
             const playerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
             const playerRow = Math.floor((this.y + this.height / 2) / TILE_SIZE);
             if (this.tileMap.getTile(playerCol, playerRow) === TILES.PHASE_BRICK) {
@@ -194,10 +166,6 @@ export class Player {
             const startX = this.facingRight ? this.x + this.width : this.x;
             const startY = this.y + 12;
 
-            // Muzzle flash particles
-            this.tileMap.addSparkles(startX, startY, '#00f0ff', 6);
-
-            // Raycast forward up to 5 tiles (160 px)
             this.phaseBeamLength = 160;
             for (let dist = 0; dist <= 160; dist += 8) {
                 const targetX = startX + dir * dist;
@@ -219,14 +187,10 @@ export class Player {
                     }
                     if (hitEnemyIndex >= 0) {
                         const enemy = enemyManager.enemies[hitEnemyIndex];
-                        this.tileMap.addSparkles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ff0055', 25);
-                        this.audio?.playExplosion?.();
-
                         const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
 
                         if (destroyedEnemy) {
                             this.score += 200;
-
                             enemyManager.onEnemyDestroyed?.({
                                 enemyId: destroyedEnemy.id,
                                 playerId: this.id
@@ -245,7 +209,6 @@ export class Player {
                     break;
                 } else if (this.tileMap.isSolid(targetCol, targetRow)) {
                     this.phaseBeamLength = dist;
-                    this.tileMap.addSparkles(targetX, startY, '#00f0ff', 4);
                     break;
                 }
             }
@@ -253,15 +216,150 @@ export class Player {
 
         // 7. Apply Positions & Handle Collision
         this.moveAndCollide(dt);
+    }
 
-        // 8. Collectible Item Pickup Collision
+    processLocalEffects(dt, input, enemyManager) {
+        if (this.isDead || !input) return;
+
+        if (input.suicide) {
+            this.takeDamage();
+            return;
+        }
+
+        const centerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
+        const centerRow = Math.floor((this.y + this.height / 2) / TILE_SIZE);
+        const feetRow = Math.floor((this.y + this.height + 1) / TILE_SIZE);
+
+        const currentTile = this.tileMap.getTile(centerCol, centerRow);
+        const feetTile = this.tileMap.getTile(centerCol, feetRow);
+
+        // Hazard check: Spikes or Energy Drain
+        if (currentTile === TILES.SPIKE || feetTile === TILES.SPIKE) {
+            this.audio?.stopEnergyDrain?.();
+            this.takeDamage();
+            return;
+        }
+        if (currentTile === TILES.ENERGY_DRAIN || feetTile === TILES.ENERGY_DRAIN) {
+            this.fuel = Math.max(0, this.fuel - 40 * dt);
+            this.audio?.startEnergyDrain?.();
+            if (Math.random() < 0.3) {
+                const px = this.x + Math.random() * this.width;
+                const py = this.y + Math.random() * this.height;
+                this.tileMap.addSparkles(px, py, '#ff0055', 1);
+            }
+        } else {
+            this.audio?.stopEnergyDrain?.();
+        }
+
+        // Jetpack thrust audio & particles
+        if (input.thrust && this.fuel > 0) {
+            this.audio?.startThrust?.();
+            const px = this.facingRight ? this.x + 2 : this.x + this.width - 2;
+            const py = this.y + this.height - 4;
+            this.tileMap.addSparkles(px, py, '#ff6600', 2);
+        } else {
+            this.audio?.stopThrust?.();
+        }
+
+        // Laser beam audio & particles
+        if (input.phase && this.phaseCooldown >= 0.11) {
+            this.audio?.playPhaseSound?.();
+            const startX = this.facingRight ? this.x + this.width : this.x;
+            const startY = this.y + 12;
+            this.tileMap.addSparkles(startX, startY, '#00f0ff', 6);
+
+            // Raycast enemy hits locally
+            const dir = this.facingRight ? 1 : -1;
+            for (let dist = 0; dist <= 160; dist += 8) {
+                const targetX = startX + dir * dist;
+
+                if (enemyManager && enemyManager.enemies) {
+                    let hitEnemyIndex = -1;
+                    for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
+                        const enemy = enemyManager.enemies[i];
+                        if (
+                            targetX >= enemy.x && targetX <= enemy.x + enemy.width &&
+                            startY >= enemy.y && startY <= enemy.y + enemy.height
+                        ) {
+                            hitEnemyIndex = i;
+                            break;
+                        }
+                    }
+                    if (hitEnemyIndex >= 0) {
+                        const enemy = enemyManager.enemies[hitEnemyIndex];
+                        this.tileMap.addSparkles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ff0055', 25);
+                        this.audio?.playExplosion?.();
+
+                        const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
+
+                        if (destroyedEnemy) {
+                            this.score += 200;
+                            enemyManager.onEnemyDestroyed?.({
+                                enemyId: destroyedEnemy.id,
+                                playerId: this.id
+                            });
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Collectibles, Teleporter & Stuck check
         this.checkCollectibles();
-
-        // 9. Teleporter Interaction (Warp to next Teleporter node)
         this.checkTeleporter();
-
-        // 10. Trapped / Stuck Detection (No fuel in inescapable pit)
         this.checkStuck(dt);
+    }
+
+    update(dt, input, enemyManager) {
+        if (this.isDead) return;
+
+        this.animTimer += dt;
+        this.simulateMovement(dt, input, enemyManager);
+        this.processLocalEffects(dt, input, enemyManager);
+    }
+
+    reconcileServerSnapshot(serverPlayer) {
+        if (!serverPlayer) return;
+
+        const acknowledgedSeq = serverPlayer.lastSequenceId || 0;
+        const prevPredictedX = this.x;
+        const prevPredictedY = this.y;
+
+        // Apply authoritative server state
+        this.x = serverPlayer.x;
+        this.y = serverPlayer.y;
+        this.vx = serverPlayer.vx;
+        this.vy = serverPlayer.vy;
+        this.fuel = serverPlayer.fuel;
+        this.lives = serverPlayer.lives;
+        this.score = serverPlayer.score;
+        this.facingRight = serverPlayer.facingRight;
+        this.isGrounded = serverPlayer.isGrounded;
+        this.isThrusting = serverPlayer.isThrusting;
+        this.isClimbing = serverPlayer.isClimbing;
+        this.isPhasing = serverPlayer.isPhasing;
+
+        // Discard acknowledged inputs
+        this.pendingInputs = this.pendingInputs.filter(inp => inp.sequenceId > acknowledgedSeq);
+
+        // Replay remaining unacknowledged inputs (physics simulation only)
+        for (const inp of this.pendingInputs) {
+            this.simulateMovement(1 / 60, inp);
+        }
+
+        // Compare position discrepancy for smooth visual correction
+        const errX = prevPredictedX - this.x;
+        const errY = prevPredictedY - this.y;
+        const errSq = errX * errX + errY * errY;
+
+        if (errSq > 4096 || serverPlayer.isDead || this.isDead) {
+            this.visualCorrectionX = 0;
+            this.visualCorrectionY = 0;
+        } else {
+            this.visualCorrectionX = Math.max(-32, Math.min(32, this.visualCorrectionX + errX));
+            this.visualCorrectionY = Math.max(-32, Math.min(32, this.visualCorrectionY + errY));
+        }
     }
 
     moveAndCollide(dt) {
@@ -767,9 +865,13 @@ export class Player {
             walkBobY = Math.abs(Math.sin(this.animTimer * walkSpeed)) * 2.0;
         }
 
+        // Decoupled visual error correction decay
+        this.visualCorrectionX = (this.visualCorrectionX || 0) * 0.75;
+        this.visualCorrectionY = (this.visualCorrectionY || 0) * 0.75;
+
         // Draw Jetman Character Sprite (Canvas Vector Graphics)
-        const px = this.x;
-        const py = this.y - walkBobY;
+        const px = this.x + this.visualCorrectionX;
+        const py = this.y + this.visualCorrectionY - walkBobY;
 
         // Back Leg (Light slate blue for depth and high visibility)
         ctx.fillStyle = '#3b82f6';
