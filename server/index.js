@@ -8,6 +8,8 @@ import { Server } from 'socket.io';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import fs from 'node:fs';
+
 import { RoomManager } from './roomManager.js';
 import { GameLoop } from './gameLoop.js';
 import { GAME_EVENTS, TILES } from '../js/shared/constants.js';
@@ -16,6 +18,7 @@ import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
+const distDir = path.join(rootDir, 'dist');
 
 const app = express();
 const httpServer = createServer(app);
@@ -27,7 +30,10 @@ const io = new Server(httpServer, {
     }
 });
 
-// Serve static frontend assets
+// Serve static frontend assets (prefer Vite build dist/ if present)
+if (fs.existsSync(distDir)) {
+    app.use(express.static(distDir));
+}
 app.use(express.static(rootDir));
 
 // Health check endpoint
