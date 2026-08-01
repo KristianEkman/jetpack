@@ -171,6 +171,11 @@ export class EnemyManager {
                 localEnemy.vx = sEnemy.vx;
                 localEnemy.vy = sEnemy.vy;
                 if (sEnemy.timer !== undefined) localEnemy.timer = sEnemy.timer;
+                if (sEnemy.animTimer !== undefined) {
+                    if (localEnemy.animTimer === undefined || Math.abs(localEnemy.animTimer - sEnemy.animTimer) > 0.5) {
+                        localEnemy.animTimer = sEnemy.animTimer;
+                    }
+                }
             }
         }
 
@@ -183,6 +188,7 @@ export class EnemyManager {
 
     interpolateEnemies(dt) {
         for (const enemy of this.enemies) {
+            enemy.animTimer = (enemy.animTimer || 0) + dt;
             if (enemy.targetX !== undefined && enemy.targetY !== undefined) {
                 const dx = enemy.targetX - enemy.x;
                 const dy = enemy.targetY - enemy.y;
@@ -387,9 +393,10 @@ export class EnemyManager {
         const cx = enemy.x + enemy.width / 2;
         const cy = enemy.y + enemy.height / 2;
         const moveAngle = Math.atan2(enemy.vy, enemy.vx);
+        const animTimer = enemy.animTimer || 0;
 
         // 1. Pulsing Crimson Void Aura
-        const auraRad = 15 + Math.sin(enemy.animTimer * 10) * 3;
+        const auraRad = 15 + Math.sin(animTimer * 10) * 3;
         const auraGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, auraRad);
         auraGrad.addColorStop(0, 'rgba(255, 0, 85, 0.85)');
         auraGrad.addColorStop(0.5, 'rgba(180, 0, 50, 0.4)');
@@ -403,12 +410,12 @@ export class EnemyManager {
 
         // 2. Rotating Serrated Demonic Horns / Spikes
         const spikeCount = 8;
-        const rotAngle = enemy.animTimer * 4;
+        const rotAngle = animTimer * 4;
         ctx.save();
         ctx.rotate(rotAngle);
         for (let i = 0; i < spikeCount; i++) {
             const a = (i * Math.PI * 2) / spikeCount;
-            const spikeLen = 13 + Math.sin(enemy.animTimer * 12 + i * 1.5) * 3;
+            const spikeLen = 13 + Math.sin(animTimer * 12 + i * 1.5) * 3;
             const innerR = 6;
 
             ctx.beginPath();
@@ -438,7 +445,7 @@ export class EnemyManager {
         ctx.stroke();
 
         // 4. Snapping Demonic Fangs
-        const jawOpen = Math.sin(enemy.animTimer * 14) * 2;
+        const jawOpen = Math.sin(animTimer * 14) * 2;
         ctx.fillStyle = '#ffeef2';
         // Left fang
         ctx.beginPath();

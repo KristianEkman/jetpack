@@ -7,6 +7,7 @@ import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, PLAYER_PHYSICS, GAME_EVENTS } f
 import { TileMap } from '../js/world/tilemap.js';
 import { Player } from '../js/entities/player.js';
 import { InputHandler } from '../js/engine/input.js';
+import { EnemyManager } from '../js/entities/enemy.js';
 import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
 
 console.log('🧪 Starting Node.js Shared Core Modules Test Suite...\n');
@@ -179,6 +180,13 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(pLocal.isDead, false);
     assert.equal(pLocal.x, 128);
     assert.equal(pLocal.y, 100);
+
+    // 5. Test EnemyManager interpolation and animTimer advancement
+    const enemyMgr = new EnemyManager(tileMap);
+    enemyMgr.addFlitzer(100, 100, 50, 50, 'flitzer_test');
+    const initialAnimTimer = enemyMgr.enemies[0].animTimer;
+    enemyMgr.interpolateEnemies(0.1);
+    assert.ok(enemyMgr.enemies[0].animTimer > initialAnimTimer, 'Flitzer animTimer must advance during interpolation');
 
     console.log('   ✅ PlayerManager entity lifecycle & snapshot sync passed.\n');
     console.log('🎉 ALL SHARED CORE MODULE TESTS PASSED SUCCESSFULLY!');
