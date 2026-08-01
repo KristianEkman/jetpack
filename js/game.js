@@ -48,7 +48,11 @@ class Game {
         };
 
         this.isMultiplayer = false;
-        this.selectedColor = '#ff4444';
+        try {
+            this.selectedColor = localStorage.getItem('jetpack_player_color') || '#ff4444';
+        } catch (e) {
+            this.selectedColor = '#ff4444';
+        }
 
         this.currentLevelIndex = 0;
         this.gameState = GAME_STATES.MENU;

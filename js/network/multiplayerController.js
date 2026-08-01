@@ -216,18 +216,66 @@ export class MultiplayerController {
             reader.readAsText(file);
         });
 
-        // Color Picker Chips
-        document.querySelectorAll('.color-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                game.selectedColor = chip.dataset.color || '#ff4444';
+        // Pilot Profile Persistence & Setup
+        const hostNameInput = document.getElementById('inputHostName');
+        if (hostNameInput) {
+            try {
+                const savedName = localStorage.getItem('jetpack_player_name');
+                if (savedName) {
+                    hostNameInput.value = savedName;
+                }
+            } catch (e) { }
+
+            hostNameInput.addEventListener('input', () => {
+                const val = hostNameInput.value.trim();
+                if (val) {
+                    try {
+                        localStorage.setItem('jetpack_player_name', val);
+                    } catch (e) { }
+                }
             });
-        });
+        }
+
+        // Color Picker Chips & Persistence
+        try {
+            const savedColor = localStorage.getItem('jetpack_player_color');
+            if (savedColor) {
+                game.selectedColor = savedColor;
+            }
+        } catch (e) { }
+
+        const colorChips = document.querySelectorAll('.color-chip');
+        if (colorChips.length > 0) {
+            colorChips.forEach(chip => {
+                const chipColor = chip.dataset.color || '#ff4444';
+                if (chipColor === game.selectedColor) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+
+                chip.addEventListener('click', () => {
+                    colorChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const color = chip.dataset.color || '#ff4444';
+                    game.selectedColor = color;
+                    try {
+                        localStorage.setItem('jetpack_player_color', color);
+                    } catch (e) { }
+                });
+            });
+        }
 
         // Form Submit Buttons
         document.getElementById('btnCreateRoomSubmit')?.addEventListener('click', () => {
             const hostName = document.getElementById('inputHostName')?.value.trim() || 'Host Pilot';
+            try {
+                localStorage.setItem('jetpack_player_name', hostName);
+                if (game.selectedColor) {
+                    localStorage.setItem('jetpack_player_color', game.selectedColor);
+                }
+            } catch (e) { }
+
             const levelVal = document.getElementById('selectRoomLevel')?.value || '0';
 
             const createOpts = {
@@ -364,6 +412,12 @@ export class MultiplayerController {
 
                 row.addEventListener('click', () => {
                     const joinName = document.getElementById('inputHostName')?.value?.trim() || 'Wingman';
+                    try {
+                        localStorage.setItem('jetpack_player_name', joinName);
+                        if (this.game.selectedColor) {
+                            localStorage.setItem('jetpack_player_color', this.game.selectedColor);
+                        }
+                    } catch (e) { }
                     this.game.network.joinRoom(r.id, {
                         playerName: joinName,
                         playerColor: this.game.selectedColor
