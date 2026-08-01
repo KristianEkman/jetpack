@@ -1,5 +1,6 @@
 /* ==========================================================================
    MASTER GAME CONTROLLER
+   Coordinates core game loop, state transitions, and sub-managers.
    ========================================================================== */
 
 import { GameLoop } from './engine/loop.js';
@@ -8,10 +9,13 @@ import { AudioManager } from './audio/index.js';
 import { TileMap, TILE_SIZE, TILES } from './world/tilemap.js';
 import { Player } from './entities/player.js';
 import { EnemyManager } from './entities/enemy.js';
-import { CAMPAIGN_LEVELS } from './levels/campaign.js';
 import { LevelEditor } from './editor/level_editor.js';
 import { PlayerManager } from './entities/playerManager.js';
 import { NetworkManager } from './network/networkManager.js';
+
+import { UIManager } from './ui/uiManager.js';
+import { LevelManager } from './levels/levelManager.js';
+import { MultiplayerController } from './network/multiplayerController.js';
 
 export const GAME_STATES = {
     MENU: 'menu',
@@ -41,31 +45,17 @@ class Game {
         this.currentLevelIndex = 0;
         this.gameState = GAME_STATES.MENU;
         this.isCustomLevel = false;
-
-        // Cache HUD DOM Element References
-        this.hudLevelEl = document.getElementById('hudLevel');
-        this.hudScoreEl = document.getElementById('hudScore');
-        this.hudLivesEl = document.getElementById('hudLives');
-        this.hudEmeraldsEl = document.getElementById('hudEmeralds');
-        this.fuelBarFillEl = document.getElementById('fuelBarFill');
-        this.fuelTextEl = document.getElementById('fuelText');
-
-        // Dirty state tracking to prevent unnecessary DOM mutations
-        this.hudState = {
-            level: null,
-            score: null,
-            lives: null,
-            emeralds: null,
-            fuel: null
-        };
-
         this.isCanvasRenderedForState = false;
-        this.setupVisibilityHandler();
+
+        // Initialize Sub-Managers
+        this.uiManager = new UIManager(this);
+        this.levelManager = new LevelManager(this);
+        this.multiplayerController = new MultiplayerController(this);
 
         this.editor = new LevelEditor(
             this.canvas,
             this.tileMap,
-            () => this.playtestCustomLevel(),
+            () => this.levelManager.playtestCustomLevel(),
             () => this.gameState === GAME_STATES.LEVEL_EDITOR
         );
 
@@ -74,715 +64,13 @@ class Game {
             (dt) => this.render(dt)
         );
 
-        this.bindUI();
-        this.initNetwork();
-        this.bindMultiplayerUI();
+        // Bind UI and Network events
+        this.uiManager.bindUI();
+        this.multiplayerController.initNetwork();
+        this.multiplayerController.bindMultiplayerUI();
         this.audio.setupUserUnlock();
-        this.showDialog('dlgMainMenu');
+        this.uiManager.showDialog('dlgMainMenu');
         this.loop.start();
-    }
-
-    bindUI() {
-        // HUD buttons
-        document.getElementById('btnPause').addEventListener('click', () => this.togglePause());
-        document.getElementById('btnSound').addEventListener('click', () => {
-            const muted = this.audio.toggleMute();
-            document.getElementById('btnSound').textContent = muted ? '🔇' : '🔊';
-        });
-        document.getElementById('btnCRT').addEventListener('click', () => {
-            document.getElementById('crtOverlay').classList.toggle('active');
-        });
-
-        // Main Menu buttons
-        document.getElementById('btnStartGame').addEventListener('click', () => {
-            this.isMultiplayer = false;
-            this.currentLevelIndex = 0;
-            this.player.score = 0;
-            this.player.lives = 3;
-            this.startLevel(0);
-        });
-
-        document.getElementById('btnMultiplayer').addEventListener('click', () => {
-            this.showDialog('dlgMultiplayer');
-            // Reset to default tab (Create Room)
-            document.getElementById('tabCreateRoom')?.click();
-            this.network.connect();
-            this.network.listRooms();
-        });
-
-        document.getElementById('btnLevelSelect').addEventListener('click', () => {
-            this.openLevelSelect();
-        });
-
-        document.getElementById('btnOpenEditor').addEventListener('click', () => {
-            this.openLevelEditor();
-        });
-
-        document.getElementById('btnControls').addEventListener('click', () => {
-            this.showDialog('dlgControls');
-        });
-
-        document.getElementById('btnCloseControls').addEventListener('click', () => {
-            if (this.gameState === GAME_STATES.PAUSED) {
-                this.showDialog('dlgPause');
-            } else {
-                this.showDialog('dlgMainMenu');
-            }
-        });
-
-        // Pause Menu buttons
-        document.getElementById('btnResume').addEventListener('click', () => this.resumeGame());
-        document.getElementById('btnRestartLevel').addEventListener('click', () => {
-            this.closeAllDialogs();
-            this.startLevel(this.currentLevelIndex);
-        });
-        document.getElementById('btnPauseControls').addEventListener('click', () => {
-            this.showDialog('dlgControls');
-        });
-        document.getElementById('btnQuitToMenu').addEventListener('click', () => {
-            this.audio.stopThrust();
-            if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
-            this.audio.stopMusic();
-            this.gameState = GAME_STATES.MENU;
-            this.showDialog('dlgMainMenu');
-        });
-
-        // Game Over buttons
-        document.getElementById('btnRetryLevel').addEventListener('click', () => {
-            this.player.lives = 3;
-            this.player.score = 0;
-            this.closeAllDialogs();
-            this.startLevel(this.currentLevelIndex);
-        });
-        document.getElementById('btnGameOverMenu').addEventListener('click', () => {
-            this.audio.stopMusic();
-            this.showDialog('dlgMainMenu');
-        });
-
-        // Stage Complete buttons
-        document.getElementById('btnNextLevel').addEventListener('click', () => {
-            this.closeAllDialogs();
-            if (this.isCustomLevel) {
-                this.openLevelEditor();
-            } else {
-                this.currentLevelIndex++;
-                if (this.currentLevelIndex >= CAMPAIGN_LEVELS.length) {
-                    this.audio.stopMusic();
-                    this.showBanner('CONGRATULATIONS! YOU BEAT THE CAMPAIGN!');
-                    setTimeout(() => this.showDialog('dlgMainMenu'), 2000);
-                } else {
-                    this.startLevel(this.currentLevelIndex);
-                }
-            }
-        });
-        document.getElementById('btnCompleteMenu').addEventListener('click', () => {
-            this.audio.stopMusic();
-            this.showDialog('dlgMainMenu');
-        });
-
-        // Level Select Close button
-        document.getElementById('btnCloseLevelSelect').addEventListener('click', () => {
-            this.showDialog('dlgMainMenu');
-        });
-
-        // Editor Toolbar buttons
-        document.getElementById('btnEditorPlay').addEventListener('click', () => this.playtestCustomLevel());
-        document.getElementById('btnEditorSave').addEventListener('click', () => {
-            this.editor.autoSaveLocal();
-            this.showBanner('LEVEL SAVED TO LOCAL STORAGE!');
-        });
-        document.getElementById('btnEditorExport').addEventListener('click', () => this.exportLevelJSON());
-        document.getElementById('btnEditorImport').addEventListener('click', () => {
-            document.getElementById('fileImportInput').click();
-        });
-        document.getElementById('fileImportInput').addEventListener('change', (e) => this.importLevelJSON(e));
-        document.getElementById('btnEditorClear').addEventListener('click', () => {
-            this.tileMap.grid.fill(TILES.AIR);
-            this.showBanner('CANVAS CLEARED');
-        });
-        document.getElementById('btnEditorExit').addEventListener('click', () => {
-            this.audio.stopMusic();
-            document.getElementById('editorToolbar').classList.add('hidden');
-            this.showDialog('dlgMainMenu');
-        });
-
-        // Pause Key Listener
-        this.input.onPausePress = () => {
-            if (this.gameState === GAME_STATES.PLAYING) {
-                this.togglePause();
-            } else if (this.gameState === GAME_STATES.PAUSED) {
-                this.resumeGame();
-            }
-        };
-    }
-
-    initNetwork() {
-        this.network.onRoomCreatedCb = (data) => {
-            this.playerManager.setLocalSocketId(this.network.socketId);
-            this.updateLobbyUI(data.room);
-            this.showLobbyView();
-            this.showBanner(`ROOM ${data.roomId} CREATED!`);
-        };
-
-        this.network.onRoomJoinedCb = (data) => {
-            this.playerManager.setLocalSocketId(this.network.socketId);
-            this.updateLobbyUI(data.room);
-            this.showLobbyView();
-            this.showBanner(`JOINED ROOM ${data.room.id}!`);
-        };
-
-        this.network.onPlayerJoinedCb = (data) => {
-            if (data.room) this.updateLobbyUI(data.room);
-            if (data.player) this.showBanner(`${data.player.name.toUpperCase()} JOINED!`);
-        };
-
-        this.network.onPlayerLeftCb = (data) => {
-            if (data.room) this.updateLobbyUI(data.room);
-            if (data.leavingPlayer) this.showBanner(`${data.leavingPlayer.name.toUpperCase()} LEFT`);
-        };
-
-        this.network.onGameStartedCb = (payload) => {
-            this.startMultiplayerMatch(payload);
-        };
-
-        this.network.onTilePhasedCb = (data) => {
-            if (this.isMultiplayer && this.tileMap && data) {
-                this.tileMap.phaseTile(data.col, data.row);
-            }
-        };
-
-        this.network.onTileRestoredCb = (data) => {
-            if (this.isMultiplayer && this.tileMap && data) {
-                this.tileMap.restoreTile(data.col, data.row);
-            }
-        };
-
-        this.network.onItemCollectedCb = (data) => {
-            if (this.isMultiplayer && this.tileMap && data) {
-                this.tileMap.setTile(data.col, data.row, TILES.AIR);
-                this.tileMap.collectedEmeralds = data.collectedEmeralds;
-                if (data.tileType === TILES.EMERALD) {
-                    if (data.isAllCaught) {
-                        this.audio?.playAllDiamondsCaught?.();
-                        this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#00e5ff', 25);
-                        this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#00ff77', 25);
-                    } else {
-                        this.audio?.playEmeraldPickup?.();
-                        this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#00e5ff', 12);
-                    }
-                } else if (data.tileType === TILES.FUEL) {
-                    this.audio?.playFuelPickup?.();
-                    this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#ffaa00', 14);
-                } else if (data.tileType === TILES.GOLD) {
-                    this.audio?.playEmeraldPickup?.();
-                    this.tileMap.addSparkles(data.col * TILE_SIZE + 16, data.row * TILE_SIZE + 16, '#f1c40f', 10);
-                }
-            }
-        };
-
-        this.network.onLevelCompleteCb = (data) => {
-            if (this.isMultiplayer) {
-                this.triggerMultiplayerLevelComplete(data);
-            }
-        };
-
-        this.network.onWorldSnapshotCb = (snapshot) => {
-            if (this.isMultiplayer && this.gameState === GAME_STATES.PLAYING) {
-                this.playerManager.updateFromSnapshot(snapshot.players);
-                const localPlayer = this.playerManager.getLocalPlayer();
-                if (localPlayer) {
-                    this.player = localPlayer;
-                }
-                // World state (emeralds) is updated authoritatively via
-                // item_collected events, not snapshots, to avoid HUD flicker.
-            }
-        };
-
-        this.network.onRoomListCb = (list) => {
-            this.renderPublicRoomsList(list);
-        };
-
-        this.network.onErrorCb = (errMsg) => {
-            alert(`Multiplayer Error: ${errMsg}`);
-        };
-    }
-
-    bindMultiplayerUI() {
-        // Tab Buttons
-        const tabCreate = document.getElementById('tabCreateRoom');
-        const tabPublic = document.getElementById('tabPublicRooms');
-
-        const viewCreate = document.getElementById('viewCreateRoom');
-        const viewPublic = document.getElementById('viewPublicRooms');
-        const viewLobby = document.getElementById('viewRoomLobby');
-
-        const switchTab = (activeTab, activeView) => {
-            [tabCreate, tabPublic].forEach(t => t?.classList.remove('active'));
-            [viewCreate, viewPublic, viewLobby].forEach(v => v?.classList.add('hidden'));
-
-            activeTab?.classList.add('active');
-            activeView?.classList.remove('hidden');
-
-            // Show tab & profile controls since we are navigating the tabs
-            document.getElementById('mpTabs')?.classList.remove('hidden');
-            document.getElementById('mpProfileSetup')?.classList.remove('hidden');
-        };
-
-        tabCreate?.addEventListener('click', () => switchTab(tabCreate, viewCreate));
-        tabPublic?.addEventListener('click', () => {
-            switchTab(tabPublic, viewPublic);
-            this.network.listRooms();
-        });
-
-        // Level / Custom Map Selection Controls
-        const selectLevel = document.getElementById('selectRoomLevel');
-        const uploadGroup = document.getElementById('groupCustomMapUpload');
-        const fileInput = document.getElementById('inputCustomMapFile');
-        const statusText = document.getElementById('customMapStatusText');
-
-        selectLevel?.addEventListener('change', () => {
-            if (selectLevel.value === 'custom') {
-                uploadGroup?.classList.remove('hidden');
-                try {
-                    const saved = localStorage.getItem('jetpack_custom_level');
-                    if (saved && !this.customMapDataPayload) {
-                        this.customMapDataPayload = JSON.parse(saved);
-                        if (statusText) statusText.textContent = `Using Editor map: "${this.customMapDataPayload.name || 'Custom Level'}"`;
-                    }
-                } catch (e) { }
-            } else {
-                uploadGroup?.classList.add('hidden');
-            }
-        });
-
-        fileInput?.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const parsed = JSON.parse(event.target.result);
-                    if (parsed && Array.isArray(parsed.grid) && parsed.grid.length === 540) {
-                        this.customMapDataPayload = parsed;
-                        if (statusText) statusText.textContent = `Loaded map: "${parsed.name || file.name}" (${parsed.grid.length} tiles)`;
-                    } else {
-                        alert('Invalid level JSON file! Grid must contain 540 tiles (30x18).');
-                    }
-                } catch (err) {
-                    alert('Error parsing map JSON file.');
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        // Color Picker Chips
-        document.querySelectorAll('.color-chip').forEach(chip => {
-            chip.addEventListener('click', (e) => {
-                document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                this.selectedColor = chip.dataset.color || '#ff4444';
-            });
-        });
-
-        // Form Submit Buttons
-        document.getElementById('btnCreateRoomSubmit')?.addEventListener('click', () => {
-            const hostName = document.getElementById('inputHostName').value.trim() || 'Host Pilot';
-            const levelVal = document.getElementById('selectRoomLevel')?.value || '0';
-
-            const createOpts = {
-                playerName: hostName,
-                playerColor: this.selectedColor
-            };
-
-            if (levelVal === 'custom') {
-                if (!this.customMapDataPayload) {
-                    try {
-                        const saved = localStorage.getItem('jetpack_custom_level');
-                        if (saved) this.customMapDataPayload = JSON.parse(saved);
-                    } catch (e) { }
-                }
-                if (!this.customMapDataPayload) {
-                    alert('Please upload a valid custom map JSON file or build one in the Level Editor!');
-                    return;
-                }
-                createOpts.customMapData = this.customMapDataPayload;
-            } else {
-                createOpts.levelIndex = parseInt(levelVal, 10);
-            }
-
-            this.network.createRoom(createOpts);
-        });
-
-        document.getElementById('btnRefreshRooms')?.addEventListener('click', () => {
-            this.network.listRooms();
-        });
-
-        document.getElementById('btnLeaveRoom')?.addEventListener('click', () => {
-            this.network.leaveRoom(() => {
-                switchTab(tabCreate, viewCreate);
-                this.showBanner('LEFT ROOM');
-            });
-        });
-
-        document.getElementById('btnStartMultiplayerGame')?.addEventListener('click', () => {
-            this.network.startMatch();
-        });
-
-        document.getElementById('btnCloseMultiplayer')?.addEventListener('click', () => {
-            this.network.leaveRoom();
-            this.showDialog('dlgMainMenu');
-        });
-    }
-
-    showLobbyView() {
-        const viewCreate = document.getElementById('viewCreateRoom');
-        const viewPublic = document.getElementById('viewPublicRooms');
-        const viewLobby = document.getElementById('viewRoomLobby');
-
-        [viewCreate, viewPublic].forEach(v => v?.classList.add('hidden'));
-        viewLobby?.classList.remove('hidden');
-
-        // Hide tab & profile controls inside the room lobby
-        document.getElementById('mpTabs')?.classList.add('hidden');
-        document.getElementById('mpProfileSetup')?.classList.add('hidden');
-    }
-
-    updateLobbyUI(room) {
-        if (!room) return;
-
-        document.getElementById('displayRoomCode').textContent = room.id;
-        document.getElementById('lobbyPlayerCount').textContent = `${room.players.length}`;
-
-        const mapNameEl = document.getElementById('displayRoomMapName');
-        if (mapNameEl) {
-            mapNameEl.textContent = room.mapName || `Level ${(room.levelIndex || 0) + 1}`;
-        }
-
-        const listEl = document.getElementById('lobbyPlayerList');
-        listEl.innerHTML = '';
-
-        const isHost = (this.network.socketId === room.hostSocketId);
-        const startBtn = document.getElementById('btnStartMultiplayerGame');
-
-        if (startBtn) {
-            if (isHost) {
-                startBtn.classList.remove('hidden');
-            } else {
-                startBtn.classList.add('hidden');
-            }
-        }
-
-        room.players.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'lobby-player-card';
-            card.innerHTML = `
-                <div class="player-info-group">
-                    <div class="player-color-dot" style="background: ${p.color};"></div>
-                    <span class="player-name-text">${p.name} ${p.isHost ? '<span class="host-badge">HOST</span>' : ''}</span>
-                </div>
-                <span style="font-size: 0.8rem; color: #00ffcc;">READY</span>
-            `;
-            listEl.appendChild(card);
-        });
-    }
-
-    renderPublicRoomsList(list) {
-        try {
-            const container = document.getElementById('publicRoomsList');
-            if (!container) {
-                console.warn('publicRoomsList element not found in DOM');
-                return;
-            }
-            container.innerHTML = '';
-
-            if (!list || list.length === 0) {
-                container.innerHTML = '<p class="empty-list-note">No active public rooms found. Create one!</p>';
-                return;
-            }
-
-            console.log(`📋 Rendering ${list.length} public rooms in list UI:`, list);
-
-            list.forEach(r => {
-                const row = document.createElement('div');
-                row.className = 'lobby-player-card';
-                row.style.cursor = 'pointer';
-                const statusBadge = (r.status === 'playing') ?
-                    '<span style="font-size: 0.75rem; color: #ffaa00; background: rgba(255,170,0,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">[PLAYING]</span>' :
-                    '<span style="font-size: 0.75rem; color: #00ffcc; background: rgba(0,255,204,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">[LOBBY]</span>';
-
-                row.innerHTML = `
-                    <div class="player-info-group">
-                        <strong style="color: #00f0ff; letter-spacing: 2px;">${r.id}</strong>
-                        <span style="font-size: 0.85rem; color: #aaa;">(${r.playerCount}/${r.maxPlayers} Pilots)</span>
-                        <span style="font-size: 0.8rem; color: #ffee55;">[${r.mapName || 'Map'}]</span>
-                        ${statusBadge}
-                    </div>
-                    <button class="btn-editor primary">JOIN</button>
-                `;
-
-                row.addEventListener('click', () => {
-                    const joinName = document.getElementById('inputHostName')?.value?.trim() || 'Wingman';
-                    console.log(`🔑 Attempting to join room ${r.id} as ${joinName}...`);
-                    this.network.joinRoom(r.id, {
-                        playerName: joinName,
-                        playerColor: this.selectedColor
-                    });
-                });
-
-                container.appendChild(row);
-            });
-        } catch (err) {
-            console.error('❌ Error rendering public rooms list:', err);
-        }
-    }
-
-    startMultiplayerMatch(payload = null) {
-        this.isMultiplayer = true;
-        const room = payload?.room || this.network.currentRoom;
-
-        let levelData = CAMPAIGN_LEVELS[0];
-        if (payload?.customMapData) {
-            levelData = payload.customMapData;
-            this.isCustomLevel = true;
-        } else if (room?.customMapData) {
-            levelData = room.customMapData;
-            this.isCustomLevel = true;
-        } else if (payload?.levelIndex !== undefined) {
-            this.currentLevelIndex = payload.levelIndex;
-            levelData = CAMPAIGN_LEVELS[payload.levelIndex] || CAMPAIGN_LEVELS[0];
-            this.isCustomLevel = false;
-        } else if (room?.levelIndex !== undefined) {
-            this.currentLevelIndex = room.levelIndex;
-            levelData = CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
-            this.isCustomLevel = false;
-        }
-
-        this.tileMap.loadLevelData(levelData);
-        this.enemyManager.clear();
-
-        // Spawn enemies from level data arrays (flitzers, missiles, turrets)
-        if (levelData.flitzers) {
-            levelData.flitzers.forEach(f => this.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
-        }
-        if (levelData.missiles) {
-            levelData.missiles.forEach(m => this.enemyManager.addHomingMissile(m.x, m.y));
-        }
-        if (levelData.turrets) {
-            levelData.turrets.forEach(t => this.enemyManager.addTurret(t.x, t.y, t.fireInterval));
-        }
-        // Also spawn any enemies placed as tiles in the grid
-        this.spawnEnemiesFromGrid();
-
-        this.playerManager.clear();
-        this.playerManager.setLocalSocketId(this.network.socketId);
-
-        // Populate initial players from current room state
-        if (room && room.players) {
-            room.players.forEach(p => {
-                this.playerManager.addPlayer(p.socketId, {
-                    id: p.id,
-                    name: p.name,
-                    color: p.color,
-                    isLocal: p.socketId === this.network.socketId,
-                    x: p.x || 128,
-                    y: p.y || 100
-                });
-            });
-        }
-
-        const localPlayer = this.playerManager.getLocalPlayer();
-        if (localPlayer) {
-            this.player = localPlayer;
-        }
-
-        this.gameState = GAME_STATES.PLAYING;
-        this.audio.startGameMusic(this.currentLevelIndex || 0);
-        this.closeAllDialogs();
-        this.showBanner('MULTIPLAYER MATCH STARTED!');
-    }
-
-    triggerMultiplayerLevelComplete(data) {
-        this.gameState = GAME_STATES.LEVEL_COMPLETE;
-        this.audio.stopThrust();
-        if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
-        this.audio.stopMusic();
-        this.audio.playPortalWarp();
-
-        const fuelBonus = Math.floor((this.player ? this.player.fuel : 0) * 10);
-        const levelScore = 1000 + fuelBonus;
-
-        const statLevelScore = document.getElementById('statLevelScore');
-        const statFuelBonus = document.getElementById('statFuelBonus');
-        const statTotalScore = document.getElementById('statTotalScore');
-
-        if (statLevelScore) statLevelScore.textContent = '1000';
-        if (statFuelBonus) statFuelBonus.textContent = `${fuelBonus}`;
-        if (statTotalScore) statTotalScore.textContent = `${(this.player ? this.player.score : 0) + levelScore}`;
-
-        const sub = document.getElementById('dialogLevelCompleteSub');
-        if (sub) {
-            sub.textContent = `MATCH CLEARED BY ${data?.clearedBy ? data.clearedBy.toUpperCase() : 'TEAM'}!`;
-        }
-
-        this.showDialog('dlgLevelComplete');
-    }
-
-    startLevel(index) {
-        this.isCustomLevel = false;
-        this.currentLevelIndex = index;
-        this.deathSequenceTimer = 0;
-        this.isDeathHandled = false;
-        const levelData = CAMPAIGN_LEVELS[index];
-
-        this.tileMap.loadLevelData(levelData);
-        this.enemyManager.clear();
-
-        // Spawn player at SPAWN tile
-        let spawnFound = false;
-        for (let r = 0; r < this.tileMap.rows; r++) {
-            for (let c = 0; c < this.tileMap.cols; c++) {
-                if (this.tileMap.getTile(c, r) === TILES.SPAWN) {
-                    this.player.spawn(c * TILE_SIZE + 4, r * TILE_SIZE + 2);
-                    spawnFound = true;
-                    break;
-                }
-            }
-        }
-        if (!spawnFound) this.player.spawn(100, 100);
-
-        // Spawn Enemies
-        if (levelData.flitzers) {
-            levelData.flitzers.forEach(f => this.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
-        }
-        if (levelData.missiles) {
-            levelData.missiles.forEach(m => this.enemyManager.addHomingMissile(m.x, m.y));
-        }
-        if (levelData.turrets) {
-            levelData.turrets.forEach(t => this.enemyManager.addTurret(t.x, t.y, t.fireInterval));
-        }
-        this.spawnEnemiesFromGrid();
-
-        this.gameState = GAME_STATES.PLAYING;
-        this.audio.startGameMusic(index);
-        document.getElementById('editorToolbar').classList.add('hidden');
-        this.closeAllDialogs();
-
-        this.showBanner(`${levelData.name.toUpperCase()}`);
-    }
-
-    openLevelSelect() {
-        const grid = document.getElementById('levelGrid');
-        grid.innerHTML = '';
-
-        CAMPAIGN_LEVELS.forEach((level, idx) => {
-            const card = document.createElement('div');
-            card.className = 'level-card';
-            card.innerHTML = `<span>STAGE</span><span>${idx + 1}</span>`;
-            card.addEventListener('click', () => {
-                this.player.score = 0;
-                this.player.lives = 3;
-                this.startLevel(idx);
-            });
-            grid.appendChild(card);
-        });
-
-        this.showDialog('dlgLevelSelect');
-    }
-
-    openLevelEditor() {
-        this.gameState = GAME_STATES.LEVEL_EDITOR;
-        this.audio.stopThrust();
-        this.audio.startMenuMusic();
-        this.closeAllDialogs();
-        document.getElementById('editorToolbar').classList.remove('hidden');
-
-        // Load saved custom level or default blank
-        if (!this.editor.loadFromLocal()) {
-            this.tileMap.grid.fill(TILES.AIR);
-        }
-    }
-
-    playtestCustomLevel() {
-        const validation = this.editor.validateLevel();
-        if (!validation.valid) {
-            alert(validation.error);
-            return;
-        }
-
-        this.isCustomLevel = true;
-        this.enemyManager.clear();
-        this.tileMap.collectedEmeralds = 0;
-
-        // Count emeralds
-        let total = 0;
-        let spawnX = 100, spawnY = 100;
-        for (let r = 0; r < this.tileMap.rows; r++) {
-            for (let c = 0; c < this.tileMap.cols; c++) {
-                const t = this.tileMap.getTile(c, r);
-                if (t === TILES.EMERALD) total++;
-                if (t === TILES.SPAWN) {
-                    spawnX = c * TILE_SIZE + 4;
-                    spawnY = r * TILE_SIZE + 2;
-                }
-            }
-        }
-        this.tileMap.totalEmeralds = total;
-        this.player.spawn(spawnX, spawnY);
-        this.spawnEnemiesFromGrid();
-
-        this.gameState = GAME_STATES.PLAYING;
-        this.audio.startGameMusic(0);
-        document.getElementById('editorToolbar').classList.add('hidden');
-        this.closeAllDialogs();
-        this.showBanner('PLAYTEST CUSTOM LEVEL');
-    }
-
-    spawnEnemiesFromGrid() {
-        for (let r = 0; r < this.tileMap.rows; r++) {
-            for (let c = 0; c < this.tileMap.cols; c++) {
-                const t = this.tileMap.getTile(c, r);
-                if (t === TILES.ENEMY_FLITZER) {
-                    this.enemyManager.addFlitzer(c * TILE_SIZE + 6, r * TILE_SIZE + 6, 120, 0);
-                } else if (t === TILES.ENEMY_MISSILE) {
-                    this.enemyManager.addHomingMissile(c * TILE_SIZE + 8, r * TILE_SIZE + 8);
-                } else if (t === TILES.ENEMY_TURRET) {
-                    this.enemyManager.addTurret(c * TILE_SIZE + 4, r * TILE_SIZE + 4, 2.0);
-                }
-            }
-        }
-    }
-
-    exportLevelJSON() {
-        const data = this.editor.getExportData();
-        const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-        const a = document.createElement('a');
-        a.setAttribute("href", str);
-        a.setAttribute("download", "jetpack_custom_level.json");
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-    }
-
-    importLevelJSON(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const parsed = JSON.parse(event.target.result);
-                if (parsed.grid && parsed.grid.length === this.tileMap.grid.length) {
-                    this.tileMap.loadLevelData(parsed);
-                    this.editor.autoSaveLocal();
-                    this.showBanner('CUSTOM LEVEL IMPORTED!');
-                } else {
-                    alert('Invalid level format!');
-                }
-            } catch (err) {
-                alert('Error parsing JSON level file!');
-            }
-        };
-        reader.readAsText(file);
     }
 
     togglePause() {
@@ -791,7 +79,7 @@ class Game {
             this.audio.stopThrust();
             if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
             this.audio.stopMusic();
-            this.showDialog('dlgPause');
+            this.uiManager.showDialog('dlgPause');
         }
     }
 
@@ -799,55 +87,38 @@ class Game {
         if (this.gameState === GAME_STATES.PAUSED) {
             this.gameState = GAME_STATES.PLAYING;
             this.audio.startGameMusic(this.currentLevelIndex);
-            this.closeAllDialogs();
+            this.uiManager.closeAllDialogs();
         }
     }
 
-    showDialog(dialogId) {
-        this.isCanvasRenderedForState = false;
-        this.closeAllDialogs();
-        const dlg = document.getElementById(dialogId);
-        if (dlg) {
-            dlg.showModal();
-        }
-        if (dialogId === 'dlgMainMenu' || dialogId === 'dlgLevelSelect') {
-            this.audio.startMenuMusic();
-        }
-    }
+    // Delegate UI & Dialog methods for convenience / compatibility
+    showDialog(dialogId) { this.uiManager.showDialog(dialogId); }
+    closeAllDialogs() { this.uiManager.closeAllDialogs(); }
+    showBanner(text) { this.uiManager.showBanner(text); }
+    updateHUD() { this.uiManager.updateHUD(); }
 
-    setupVisibilityHandler() {
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                this.loop.stop();
-                this.audio.stopThrust();
-                if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
-            } else {
-                this.isCanvasRenderedForState = false;
-                this.loop.start();
-            }
-        });
-    }
+    // Delegate Level methods for convenience / compatibility
+    startLevel(index) { this.levelManager.startLevel(index); }
+    openLevelSelect() { this.levelManager.openLevelSelect(); }
+    openLevelEditor() { this.levelManager.openLevelEditor(); }
+    playtestCustomLevel() { this.levelManager.playtestCustomLevel(); }
+    spawnEnemiesFromGrid() { this.levelManager.spawnEnemiesFromGrid(); }
+    triggerLevelComplete() { this.levelManager.triggerLevelComplete(); }
+    exportLevelJSON() { this.levelManager.exportLevelJSON(); }
+    importLevelJSON(e) { this.levelManager.importLevelJSON(e); }
 
-    closeAllDialogs() {
-        document.querySelectorAll('dialog').forEach(d => {
-            if (d.open) d.close();
-        });
-    }
-
-    showBanner(text) {
-        const banner = document.getElementById('bannerNotification');
-        const bannerText = document.getElementById('bannerText');
-        bannerText.textContent = text;
-        banner.classList.remove('hidden');
-        setTimeout(() => {
-            banner.classList.add('hidden');
-        }, 2200);
-    }
+    // Delegate Multiplayer methods for convenience / compatibility
+    initNetwork() { this.multiplayerController.initNetwork(); }
+    bindMultiplayerUI() { this.multiplayerController.bindMultiplayerUI(); }
+    showLobbyView() { this.multiplayerController.showLobbyView(); }
+    updateLobbyUI(room) { this.multiplayerController.updateLobbyUI(room); }
+    renderPublicRoomsList(list) { this.multiplayerController.renderPublicRoomsList(list); }
+    startMultiplayerMatch(payload) { this.multiplayerController.startMultiplayerMatch(payload); }
+    triggerMultiplayerLevelComplete(data) { this.multiplayerController.triggerMultiplayerLevelComplete(data); }
 
     update(dt) {
         if (this.gameState !== GAME_STATES.PLAYING) return;
 
-        // Time Dilation scale during dramatic player death sequence
         let effectiveDt = dt;
 
         if (this.isMultiplayer) {
@@ -857,7 +128,6 @@ class Game {
 
         if (this.player.isDead) {
             this.deathSequenceTimer += dt;
-            // First 0.25s of death runs in slow-motion (0.15x speed), smoothly scaling back to 1.0x
             if (this.deathSequenceTimer < 0.25) {
                 effectiveDt = dt * 0.15;
             } else if (this.deathSequenceTimer < 0.6) {
@@ -867,117 +137,55 @@ class Game {
             this.audio.stopThrust();
             if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
 
-            // After 1.8 seconds of explosion physics, perform state transition once
             if (this.deathSequenceTimer >= 1.8 && !this.isDeathHandled) {
                 this.isDeathHandled = true;
                 if (this.player.lives <= 0) {
                     this.gameState = GAME_STATES.GAME_OVER;
-                    document.getElementById('gameOverStats').textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
-                    this.showDialog('dlgGameOver');
+                    const stats = document.getElementById('gameOverStats');
+                    if (stats) stats.textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
+                    this.uiManager.showDialog('dlgGameOver');
                 } else if (this.isMultiplayer) {
-                    // In multiplayer, don't reload the level — the server will
-                    // respawn us via snapshot. Just reset the death animation state
-                    // so we're ready to accept the server's respawn.
                     this.deathSequenceTimer = 0;
                 } else {
-                    this.startLevel(this.currentLevelIndex);
+                    this.levelManager.startLevel(this.currentLevelIndex);
                 }
             }
         } else if (this.isDeathHandled) {
-            // Player respawned (isDead transitioned to false) — reset death state
             this.deathSequenceTimer = 0;
             this.isDeathHandled = false;
         }
 
-        // 1. Update TileMap (debris physics, particles)
+        // 1. Update TileMap
         this.tileMap.update(effectiveDt, this.player, this.enemyManager);
 
         // 2. Update Player
         this.player.update(effectiveDt, this.input.keys, this.enemyManager);
 
-        // Track alive state before enemy update to detect client-side enemy kills
-        // (spike/stuck/suicide deaths already happened in player.update above
-        // and are handled server-side, so we only want to detect enemy kills)
         const wasAliveBeforeEnemies = !this.player.isDead;
 
         // 3. Update Enemies
         this.enemyManager.update(effectiveDt, this.player);
 
-        // 4. Notify server if enemies killed the local player this tick.
-        // The server has no EnemyManager, so it won't detect enemy deaths on
-        // its own. Spike/stuck/suicide deaths are already handled server-side
-        // via player.update() and don't need this notification.
+        // 4. Notify server if enemies killed local player
         if (this.isMultiplayer && wasAliveBeforeEnemies && this.player.isDead) {
             this.network.sendPlayerDied('enemy');
         }
 
-        // 5. Check Level Clear Condition (Player enters EXIT_PORTAL when all emeralds collected)
+        // 5. Check Level Clear Condition
         if (!this.player.isDead && this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds) {
             const playerCol = Math.floor((this.player.x + this.player.width / 2) / TILE_SIZE);
             const playerRow = Math.floor((this.player.y + this.player.height / 2) / TILE_SIZE);
 
             if (this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL) {
-                this.triggerLevelComplete();
+                this.levelManager.triggerLevelComplete();
             }
         }
 
         // Update HUD display
-        this.updateHUD();
-    }
-
-    triggerLevelComplete() {
-        this.gameState = GAME_STATES.LEVEL_COMPLETE;
-        this.audio.stopThrust();
-        if (this.audio.stopEnergyDrain) this.audio.stopEnergyDrain();
-        this.audio.stopMusic();
-        this.audio.playPortalWarp();
-
-        const fuelBonus = Math.floor(this.player.fuel * 10);
-        const levelScore = 1000 + fuelBonus;
-        this.player.score += levelScore;
-
-        document.getElementById('statLevelScore').textContent = '1000';
-        document.getElementById('statFuelBonus').textContent = `${fuelBonus}`;
-        document.getElementById('statTotalScore').textContent = `${this.player.score}`;
-
-        this.showDialog('dlgLevelComplete');
-    }
-
-    updateHUD() {
-        const levelStr = this.isCustomLevel ? 'CUSTOM' : `${this.currentLevelIndex + 1}`;
-        if (this.hudState.level !== levelStr) {
-            this.hudState.level = levelStr;
-            this.hudLevelEl.textContent = levelStr;
-        }
-
-        if (this.hudState.score !== this.player.score) {
-            this.hudState.score = this.player.score;
-            this.hudScoreEl.textContent = String(this.player.score).padStart(6, '0');
-        }
-
-        if (this.hudState.lives !== this.player.lives) {
-            this.hudState.lives = this.player.lives;
-            let hearts = '';
-            for (let i = 0; i < this.player.lives; i++) hearts += '❤️';
-            this.hudLivesEl.textContent = hearts || '💀';
-        }
-
-        const emeraldStr = `${this.tileMap.collectedEmeralds} / ${this.tileMap.totalEmeralds}`;
-        if (this.hudState.emeralds !== emeraldStr) {
-            this.hudState.emeralds = emeraldStr;
-            this.hudEmeraldsEl.textContent = emeraldStr;
-        }
-
-        const fuelPct = Math.round(this.player.fuel);
-        if (this.hudState.fuel !== fuelPct) {
-            this.hudState.fuel = fuelPct;
-            this.fuelBarFillEl.style.width = `${fuelPct}%`;
-            this.fuelTextEl.textContent = `${fuelPct}%`;
-        }
+        this.uiManager.updateHUD();
     }
 
     render(dt) {
-        // Skip continuous canvas rendering in menu, pause, or game over states to eliminate background CPU/GPU usage
         if (this.gameState === GAME_STATES.PAUSED || this.gameState === GAME_STATES.MENU ||
             this.gameState === GAME_STATES.GAME_OVER || this.gameState === GAME_STATES.LEVEL_COMPLETE) {
             if (this.isCanvasRenderedForState) return;
