@@ -152,6 +152,33 @@ export class GameLoop {
                 }
             }
 
+            // 2b. Check Game Over Condition (All players eliminated)
+            if (room.status === 'playing' && room.players.size > 0) {
+                let allDead = true;
+                for (const playerEntity of room.players.values()) {
+                    if (!playerEntity.isDead || playerEntity.lives > 0) {
+                        allDead = false;
+                        break;
+                    }
+                }
+
+                if (allDead) {
+                    room.status = 'finished';
+                    const playersList = [];
+                    for (const [sId, p] of room.players.entries()) {
+                        playersList.push({ socketId: sId, name: p.name, score: p.score, lives: p.lives });
+                    }
+                    if (this.io) {
+                        this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || 'game_over', {
+                            roomId: room.id,
+                            reason: 'all_players_eliminated',
+                            players: playersList
+                        });
+                    }
+                    console.log(`💀 All players eliminated in Room ${room.id}! Game Over emitted.`);
+                }
+            }
+
             // 3. Build world snapshot (20 Hz snapshot emission)
             const snapshotInterval = NETWORK_SETTINGS?.SNAPSHOT_INTERVAL_TICKS || 3;
             if (room.tickCount % snapshotInterval === 0 && this.io) {

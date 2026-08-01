@@ -23,7 +23,8 @@ export const GAME_STATES = {
     PAUSED: 'paused',
     LEVEL_EDITOR: 'level_editor',
     GAME_OVER: 'game_over',
-    LEVEL_COMPLETE: 'level_complete'
+    LEVEL_COMPLETE: 'level_complete',
+    SPECTATING: 'spectating'
 };
 
 class Game {
@@ -122,9 +123,10 @@ class Game {
     renderPublicRoomsList(list) { this.multiplayerController.renderPublicRoomsList(list); }
     startMultiplayerMatch(payload) { this.multiplayerController.startMultiplayerMatch(payload); }
     triggerMultiplayerLevelComplete(data) { this.multiplayerController.triggerMultiplayerLevelComplete(data); }
+    triggerMultiplayerGameOver(data) { this.multiplayerController.triggerMultiplayerGameOver(data); }
 
     update(dt) {
-        if (this.gameState !== GAME_STATES.PLAYING) return;
+        if (this.gameState !== GAME_STATES.PLAYING && this.gameState !== GAME_STATES.SPECTATING) return;
 
         let effectiveDt = dt;
 
@@ -149,10 +151,15 @@ class Game {
             if (this.deathSequenceTimer >= 1.8 && !this.isDeathHandled) {
                 this.isDeathHandled = true;
                 if (this.player.lives <= 0) {
-                    this.gameState = GAME_STATES.GAME_OVER;
-                    const stats = document.getElementById('gameOverStats');
-                    if (stats) stats.textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
-                    this.uiManager.showDialog('dlgGameOver');
+                    if (this.isMultiplayer) {
+                        this.gameState = GAME_STATES.SPECTATING;
+                        this.uiManager.showBanner('OUT OF LIVES - SPECTATING');
+                    } else {
+                        this.gameState = GAME_STATES.GAME_OVER;
+                        const stats = document.getElementById('gameOverStats');
+                        if (stats) stats.textContent = `Final Score: ${String(this.player.score).padStart(6, '0')}`;
+                        this.uiManager.showDialog('dlgGameOver');
+                    }
                 } else if (this.isMultiplayer) {
                     this.deathSequenceTimer = 0;
                 } else {
@@ -162,6 +169,11 @@ class Game {
         } else if (this.isDeathHandled) {
             this.deathSequenceTimer = 0;
             this.isDeathHandled = false;
+        }
+
+        if (this.gameState === GAME_STATES.SPECTATING) {
+            this.uiManager.updateHUD();
+            return;
         }
 
         const wasAlive = !this.player.isDead;
@@ -230,6 +242,18 @@ class Game {
         // Render Editor Overlay if in Level Editor Mode
         if (this.gameState === GAME_STATES.LEVEL_EDITOR) {
             this.editor.renderHoverPreview(this.ctx);
+        }
+
+        // Render Spectator Banner Overlay if in Spectating Mode
+        if (this.gameState === GAME_STATES.SPECTATING) {
+            this.ctx.save();
+            this.ctx.fillStyle = 'rgba(255, 0, 85, 0.25)';
+            this.ctx.fillRect(0, 0, this.canvas.width, 28);
+            this.ctx.font = 'bold 12px Orbitron, sans-serif';
+            this.ctx.fillStyle = '#ff0055';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('💀 OUT OF LIVES - SPECTATING MATCH', this.canvas.width / 2, 18);
+            this.ctx.restore();
         }
     }
 }

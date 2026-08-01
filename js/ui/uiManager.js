@@ -99,10 +99,14 @@ export class UIManager {
 
         // Game Over buttons
         document.getElementById('btnRetryLevel')?.addEventListener('click', () => {
-            game.player.lives = 3;
-            game.player.score = 0;
-            this.closeAllDialogs();
-            game.levelManager.startLevel(game.currentLevelIndex);
+            if (game.isMultiplayer) {
+                game.network.startMatch();
+            } else {
+                game.player.lives = 3;
+                game.player.score = 0;
+                this.closeAllDialogs();
+                game.levelManager.startLevel(game.currentLevelIndex);
+            }
         });
         document.getElementById('btnGameOverMenu')?.addEventListener('click', () => {
             game.audio.stopMusic();

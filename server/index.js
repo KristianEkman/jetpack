@@ -372,6 +372,7 @@ function initRoomEnemies(room, levelData) {
 
         for (const [sId, playerEntity] of room.players.entries()) {
             playerEntity.spawn(spawnX, spawnY);
+            playerEntity.lives = 3;
             playerEntity.isDead = false;
             playerEntity.fuel = 100;
         }

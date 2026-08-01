@@ -63,7 +63,8 @@ export const GAME_EVENTS = {
     COMPLETE_LEVEL: 'complete_level',
     NEXT_LEVEL: 'next_level',
     PLAYER_DIED: 'player_died',
-    ENEMY_DESTROYED: 'enemy_destroyed'
+    ENEMY_DESTROYED: 'enemy_destroyed',
+    GAME_OVER: 'game_over'
 };
 
 export const NETWORK_SETTINGS = {

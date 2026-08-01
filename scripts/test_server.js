@@ -220,6 +220,35 @@ try {
     assert.equal(dupAck.duplicate, true);
     console.log('   ✅ Enemy destruction event broadcast and duplicate handling verified.\n');
 
+    // 8.6 Testing All-Players-Eliminated Game Over Flow
+    console.log('8️⃣.6️⃣  Testing All Players Eliminated Game Over Flow...');
+    const targetRoom = roomManager.getRoom(roomId);
+    targetRoom.status = 'playing';
+    for (const p of targetRoom.players.values()) {
+        p.isDead = true;
+        p.lives = 0;
+    }
+
+    let gameOverData = null;
+    const gameOverPromise = new Promise((resolve) => {
+        client1.on(GAME_EVENTS.GAME_OVER || 'game_over', (data) => {
+            gameOverData = data;
+            resolve(data);
+        });
+    });
+
+    // Tick game loop once to evaluate game over
+    gameLoop.tick();
+
+    await Promise.race([
+        gameOverPromise,
+        new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+
+    assert.notEqual(gameOverData, null, 'Client 1 should receive game_over event when all players are eliminated');
+    assert.equal(targetRoom.status, 'finished');
+    console.log('   ✅ All players eliminated game_over broadcast and room state verified.\n');
+
     // 9. Client Disconnection & Room Cleanup
     console.log('9️⃣  Testing Client Disconnect & Room Cleanup...');
     let client1PlayerLeftEvent = null;

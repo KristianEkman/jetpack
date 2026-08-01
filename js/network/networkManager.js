@@ -32,6 +32,7 @@ export class NetworkManager {
         this.onItemCollectedCb = null;
         this.onLevelCompleteCb = null;
         this.onEnemyDestroyedCb = null;
+        this.onGameOverCb = null;
     }
 
     connect(serverUrl = window.location.origin) {
@@ -139,6 +140,10 @@ export class NetworkManager {
 
         this.socket.on(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', (data) => {
             if (this.onLevelCompleteCb) this.onLevelCompleteCb(data);
+        });
+
+        this.socket.on(GAME_EVENTS.GAME_OVER || 'game_over', (data) => {
+            if (this.onGameOverCb) this.onGameOverCb(data);
         });
 
         this.socket.on(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', (snapshot) => {

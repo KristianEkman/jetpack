@@ -110,8 +110,14 @@ export class MultiplayerController {
             }
         };
 
+        game.network.onGameOverCb = (data) => {
+            if (game.isMultiplayer) {
+                this.triggerMultiplayerGameOver(data);
+            }
+        };
+
         game.network.onWorldSnapshotCb = (snapshot) => {
-            if (game.isMultiplayer && game.gameState === GAME_STATES.PLAYING) {
+            if (game.isMultiplayer && (game.gameState === GAME_STATES.PLAYING || game.gameState === GAME_STATES.SPECTATING)) {
                 if (game.network.interpolationDelay) {
                     game.playerManager.interpolationDelay = game.network.interpolationDelay;
                 }
@@ -485,5 +491,41 @@ export class MultiplayerController {
         this.updateLevelCompleteHostState(data?.room || game.network.currentRoom);
 
         game.uiManager.showDialog('dlgLevelComplete');
+    }
+
+    updateGameOverHostState(room = this.game.network.currentRoom) {
+        const game = this.game;
+        const btnRetryLevel = document.getElementById('btnRetryLevel');
+        if (!btnRetryLevel) return;
+
+        if (game.isMultiplayer) {
+            const isHost = room ? (game.network.socketId === room.hostSocketId) : false;
+            if (isHost) {
+                btnRetryLevel.disabled = false;
+                btnRetryLevel.textContent = '🔄 RETRY MATCH';
+            } else {
+                btnRetryLevel.disabled = true;
+                btnRetryLevel.textContent = '⌛ WAITING FOR HOST TO RETRY...';
+            }
+        } else {
+            btnRetryLevel.disabled = false;
+            btnRetryLevel.textContent = '🔄 RETRY LEVEL';
+        }
+    }
+
+    triggerMultiplayerGameOver(data = {}) {
+        const game = this.game;
+        game.gameState = GAME_STATES.GAME_OVER;
+        game.audio?.stopThrust?.();
+        if (game.audio?.stopEnergyDrain) game.audio.stopEnergyDrain();
+
+        const stats = document.getElementById('gameOverStats');
+        if (stats) {
+            stats.textContent = `ALL PLAYERS ELIMINATED | Final Score: ${String(game.player?.score || 0).padStart(6, '0')}`;
+        }
+
+        this.updateGameOverHostState(data?.room || game.network.currentRoom);
+        game.uiManager.showBanner('ALL PLAYERS ELIMINATED - GAME OVER');
+        game.uiManager.showDialog('dlgGameOver');
     }
 }
