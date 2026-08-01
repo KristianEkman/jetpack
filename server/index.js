@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import fs from 'node:fs';
+import { execSync } from 'node:child_process';
 
 import { RoomManager } from './roomManager.js';
 import { GameLoop } from './gameLoop.js';
@@ -19,6 +20,39 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
+
+let serverCommitHash = 'dev';
+let deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+
+function loadVersionInfo() {
+    const distVersionFile = path.join(distDir, 'version.json');
+    const rootVersionFile = path.join(rootDir, 'version.json');
+
+    if (fs.existsSync(distVersionFile)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(distVersionFile, 'utf8'));
+            if (data.commitHash) serverCommitHash = data.commitHash;
+            if (data.deployedAt) deployedAt = data.deployedAt;
+            return;
+        } catch (e) {}
+    }
+
+    if (fs.existsSync(rootVersionFile)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(rootVersionFile, 'utf8'));
+            if (data.commitHash) serverCommitHash = data.commitHash;
+            if (data.deployedAt) deployedAt = data.deployedAt;
+            return;
+        } catch (e) {}
+    }
+
+    try {
+        const gitHash = execSync('git rev-parse --short HEAD', { cwd: rootDir }).toString().trim();
+        if (gitHash) serverCommitHash = gitHash;
+    } catch (e) {}
+}
+
+loadVersionInfo();
 
 const app = express();
 const httpServer = createServer(app);
@@ -35,6 +69,14 @@ if (fs.existsSync(distDir)) {
     app.use(express.static(distDir));
 }
 app.use(express.static(rootDir));
+
+// Version information endpoint
+app.get('/api/version', (req, res) => {
+    res.json({
+        commitHash: serverCommitHash,
+        deployedAt: deployedAt
+    });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -29,6 +29,15 @@ try {
     assert.equal(health.status, 'ok');
     console.log('   ✅ HTTP Health check endpoint responded correctly.\n');
 
+    // 2.5 HTTP Version Endpoint Verification
+    console.log('2️⃣.5️⃣  Testing GET /api/version Endpoint...');
+    const versionRes = await fetch(`${SERVER_URL}/api/version`);
+    assert.equal(versionRes.status, 200);
+    const versionData = await versionRes.json();
+    assert.ok(versionData.commitHash, 'Should contain commitHash');
+    assert.ok(versionData.deployedAt, 'Should contain deployedAt');
+    console.log(`   ✅ HTTP Version endpoint returned commit ${versionData.commitHash} (${versionData.deployedAt}).\n`);
+
     // 3. Socket.IO Client 1 Connection & Handshake
     console.log('3️⃣  Testing Socket.IO Client Connection & Handshake...');
     client1 = ioClient(SERVER_URL, { forceNew: true });

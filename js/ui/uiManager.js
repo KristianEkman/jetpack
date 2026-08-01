@@ -29,10 +29,13 @@ export class UIManager {
         };
 
         this.setupVisibilityHandler();
+        this.initVersionBadge();
     }
 
     bindUI() {
         const game = this.game;
+
+        this.initVersionBadge();
 
         // HUD buttons
         document.getElementById('btnPause')?.addEventListener('click', () => game.togglePause());
@@ -179,6 +182,10 @@ export class UIManager {
         this.closeAllDialogs();
         const dlg = document.getElementById(dialogId);
         if (dlg) {
+            const badge = document.getElementById('gameVersionBadge');
+            if (badge) {
+                dlg.appendChild(badge);
+            }
             dlg.showModal();
         }
         if (dialogId === 'dlgMainMenu' || dialogId === 'dlgLevelSelect') {
@@ -187,6 +194,11 @@ export class UIManager {
     }
 
     closeAllDialogs() {
+        const badge = document.getElementById('gameVersionBadge');
+        const appContainer = document.getElementById('appContainer');
+        if (badge && appContainer && badge.parentElement !== appContainer) {
+            appContainer.appendChild(badge);
+        }
         document.querySelectorAll('dialog').forEach(d => {
             if (d.open) d.close();
         });
@@ -249,5 +261,32 @@ export class UIManager {
             if (this.fuelBarFillEl) this.fuelBarFillEl.style.width = `${fuelPct}%`;
             if (this.fuelTextEl) this.fuelTextEl.textContent = `${fuelPct}%`;
         }
+    }
+
+    initVersionBadge() {
+        const hashEl = document.getElementById('versionCommit');
+        const dateEl = document.getElementById('versionDate');
+
+        let commitHash = typeof __GIT_COMMIT_HASH__ !== 'undefined' ? __GIT_COMMIT_HASH__ : null;
+        let buildDate = typeof __BUILD_DATE_TIME__ !== 'undefined' ? __BUILD_DATE_TIME__ : null;
+
+        if (commitHash && hashEl) {
+            hashEl.textContent = commitHash;
+        }
+        if (buildDate && dateEl) {
+            dateEl.textContent = buildDate;
+        }
+
+        fetch('/api/version')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) {
+                    if (hashEl && data.commitHash) hashEl.textContent = data.commitHash;
+                    if (dateEl && data.deployedAt) dateEl.textContent = data.deployedAt;
+                }
+            })
+            .catch(() => {
+                // Ignore errors when running without server
+            });
     }
 }
