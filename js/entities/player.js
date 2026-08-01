@@ -219,8 +219,18 @@ export class Player {
                         const enemy = enemyManager.enemies[hitEnemyIndex];
                         this.tileMap.addSparkles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ff0055', 25);
                         this.audio?.playExplosion?.();
-                        this.score += 200;
-                        enemyManager.enemies.splice(hitEnemyIndex, 1);
+
+                        const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
+
+                        if (destroyedEnemy) {
+                            this.score += 200;
+
+                            enemyManager.onEnemyDestroyed?.({
+                                enemyId: destroyedEnemy.id,
+                                playerId: this.id
+                            });
+                        }
+
                         this.phaseBeamLength = dist;
                         break;
                     }

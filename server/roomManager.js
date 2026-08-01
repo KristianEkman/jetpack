@@ -62,6 +62,7 @@ export class RoomManager {
             playerConfigs: new Map(),  // socketId -> metadata ({ id, name, color, isReady, isHost })
             status: 'lobby',          // 'lobby' | 'playing' | 'finished'
             tickCount: 0,
+            destroyedEnemyIds: new Set(),
             createdAt: Date.now()
         };
 
@@ -238,7 +239,8 @@ export class RoomManager {
             mapName: room.mapName,
             status: room.status,
             tickCount: room.tickCount,
-            players: playersList
+            players: playersList,
+            destroyedEnemyIds: room.destroyedEnemyIds ? Array.from(room.destroyedEnemyIds) : []
         };
     }
 

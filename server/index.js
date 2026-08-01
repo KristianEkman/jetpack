@@ -162,6 +162,7 @@ io.on('connection', (socket) => {
         }
 
         room.status = 'playing';
+        room.destroyedEnemyIds = new Set();
 
         // Re-load level tileMap data on server at match start
         const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
@@ -234,6 +235,39 @@ io.on('connection', (socket) => {
         console.log(`💀 Player ${socket.id} died (reason: ${data.reason || 'enemy'}, lives: ${playerEntity.lives})`);
     });
 
+    // Enemy Destroyed Handler (Client -> Server)
+    socket.on(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', ({ enemyId } = {}, callback) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+
+        if (!room || room.status !== 'playing' || !enemyId) {
+            callback?.({
+                success: false,
+                error: 'Invalid enemy destruction'
+            });
+            return;
+        }
+
+        room.destroyedEnemyIds ??= new Set();
+
+        // Prevent repeated shots or duplicate messages.
+        if (room.destroyedEnemyIds.has(enemyId)) {
+            callback?.({
+                success: true,
+                duplicate: true
+            });
+            return;
+        }
+
+        room.destroyedEnemyIds.add(enemyId);
+
+        io.to(room.id).emit(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', {
+            enemyId,
+            killedBy: socket.id
+        });
+
+        callback?.({ success: true });
+    });
+
     // Complete Level Handler (Client -> Server)
     socket.on(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', (data = {}, callback) => {
         const room = roomManager.getRoomBySocketId(socket.id);
@@ -279,6 +313,7 @@ io.on('connection', (socket) => {
         }
 
         room.status = 'playing';
+        room.destroyedEnemyIds = new Set();
 
         const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
         room.tileMap.loadLevelData(levelData);

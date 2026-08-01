@@ -188,6 +188,38 @@ try {
     assert.equal(room.status, 'playing');
     console.log('   ✅ Host next_level advanced room levelIndex to 1 and synchronized clients.\n');
 
+    // 8.5 Enemy Destruction Synchronization Verification
+    console.log('8️⃣.5️⃣  Testing Enemy Destruction Synchronization...');
+    let client2EnemyDestroyedData = null;
+    const enemyDestroyedPromise = new Promise((resolve) => {
+        client2.on(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', (data) => {
+            client2EnemyDestroyedData = data;
+            resolve(data);
+        });
+    });
+
+    const destroyAck = await new Promise((resolve) => {
+        client1.emit(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', { enemyId: 'enemy_0' }, resolve);
+    });
+    assert.equal(destroyAck.success, true);
+
+    await Promise.race([
+        enemyDestroyedPromise,
+        new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+
+    assert.notEqual(client2EnemyDestroyedData, null, 'Client 2 should receive enemy_destroyed event');
+    assert.equal(client2EnemyDestroyedData.enemyId, 'enemy_0');
+    assert.equal(client2EnemyDestroyedData.killedBy, client1.id);
+    assert.equal(room.destroyedEnemyIds.has('enemy_0'), true);
+
+    // Verify duplicate shot handling
+    const dupAck = await new Promise((resolve) => {
+        client1.emit(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', { enemyId: 'enemy_0' }, resolve);
+    });
+    assert.equal(dupAck.duplicate, true);
+    console.log('   ✅ Enemy destruction event broadcast and duplicate handling verified.\n');
+
     // 9. Client Disconnection & Room Cleanup
     console.log('9️⃣  Testing Client Disconnect & Room Cleanup...');
     let client1PlayerLeftEvent = null;

@@ -15,15 +15,25 @@ export class EnemyManager {
         this.tileMap = tileMap;
         this.enemies = [];
         this.projectiles = [];
+        this.nextEnemyId = 0;
+
+        // Called when the local player shoots an enemy.
+        this.onEnemyDestroyed = null;
     }
 
     clear() {
         this.enemies = [];
         this.projectiles = [];
+        this.nextEnemyId = 0;
     }
 
-    addFlitzer(x, y, vx = 100, vy = 100) {
+    allocateEnemyId(explicitId = null) {
+        return explicitId ?? `enemy_${this.nextEnemyId++}`;
+    }
+
+    addFlitzer(x, y, vx = 100, vy = 100, id = null) {
         this.enemies.push({
+            id: this.allocateEnemyId(id),
             type: ENEMY_TYPES.FLITZER,
             x,
             y,
@@ -35,8 +45,9 @@ export class EnemyManager {
         });
     }
 
-    addHomingMissile(x, y) {
+    addHomingMissile(x, y, id = null) {
         this.enemies.push({
+            id: this.allocateEnemyId(id),
             type: ENEMY_TYPES.HOMING_MISSILE,
             x,
             y,
@@ -48,8 +59,9 @@ export class EnemyManager {
         });
     }
 
-    addTurret(x, y, fireInterval = 2.0) {
+    addTurret(x, y, fireInterval = 2.0, id = null) {
         this.enemies.push({
+            id: this.allocateEnemyId(id),
             type: ENEMY_TYPES.TURRET,
             x,
             y,
@@ -58,6 +70,16 @@ export class EnemyManager {
             timer: 0,
             fireInterval
         });
+    }
+
+    removeEnemyById(enemyId) {
+        const index = this.enemies.findIndex(enemy => enemy.id === enemyId);
+
+        if (index === -1) {
+            return null;
+        }
+
+        return this.enemies.splice(index, 1)[0];
     }
 
     update(dt, player) {

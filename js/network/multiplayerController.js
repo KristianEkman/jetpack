@@ -82,6 +82,28 @@ export class MultiplayerController {
             }
         };
 
+        game.network.onEnemyDestroyedCb = (data) => {
+            if (!game.isMultiplayer || !data?.enemyId) {
+                return;
+            }
+
+            const enemy = game.enemyManager.removeEnemyById(data.enemyId);
+
+            // The shooter already removed it locally, so enemy will be null there.
+            if (!enemy) {
+                return;
+            }
+
+            game.tileMap.addSparkles(
+                enemy.x + enemy.width / 2,
+                enemy.y + enemy.height / 2,
+                '#ff0055',
+                25
+            );
+
+            game.audio?.playExplosion?.();
+        };
+
         game.network.onLevelCompleteCb = (data) => {
             if (game.isMultiplayer) {
                 this.triggerMultiplayerLevelComplete(data);
@@ -370,6 +392,15 @@ export class MultiplayerController {
             levelData.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
         }
         game.levelManager.spawnEnemiesFromGrid();
+
+        const destroyedEnemyIds =
+            payload?.destroyedEnemyIds ??
+            room?.destroyedEnemyIds ??
+            [];
+
+        for (const enemyId of destroyedEnemyIds) {
+            game.enemyManager.removeEnemyById(enemyId);
+        }
 
         game.playerManager.clear();
         game.playerManager.setLocalSocketId(game.network.socketId);

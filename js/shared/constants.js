@@ -62,7 +62,8 @@ export const GAME_EVENTS = {
     LEVEL_COMPLETE: 'level_complete',
     COMPLETE_LEVEL: 'complete_level',
     NEXT_LEVEL: 'next_level',
-    PLAYER_DIED: 'player_died'
+    PLAYER_DIED: 'player_died',
+    ENEMY_DESTROYED: 'enemy_destroyed'
 };
 
 

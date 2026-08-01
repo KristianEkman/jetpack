@@ -25,6 +25,7 @@ export class NetworkManager {
         this.onTileRestoredCb = null;
         this.onItemCollectedCb = null;
         this.onLevelCompleteCb = null;
+        this.onEnemyDestroyedCb = null;
     }
 
     connect(serverUrl = window.location.origin) {
@@ -128,6 +129,15 @@ export class NetworkManager {
             if (this.onItemCollectedCb) this.onItemCollectedCb(data);
         });
 
+        this.socket.on(
+            GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed',
+            (data) => {
+                if (this.onEnemyDestroyedCb) {
+                    this.onEnemyDestroyedCb(data);
+                }
+            }
+        );
+
         this.socket.on(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', (data) => {
             if (this.onLevelCompleteCb) this.onLevelCompleteCb(data);
         });
@@ -195,6 +205,18 @@ export class NetworkManager {
     sendPlayerDied(reason = 'enemy') {
         if (!this.socket || !this.isConnected || !this.currentRoom) return;
         this.socket.emit(GAME_EVENTS.PLAYER_DIED || 'player_died', { reason });
+    }
+
+    sendEnemyDestroyed(enemyId, callback = null) {
+        if (!this.socket || !this.isConnected || !this.currentRoom) {
+            return;
+        }
+
+        this.socket.emit(
+            GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed',
+            { enemyId },
+            callback
+        );
     }
 
     completeLevel(callback = null) {

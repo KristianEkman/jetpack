@@ -39,6 +39,13 @@ class Game {
 
         this.playerManager = new PlayerManager(this.audio, this.tileMap);
         this.network = new NetworkManager();
+
+        this.enemyManager.onEnemyDestroyed = ({ enemyId }) => {
+            if (this.isMultiplayer) {
+                this.network.sendEnemyDestroyed(enemyId);
+            }
+        };
+
         this.isMultiplayer = false;
         this.selectedColor = '#ff4444';
 
