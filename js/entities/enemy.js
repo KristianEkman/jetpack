@@ -141,8 +141,27 @@ export class EnemyManager {
             // Check Collision with Player
             if (player && this.checkAABB(enemy, player)) {
                 player.takeDamage();
+
+                // Homing missiles are destroyed on impact
+                if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
+                    enemy.dead = true;
+                    // Explosion sparkles at impact point
+                    if (this.tileMap && this.tileMap.addSparkles) {
+                        for (let s = 0; s < 8; s++) {
+                            this.tileMap.addSparkles(
+                                enemy.x + enemy.width / 2 + (Math.random() * 16 - 8),
+                                enemy.y + enemy.height / 2 + (Math.random() * 16 - 8),
+                                '#ff5500',
+                                2
+                            );
+                        }
+                    }
+                }
             }
         }
+
+        // Remove dead enemies (e.g. homing missiles destroyed on impact)
+        this.enemies = this.enemies.filter(e => !e.dead);
 
         // 2. Update Turret Projectiles
         for (let i = this.projectiles.length - 1; i >= 0; i--) {

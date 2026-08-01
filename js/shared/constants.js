@@ -59,6 +59,7 @@ export const GAME_EVENTS = {
     START_MATCH: 'start_match',
     GAME_STARTED: 'game_started',
     ITEM_COLLECTED: 'item_collected',
-    LEVEL_COMPLETE: 'level_complete'
+    LEVEL_COMPLETE: 'level_complete',
+    PLAYER_DIED: 'player_died'
 };
 

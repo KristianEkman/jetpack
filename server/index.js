@@ -217,6 +217,23 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Player Died Handler (Client reports enemy-caused death)
+    // Enemies run client-side only, so the client must notify the server
+    // when an enemy kills it. The server's existing death timer in the
+    // game loop will then handle respawning.
+    socket.on(GAME_EVENTS.PLAYER_DIED || 'player_died', (data = {}) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room || room.status !== 'playing') return;
+
+        const playerEntity = room.players.get(socket.id);
+        if (!playerEntity || playerEntity.isDead) return;
+
+        playerEntity.isDead = true;
+        playerEntity.lives--;
+        playerEntity._deathTimer = 0;
+        console.log(`💀 Player ${socket.id} died (reason: ${data.reason || 'enemy'}, lives: ${playerEntity.lives})`);
+    });
+
     // Disconnect
     socket.on('disconnect', () => {
         console.log(`❌ Client disconnected: ${socket.id}`);

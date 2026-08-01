@@ -191,4 +191,9 @@ export class NetworkManager {
         if (!this.socket || !this.isConnected || !this.currentRoom) return;
         this.socket.emit(GAME_EVENTS.PLAYER_INPUT || 'player_input', inputState);
     }
+
+    sendPlayerDied(reason = 'enemy') {
+        if (!this.socket || !this.isConnected || !this.currentRoom) return;
+        this.socket.emit(GAME_EVENTS.PLAYER_DIED || 'player_died', { reason });
+    }
 }

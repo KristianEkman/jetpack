@@ -574,6 +574,18 @@ class Game {
 
         this.tileMap.loadLevelData(levelData);
         this.enemyManager.clear();
+
+        // Spawn enemies from level data arrays (flitzers, missiles, turrets)
+        if (levelData.flitzers) {
+            levelData.flitzers.forEach(f => this.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
+        }
+        if (levelData.missiles) {
+            levelData.missiles.forEach(m => this.enemyManager.addHomingMissile(m.x, m.y));
+        }
+        if (levelData.turrets) {
+            levelData.turrets.forEach(t => this.enemyManager.addTurret(t.x, t.y, t.fireInterval));
+        }
+        // Also spawn any enemies placed as tiles in the grid
         this.spawnEnemiesFromGrid();
 
         this.playerManager.clear();
@@ -898,10 +910,23 @@ class Game {
         // 2. Update Player
         this.player.update(effectiveDt, this.input.keys, this.enemyManager);
 
+        // Track alive state before enemy update to detect client-side enemy kills
+        // (spike/stuck/suicide deaths already happened in player.update above
+        // and are handled server-side, so we only want to detect enemy kills)
+        const wasAliveBeforeEnemies = !this.player.isDead;
+
         // 3. Update Enemies
         this.enemyManager.update(effectiveDt, this.player);
 
-        // 4. Check Level Clear Condition (Player enters EXIT_PORTAL when all emeralds collected)
+        // 4. Notify server if enemies killed the local player this tick.
+        // The server has no EnemyManager, so it won't detect enemy deaths on
+        // its own. Spike/stuck/suicide deaths are already handled server-side
+        // via player.update() and don't need this notification.
+        if (this.isMultiplayer && wasAliveBeforeEnemies && this.player.isDead) {
+            this.network.sendPlayerDied('enemy');
+        }
+
+        // 5. Check Level Clear Condition (Player enters EXIT_PORTAL when all emeralds collected)
         if (!this.player.isDead && this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds) {
             const playerCol = Math.floor((this.player.x + this.player.width / 2) / TILE_SIZE);
             const playerRow = Math.floor((this.player.y + this.player.height / 2) / TILE_SIZE);
