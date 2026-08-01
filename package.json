@@ -11,9 +11,11 @@
     "dev": "vite",
     "build": "vite build",
     "deploy": "npm run build && az webapp up --resource-group jetpack-rg",
-    "test": "node scripts/test_shared.js && node scripts/test_server.js",
+    "test": "node scripts/test_shared.js && node scripts/test_server.js && node scripts/test_phase5.js && node scripts/test_list_rooms.js",
     "test:shared": "node scripts/test_shared.js",
-    "test:server": "node scripts/test_server.js"
+    "test:server": "node scripts/test_server.js",
+    "test:phase5": "node scripts/test_phase5.js",
+    "test:list_rooms": "node scripts/test_list_rooms.js"
   },
   "keywords": [
     "jetpack",

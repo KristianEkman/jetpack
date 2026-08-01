@@ -1,6 +1,12 @@
 import { io } from 'socket.io-client';
+import { httpServer, gameLoop } from '../server/index.js';
 
-const socket = io('http://localhost:3000');
+const PORT = 3000;
+
+await new Promise((resolve) => httpServer.listen(PORT, resolve));
+gameLoop.start();
+
+const socket = io(`http://localhost:${PORT}`);
 
 socket.on('connect', () => {
     console.log('Connected with socket ID:', socket.id);
@@ -11,7 +17,11 @@ socket.on('connect', () => {
         socket.emit('list_rooms', (list) => {
             console.log('List rooms response:', JSON.stringify(list, null, 2));
             socket.disconnect();
-            process.exit(0);
+            gameLoop.stop();
+            httpServer.close(() => {
+                process.exit(0);
+            });
         });
     });
 });
+
