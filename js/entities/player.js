@@ -47,6 +47,7 @@ export class Player {
         this.score = 0;
         this.lives = PLAYER_PHYSICS.INITIAL_LIVES;
         this.isDead = false;
+        this.serverAcknowledgedDeath = false;
 
         // Phase Shifter / Laser Beam properties
         this.phaseCooldown = 0;
@@ -67,6 +68,7 @@ export class Player {
         this.isGrounded = false;
         this.isClimbing = false;
         this.isDead = false;
+        this.serverAcknowledgedDeath = false;
         this.isPhasing = false;
         this.phaseBeamTimer = 0;
         this.phaseCooldown = 0;
@@ -565,6 +567,7 @@ export class Player {
     takeDamage() {
         if (this.isDead) return;
         this.isDead = true;
+        this.serverAcknowledgedDeath = false;
         this.lives--;
         this.stuckTimer = 0;
         this.audio?.stopThrust?.();

@@ -152,6 +152,34 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(manager.getPlayer('socket_2'), undefined);
     assert.equal(manager.players.size, 2);
 
+    // Test multiplayer death snapshot synchronization:
+    // 1. Local player takes damage
+    pLocal.takeDamage();
+    assert.equal(pLocal.isDead, true);
+
+    // 2. Incoming stale server snapshot (sent before server processed death, so isDead: false)
+    manager.updateFromSnapshot([
+        { socketId: 'socket_1', id: pLocal.id, x: 210, y: 150, isDead: false }
+    ]);
+    // Should NOT revive local player prematurely!
+    assert.equal(pLocal.isDead, true);
+
+    // 3. Server acknowledges death (isDead: true)
+    manager.updateFromSnapshot([
+        { socketId: 'socket_1', id: pLocal.id, x: 210, y: 150, isDead: true, lives: 2 }
+    ]);
+    assert.equal(pLocal.isDead, true);
+    assert.equal(pLocal.serverAcknowledgedDeath, true);
+    assert.equal(pLocal.lives, 2);
+
+    // 4. Server signals respawn (isDead: false with new spawn coordinates)
+    manager.updateFromSnapshot([
+        { socketId: 'socket_1', id: pLocal.id, x: 128, y: 100, isDead: false, lives: 2 }
+    ]);
+    assert.equal(pLocal.isDead, false);
+    assert.equal(pLocal.x, 128);
+    assert.equal(pLocal.y, 100);
+
     console.log('   ✅ PlayerManager entity lifecycle & snapshot sync passed.\n');
     console.log('🎉 ALL SHARED CORE MODULE TESTS PASSED SUCCESSFULLY!');
 });

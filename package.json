@@ -10,6 +10,7 @@
     "start": "node server/index.js",
     "dev": "vite",
     "build": "vite build",
+    "deploy": "npm run build && az webapp up --resource-group jetpack-rg",
     "test": "node scripts/test_shared.js && node scripts/test_server.js",
     "test:shared": "node scripts/test_shared.js",
     "test:server": "node scripts/test_server.js"

@@ -73,13 +73,26 @@ export class PlayerManager {
                 });
             }
 
-            // For the local player, only apply server state when the server signals
-            // a respawn (isDead transitions from true → false). Otherwise skip to
-            // prevent flicker — the local player runs its own physics.
+            // For the local player, run local physics and only apply server state when
+            // the server signals a respawn after acknowledging death.
             if (socketId === this.localSocketId) {
-                if (player.isDead && pData.isDead === false) {
-                    // Server has respawned us — apply position, state, and fuel
-                    player.applySnapshot(pData);
+                if (player.isDead) {
+                    if (pData.isDead) {
+                        // Server acknowledges local player's death
+                        player.serverAcknowledgedDeath = true;
+                        if (pData.lives !== undefined) player.lives = pData.lives;
+                    } else if (player.serverAcknowledgedDeath && pData.isDead === false) {
+                        // Server previously confirmed death and is NOW signaling a respawn!
+                        player.applySnapshot(pData);
+                        player.serverAcknowledgedDeath = false;
+                    }
+                } else if (pData.isDead) {
+                    // Server forced death on local player
+                    player.takeDamage();
+                    player.serverAcknowledgedDeath = true;
+                    if (pData.lives !== undefined) player.lives = pData.lives;
+                } else {
+                    player.serverAcknowledgedDeath = false;
                 }
             } else {
                 player.applySnapshot(pData);

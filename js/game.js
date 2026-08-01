@@ -162,20 +162,20 @@ class Game {
             this.isDeathHandled = false;
         }
 
+        const wasAlive = !this.player.isDead;
+
         // 1. Update TileMap
         this.tileMap.update(effectiveDt, this.player, this.enemyManager);
 
         // 2. Update Player
         this.player.update(effectiveDt, this.input.keys, this.enemyManager);
 
-        const wasAliveBeforeEnemies = !this.player.isDead;
-
         // 3. Update Enemies
         this.enemyManager.update(effectiveDt, this.player);
 
-        // 4. Notify server if enemies killed local player
-        if (this.isMultiplayer && wasAliveBeforeEnemies && this.player.isDead) {
-            this.network.sendPlayerDied('enemy');
+        // 4. Notify server if local player died this frame
+        if (this.isMultiplayer && wasAlive && this.player.isDead) {
+            this.network.sendPlayerDied('local_damage');
         }
 
         // 5. Check Level Clear Condition
