@@ -1,5 +1,5 @@
  - [x] shoting on phasebrick does not destroys them on other clients.
- - [ ] Typescript, only two files left.
+ - [x] Typescript.
  - [x] Save used name and color in local storage
  - [x] Prevent joining in-progress games & hide them from public room list
  - [x] display git commit hash version and deployd date time in the game. Bottom right corner.
@@ -17,3 +17,4 @@
  - [ ] community level hub / workshop
  Upload custom levels to the server, browse/search by rating, and play community maps.
 
+ shots to rappid

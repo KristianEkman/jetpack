@@ -157,6 +157,30 @@ const LEVEL_5_STR = `
 ##############################
 `;
 
+// Level 6: Trickster Circuit
+// A layered route-choice puzzle: the teleporter is fast but dangerous, while
+// the vine and ladder routes trade speed for safer fuel and collectible paths.
+const LEVEL_6_STR = `
+##############################
+#S....E...PPP....T....E......#
+#####.###.PPP.######.#######.#
+#....V#...PPP......#.........#
+#.###V#.##########.#.#######.#
+#...#V#....F.......#.#.......#
+#.#.#V############.#.#.#####.#
+#.#.#V...>>>>>>....#.#...E...#
+#.#.#####XXGXXX#####.#######.#
+#.#.....H......H...#.........#
+#.#####.H.DDDD.H.###########.#
+#.....#.H.D..D.H.#.....F.....#
+#####.#.H.D.E..H.#.###########
+#.....#.H.IIII.H.#...........#
+#.###.T.H.<<<<.H.###########.#
+#...F...H......H....E........O
+#.##########################.#
+##############################
+`;
+
 export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
     {
         name: "Stage 1: Genesis Caverns",
@@ -198,5 +222,19 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
         ],
         missiles: [{ x: 850, y: 80 }],
         turrets: [{ x: 480, y: 440, fireInterval: 1.8 }]
+    },
+    {
+        name: "Stage 6: Trickster Circuit",
+        grid: parseLevelString(LEVEL_6_STR),
+        flitzers: [
+            { x: 260, y: 105, vx: 165, vy: 70 },
+            { x: 735, y: 240, vx: -185, vy: 0 },
+            { x: 430, y: 465, vx: 155, vy: -90 }
+        ],
+        missiles: [{ x: 855, y: 335 }],
+        turrets: [
+            { x: 560, y: 180, fireInterval: 1.65 },
+            { x: 770, y: 470, fireInterval: 2.1 }
+        ]
     }
 ];
