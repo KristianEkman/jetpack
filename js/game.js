@@ -310,27 +310,25 @@ class Game {
     bindMultiplayerUI() {
         // Tab Buttons
         const tabCreate = document.getElementById('tabCreateRoom');
-        const tabJoin = document.getElementById('tabJoinRoom');
         const tabPublic = document.getElementById('tabPublicRooms');
 
         const viewCreate = document.getElementById('viewCreateRoom');
-        const viewJoin = document.getElementById('viewJoinRoom');
         const viewPublic = document.getElementById('viewPublicRooms');
         const viewLobby = document.getElementById('viewRoomLobby');
 
         const switchTab = (activeTab, activeView) => {
-            [tabCreate, tabJoin, tabPublic].forEach(t => t?.classList.remove('active'));
-            [viewCreate, viewJoin, viewPublic, viewLobby].forEach(v => v?.classList.add('hidden'));
+            [tabCreate, tabPublic].forEach(t => t?.classList.remove('active'));
+            [viewCreate, viewPublic, viewLobby].forEach(v => v?.classList.add('hidden'));
 
             activeTab?.classList.add('active');
             activeView?.classList.remove('hidden');
 
-            // Show tab controls since we are navigating the tabs
+            // Show tab & profile controls since we are navigating the tabs
             document.getElementById('mpTabs')?.classList.remove('hidden');
+            document.getElementById('mpProfileSetup')?.classList.remove('hidden');
         };
 
         tabCreate?.addEventListener('click', () => switchTab(tabCreate, viewCreate));
-        tabJoin?.addEventListener('click', () => switchTab(tabJoin, viewJoin));
         tabPublic?.addEventListener('click', () => {
             switchTab(tabPublic, viewPublic);
             this.network.listRooms();
@@ -415,19 +413,6 @@ class Game {
             this.network.createRoom(createOpts);
         });
 
-        document.getElementById('btnJoinRoomSubmit')?.addEventListener('click', () => {
-            const joinName = document.getElementById('inputJoinName').value.trim() || 'Wingman';
-            const roomCode = document.getElementById('inputRoomCode').value.trim().toUpperCase();
-            if (!roomCode || roomCode.length !== 4) {
-                alert('Please enter a valid 4-letter room code.');
-                return;
-            }
-            this.network.joinRoom(roomCode, {
-                playerName: joinName,
-                playerColor: this.selectedColor
-            });
-        });
-
         document.getElementById('btnRefreshRooms')?.addEventListener('click', () => {
             this.network.listRooms();
         });
@@ -451,15 +436,15 @@ class Game {
 
     showLobbyView() {
         const viewCreate = document.getElementById('viewCreateRoom');
-        const viewJoin = document.getElementById('viewJoinRoom');
         const viewPublic = document.getElementById('viewPublicRooms');
         const viewLobby = document.getElementById('viewRoomLobby');
 
-        [viewCreate, viewJoin, viewPublic].forEach(v => v?.classList.add('hidden'));
+        [viewCreate, viewPublic].forEach(v => v?.classList.add('hidden'));
         viewLobby?.classList.remove('hidden');
 
-        // Hide tab controls inside the room lobby
+        // Hide tab & profile controls inside the room lobby
         document.getElementById('mpTabs')?.classList.add('hidden');
+        document.getElementById('mpProfileSetup')?.classList.add('hidden');
     }
 
     updateLobbyUI(room) {
@@ -536,7 +521,7 @@ class Game {
                 `;
 
                 row.addEventListener('click', () => {
-                    const joinName = document.getElementById('inputJoinName')?.value?.trim() || 'Wingman';
+                    const joinName = document.getElementById('inputHostName')?.value?.trim() || 'Wingman';
                     console.log(`🔑 Attempting to join room ${r.id} as ${joinName}...`);
                     this.network.joinRoom(r.id, {
                         playerName: joinName,

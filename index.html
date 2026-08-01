@@ -236,18 +236,32 @@
         <div class="dialog-content wide">
             <h2>MULTIPLAYER LOBBY</h2>
 
-            <div id="mpTabs" class="mp-tabs">
-                <button id="tabCreateRoom" class="mp-tab-btn active">CREATE ROOM</button>
-                <button id="tabJoinRoom" class="mp-tab-btn">JOIN ROOM</button>
-                <button id="tabPublicRooms" class="mp-tab-btn">PUBLIC ROOMS</button>
-            </div>
-
-            <!-- Create Room View -->
-            <div id="viewCreateRoom" class="mp-view-section">
+            <!-- Pilot Setup (Always Visible) -->
+            <div id="mpProfileSetup" class="mp-profile-setup">
                 <div class="form-group">
                     <label for="inputHostName">Pilot Name:</label>
                     <input type="text" id="inputHostName" class="retro-input" value="Pilot 1" maxlength="12">
                 </div>
+                <div class="form-group">
+                    <label>Pilot Suit Color:</label>
+                    <div class="color-picker-row">
+                        <button class="color-chip active" data-color="#ff4444" style="background:#ff4444;"></button>
+                        <button class="color-chip" data-color="#44ff44" style="background:#44ff44;"></button>
+                        <button class="color-chip" data-color="#4488ff" style="background:#4488ff;"></button>
+                        <button class="color-chip" data-color="#ffff44" style="background:#ffff44;"></button>
+                        <button class="color-chip" data-color="#ff44ff" style="background:#ff44ff;"></button>
+                        <button class="color-chip" data-color="#00ffff" style="background:#00ffff;"></button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mpTabs" class="mp-tabs">
+                <button id="tabCreateRoom" class="mp-tab-btn active">CREATE ROOM</button>
+                <button id="tabPublicRooms" class="mp-tab-btn">JOIN</button>
+            </div>
+
+            <!-- Create Room View -->
+            <div id="viewCreateRoom" class="mp-view-section">
                 <div class="form-group">
                     <label for="selectRoomLevel">Select Level / Map:</label>
                     <select id="selectRoomLevel" class="retro-input">
@@ -262,33 +276,10 @@
                 <div id="groupCustomMapUpload" class="form-group hidden">
                     <label for="inputCustomMapFile">Upload Custom Map JSON:</label>
                     <input type="file" id="inputCustomMapFile" class="retro-input" accept=".json">
-                    <small id="customMapStatusText" style="color: #00ffcc; font-size: 0.8rem; display: block; margin-top: 4px;"></small>
+                    <small id="customMapStatusText"
+                        style="color: #00ffcc; font-size: 0.8rem; display: block; margin-top: 4px;"></small>
                 </div>
-                <div class="form-group">
-                    <label>Pilot Suit Color:</label>
-                    <div class="color-picker-row">
-                        <button class="color-chip active" data-color="#ff4444" style="background:#ff4444;"></button>
-                        <button class="color-chip" data-color="#44ff44" style="background:#44ff44;"></button>
-                        <button class="color-chip" data-color="#4488ff" style="background:#4488ff;"></button>
-                        <button class="color-chip" data-color="#ffff44" style="background:#ffff44;"></button>
-                        <button class="color-chip" data-color="#ff44ff" style="background:#ff44ff;"></button>
-                        <button class="color-chip" data-color="#00ffff" style="background:#00ffff;"></button>
-                    </div>
-                </div>
-                <button id="btnCreateRoomSubmit" class="btn-menu primary">🏠 CREATE PRIVATE ROOM</button>
-            </div>
-
-            <!-- Join Room View -->
-            <div id="viewJoinRoom" class="mp-view-section hidden">
-                <div class="form-group">
-                    <label for="inputJoinName">Pilot Name:</label>
-                    <input type="text" id="inputJoinName" class="retro-input" value="Wingman" maxlength="12">
-                </div>
-                <div class="form-group">
-                    <label for="inputRoomCode">4-Letter Room Code:</label>
-                    <input type="text" id="inputRoomCode" class="retro-input code-input" placeholder="e.g. JTPK" maxlength="4">
-                </div>
-                <button id="btnJoinRoomSubmit" class="btn-menu primary">🔑 JOIN ROOM</button>
+                <button id="btnCreateRoomSubmit" class="btn-menu primary">🏠 CREATE ROOM</button>
             </div>
 
             <!-- Public Rooms View -->
@@ -316,7 +307,8 @@
                 </div>
 
                 <div class="lobby-actions">
-                    <button id="btnStartMultiplayerGame" class="btn-menu primary hidden">🚀 START MULTIPLAYER MATCH</button>
+                    <button id="btnStartMultiplayerGame" class="btn-menu primary hidden">🚀 START MULTIPLAYER
+                        MATCH</button>
                     <button id="btnLeaveRoom" class="btn-menu danger">🚪 LEAVE ROOM</button>
                 </div>
             </div>
