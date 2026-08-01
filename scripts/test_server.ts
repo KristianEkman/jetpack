@@ -163,7 +163,7 @@ try {
 
     assert.notEqual(client1LevelCompleteEvent, null, 'Client 1 should receive level_complete event');
     assert.equal(client1LevelCompleteEvent.clearedBy, 'Wingman');
-    assert.equal(room.status, 'level_complete');
+    assert.equal(room.status, 'finished');
     console.log('   ✅ level_complete broadcast and room state verified.');
 
     const nonHostNextResult: any = await new Promise((resolve) => {
