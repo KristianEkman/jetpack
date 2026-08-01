@@ -139,10 +139,18 @@ export class MultiplayerController {
         const viewLobby = document.getElementById('viewRoomLobby');
 
         const switchTab = (activeTab, activeView) => {
-            [tabCreate, tabPublic].forEach(t => t?.classList.remove('active'));
+            [tabCreate, tabPublic].forEach(t => {
+                if (t) {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                }
+            });
             [viewCreate, viewPublic, viewLobby].forEach(v => v?.classList.add('hidden'));
 
-            activeTab?.classList.add('active');
+            if (activeTab) {
+                activeTab.classList.add('active');
+                activeTab.setAttribute('aria-selected', 'true');
+            }
             activeView?.classList.remove('hidden');
 
             document.getElementById('mpTabs')?.classList.remove('hidden');
