@@ -121,8 +121,75 @@ try {
     assert.equal(client2Config.lastSequenceId, 101);
     console.log('   ✅ Client 2 input sequenceId updated on server.\n');
 
-    // 8. Client Disconnection & Room Cleanup
-    console.log('8️⃣  Testing Client Disconnect & Room Cleanup...');
+    // 8. Multiplayer Match Start, Level Completion & Next Level Transition
+    console.log('8️⃣  Testing Multiplayer Level Complete & Next Level Flow...');
+    const startMatchResult = await new Promise((resolve) => {
+        client1.emit(GAME_EVENTS.START_MATCH || 'start_match', {}, resolve);
+    });
+    assert.equal(startMatchResult.success, true);
+    assert.equal(room.status, 'playing');
+    console.log('   ✅ Match started successfully.');
+
+    // Client 2 completes level
+    let client1LevelCompleteEvent = null;
+    const levelCompletePromise = new Promise((resolve) => {
+        client1.on(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', (data) => {
+            client1LevelCompleteEvent = data;
+            resolve(data);
+        });
+    });
+
+    const completeResult = await new Promise((resolve) => {
+        client2.emit(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', {}, resolve);
+    });
+    assert.equal(completeResult.success, true);
+    assert.equal(completeResult.clearedBy, 'Wingman');
+
+    await Promise.race([
+        levelCompletePromise,
+        new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+
+    assert.notEqual(client1LevelCompleteEvent, null, 'Client 1 should receive level_complete event');
+    assert.equal(client1LevelCompleteEvent.clearedBy, 'Wingman');
+    assert.equal(room.status, 'level_complete');
+    console.log('   ✅ level_complete broadcast and room state verified.');
+
+    // Non-host attempts next_level (should be rejected)
+    const nonHostNextResult = await new Promise((resolve) => {
+        client2.emit(GAME_EVENTS.NEXT_LEVEL || 'next_level', {}, resolve);
+    });
+    assert.equal(nonHostNextResult.success, false);
+    assert.equal(nonHostNextResult.error, 'Only the room host can advance to the next level');
+    console.log('   ✅ Non-host next_level permission restriction verified.');
+
+    // Host emits next_level
+    let client2GameStartedEvent = null;
+    const gameStartedPromise = new Promise((resolve) => {
+        client2.on(GAME_EVENTS.GAME_STARTED || 'game_started', (data) => {
+            client2GameStartedEvent = data;
+            resolve(data);
+        });
+    });
+
+    const hostNextResult = await new Promise((resolve) => {
+        client1.emit(GAME_EVENTS.NEXT_LEVEL || 'next_level', {}, resolve);
+    });
+    assert.equal(hostNextResult.success, true);
+    assert.equal(hostNextResult.levelIndex, 1);
+
+    await Promise.race([
+        gameStartedPromise,
+        new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+
+    assert.notEqual(client2GameStartedEvent, null, 'Client 2 should receive game_started event');
+    assert.equal(client2GameStartedEvent.levelIndex, 1);
+    assert.equal(room.status, 'playing');
+    console.log('   ✅ Host next_level advanced room levelIndex to 1 and synchronized clients.\n');
+
+    // 9. Client Disconnection & Room Cleanup
+    console.log('9️⃣  Testing Client Disconnect & Room Cleanup...');
     let client1PlayerLeftEvent = null;
     const playerLeftPromise = new Promise((resolve) => {
         client1.on('player_left', (data) => {

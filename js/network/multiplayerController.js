@@ -38,6 +38,9 @@ export class MultiplayerController {
         game.network.onPlayerLeftCb = (data) => {
             if (data.room) this.updateLobbyUI(data.room);
             if (data.leavingPlayer) game.uiManager.showBanner(`${data.leavingPlayer.name.toUpperCase()} LEFT`);
+            if (game.gameState === GAME_STATES.LEVEL_COMPLETE && game.isMultiplayer) {
+                this.updateLevelCompleteHostState(data.room);
+            }
         };
 
         game.network.onGameStartedCb = (payload) => {
@@ -378,8 +381,8 @@ export class MultiplayerController {
                     name: p.name,
                     color: p.color,
                     isLocal: p.socketId === game.network.socketId,
-                    x: p.x || 128,
-                    y: p.y || 100
+                    x: p.x ?? 128,
+                    y: p.y ?? 100
                 });
             });
         }
@@ -393,6 +396,21 @@ export class MultiplayerController {
         game.audio.startGameMusic(game.currentLevelIndex || 0);
         game.uiManager.closeAllDialogs();
         game.uiManager.showBanner('MULTIPLAYER MATCH STARTED!');
+    }
+
+    updateLevelCompleteHostState(room = this.game.network.currentRoom) {
+        const game = this.game;
+        const isHost = room ? (game.network.socketId === room.hostSocketId) : false;
+        const btnNextLevel = document.getElementById('btnNextLevel');
+        if (btnNextLevel) {
+            if (isHost) {
+                btnNextLevel.disabled = false;
+                btnNextLevel.textContent = '🚀 NEXT LEVEL';
+            } else {
+                btnNextLevel.disabled = true;
+                btnNextLevel.textContent = '⌛ WAITING FOR HOST...';
+            }
+        }
     }
 
     triggerMultiplayerLevelComplete(data) {
@@ -418,6 +436,8 @@ export class MultiplayerController {
         if (sub) {
             sub.textContent = `MATCH CLEARED BY ${data?.clearedBy ? data.clearedBy.toUpperCase() : 'TEAM'}!`;
         }
+
+        this.updateLevelCompleteHostState(data?.room || game.network.currentRoom);
 
         game.uiManager.showDialog('dlgLevelComplete');
     }

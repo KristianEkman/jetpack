@@ -196,4 +196,24 @@ export class NetworkManager {
         if (!this.socket || !this.isConnected || !this.currentRoom) return;
         this.socket.emit(GAME_EVENTS.PLAYER_DIED || 'player_died', { reason });
     }
+
+    completeLevel(callback = null) {
+        if (!this.socket || !this.isConnected || !this.currentRoom) return;
+        this.socket.emit(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', {}, (response) => {
+            if (response?.success && response.room) {
+                this.currentRoom = response.room;
+            }
+            callback?.(response);
+        });
+    }
+
+    nextLevel(callback = null) {
+        if (!this.socket || !this.isConnected || !this.currentRoom) return;
+        this.socket.emit(GAME_EVENTS.NEXT_LEVEL || 'next_level', {}, (response) => {
+            if (response?.success && response.room) {
+                this.currentRoom = response.room;
+            }
+            callback?.(response);
+        });
+    }
 }

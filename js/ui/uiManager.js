@@ -111,6 +111,10 @@ export class UIManager {
 
         // Stage Complete buttons
         document.getElementById('btnNextLevel')?.addEventListener('click', () => {
+            if (game.isMultiplayer) {
+                game.network.nextLevel();
+                return;
+            }
             this.closeAllDialogs();
             if (game.isCustomLevel) {
                 game.levelManager.openLevelEditor();

@@ -234,6 +234,86 @@ io.on('connection', (socket) => {
         console.log(`💀 Player ${socket.id} died (reason: ${data.reason || 'enemy'}, lives: ${playerEntity.lives})`);
     });
 
+    // Complete Level Handler (Client -> Server)
+    socket.on(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', (data = {}, callback) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room || room.status !== 'playing') {
+            const errRes = { success: false, error: 'Room not in playing state' };
+            if (typeof callback === 'function') callback(errRes);
+            return;
+        }
+
+        room.status = 'level_complete';
+        const playerConfig = room.playerConfigs.get(socket.id);
+        const playerName = playerConfig ? playerConfig.name : 'Player';
+
+        const payload = {
+            success: true,
+            clearedBy: playerName,
+            socketId: socket.id,
+            room: roomManager.serializeRoom(room)
+        };
+
+        if (typeof callback === 'function') callback(payload);
+        io.to(room.id).emit(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', payload);
+        console.log(`🏆 Level completed in Room ${room.id} by ${playerName}`);
+    });
+
+    // Next Level Handler (Host -> Server)
+    socket.on(GAME_EVENTS.NEXT_LEVEL || 'next_level', (data = {}, callback) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) {
+            const errRes = { success: false, error: 'Room not found' };
+            if (typeof callback === 'function') callback(errRes);
+            return;
+        }
+
+        if (room.hostSocketId !== socket.id) {
+            const errRes = { success: false, error: 'Only the room host can advance to the next level' };
+            if (typeof callback === 'function') callback(errRes);
+            return;
+        }
+
+        if (!room.customMapData) {
+            room.levelIndex = (room.levelIndex + 1) % CAMPAIGN_LEVELS.length;
+        }
+
+        room.status = 'playing';
+
+        const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
+        room.tileMap.loadLevelData(levelData);
+
+        let spawnX = 128;
+        let spawnY = 100;
+        for (let r = 0; r < room.tileMap.rows; r++) {
+            for (let c = 0; c < room.tileMap.cols; c++) {
+                if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
+                    spawnX = c * 32 + 4;
+                    spawnY = r * 32 + 2;
+                    break;
+                }
+            }
+        }
+
+        for (const [sId, playerEntity] of room.players.entries()) {
+            playerEntity.spawn(spawnX, spawnY);
+            playerEntity.isDead = false;
+            playerEntity.fuel = 100;
+        }
+
+        const payload = {
+            success: true,
+            room: roomManager.serializeRoom(room),
+            levelIndex: room.levelIndex,
+            customMapData: room.customMapData
+        };
+
+        if (typeof callback === 'function') callback(payload);
+        io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || 'game_started', payload);
+        io.emit('room_list_updated', roomManager.listRooms());
+        console.log(`🚀 Next level (${room.levelIndex}) started in Room ${room.id} by Host ${socket.id}`);
+    });
+
     // Disconnect
     socket.on('disconnect', () => {
         console.log(`❌ Client disconnected: ${socket.id}`);

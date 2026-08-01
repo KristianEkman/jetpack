@@ -161,6 +161,17 @@ export class LevelManager {
         if (statFuelBonus) statFuelBonus.textContent = `${fuelBonus}`;
         if (statTotalScore) statTotalScore.textContent = `${game.player.score}`;
 
+        const btnNextLevel = document.getElementById('btnNextLevel');
+        if (btnNextLevel) {
+            btnNextLevel.disabled = false;
+            btnNextLevel.textContent = '🚀 NEXT LEVEL';
+        }
+
+        const sub = document.getElementById('dialogLevelCompleteSub');
+        if (sub) {
+            sub.textContent = '';
+        }
+
         game.uiManager.showDialog('dlgLevelComplete');
     }
 

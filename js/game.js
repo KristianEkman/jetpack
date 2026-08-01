@@ -177,7 +177,12 @@ class Game {
             const playerRow = Math.floor((this.player.y + this.player.height / 2) / TILE_SIZE);
 
             if (this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL) {
-                this.levelManager.triggerLevelComplete();
+                if (this.isMultiplayer) {
+                    this.gameState = GAME_STATES.LEVEL_COMPLETE;
+                    this.network.completeLevel();
+                } else {
+                    this.levelManager.triggerLevelComplete();
+                }
             }
         }
 

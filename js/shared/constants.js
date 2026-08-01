@@ -60,6 +60,9 @@ export const GAME_EVENTS = {
     GAME_STARTED: 'game_started',
     ITEM_COLLECTED: 'item_collected',
     LEVEL_COMPLETE: 'level_complete',
+    COMPLETE_LEVEL: 'complete_level',
+    NEXT_LEVEL: 'next_level',
     PLAYER_DIED: 'player_died'
 };
+
 
