@@ -7,14 +7,14 @@ const versionFilePath = path.join(rootDir, 'version.json');
 const distDir = path.join(rootDir, 'dist');
 const distVersionFilePath = path.join(distDir, 'version.json');
 
-let commitHash = null;
+let commitHash: string | null = null;
 try {
   commitHash = execSync('git rev-parse --short HEAD', { cwd: rootDir }).toString().trim();
 } catch (e) {
-  // Git failed (e.g. on Azure build server without .git)
+  // Git failed
 }
 
-let existingData = {};
+let existingData: any = {};
 if (fs.existsSync(versionFilePath)) {
   try {
     existingData = JSON.parse(fs.readFileSync(versionFilePath, 'utf8'));

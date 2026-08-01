@@ -7,16 +7,17 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node server/index.js",
+    "start": "tsx server/index.ts",
     "dev": "vite",
-    "prebuild": "node scripts/generate_version.js",
-    "build": "vite build",
+    "prebuild": "tsx scripts/generate_version.ts",
+    "build": "tsc --noEmit && vite build",
     "deploy": "npm run build && az webapp up --resource-group jetpack-rg",
-    "test": "node scripts/test_shared.js && node scripts/test_server.js && node scripts/test_phase5.js && node scripts/test_list_rooms.js",
-    "test:shared": "node scripts/test_shared.js",
-    "test:server": "node scripts/test_server.js",
-    "test:phase5": "node scripts/test_phase5.js",
-    "test:list_rooms": "node scripts/test_list_rooms.js"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx scripts/test_shared.ts && tsx scripts/test_server.ts && tsx scripts/test_phase5.ts && tsx scripts/test_list_rooms.ts",
+    "test:shared": "tsx scripts/test_shared.ts",
+    "test:server": "tsx scripts/test_server.ts",
+    "test:phase5": "tsx scripts/test_phase5.ts",
+    "test:list_rooms": "tsx scripts/test_list_rooms.ts"
   },
   "keywords": [
     "jetpack",
@@ -32,6 +33,11 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.2",
+    "@types/socket.io": "^3.0.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
     "vite": "^8.2.0"
   }
 }

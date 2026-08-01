@@ -4,8 +4,10 @@
 
 import { NOTES } from './notes.js';
 
+export type PatternArray = Array<number | null>;
+
 // 192-step Retro Chiptune Adaptation: "In the Hall of the Mountain King" (Edvard Grieg)
-export const BASS_PATTERN = [
+export const BASS_PATTERN: PatternArray = [
     // --- Phase 1: Marching Staccato Bass (Steps 0 - 63) ---
     NOTES.A2, null, NOTES.A2, null, NOTES.C3, null, NOTES.A2, null,
     NOTES.E3, null, NOTES.C3, null, NOTES.E2, null, NOTES.G2, null,
@@ -40,53 +42,40 @@ export const BASS_PATTERN = [
     NOTES.A2, null, NOTES.A2, null, NOTES.A2, null, null, null
 ];
 
-export const MELODY_PATTERN = [
+export const MELODY_PATTERN: PatternArray = [
     // --- Phase 1: Lower Octave Theme (Steps 0 - 63) ---
-    // Bar 1 (Steps 0 - 15)
     NOTES.A4, null, NOTES.B4, null, NOTES.C5, null, NOTES.D5, null,
     NOTES.E5, null, NOTES.C5, null, NOTES.E5, null, null, null,
-    // Bar 2 (Steps 16 - 31)
     NOTES.Gs4, null, NOTES.E5, null, NOTES.Gs4, null, null, null,
     NOTES.G4, null, NOTES.Eb5, null, NOTES.G4, null, null, null,
-    // Bar 3 (Steps 32 - 47)
     NOTES.A4, null, NOTES.B4, null, NOTES.C5, null, NOTES.D5, null,
     NOTES.E5, null, NOTES.C5, null, NOTES.E5, null, NOTES.A5, null,
-    // Bar 4 (Steps 48 - 63)
     NOTES.G5, null, NOTES.E5, null, NOTES.C5, null, NOTES.E5, null,
     NOTES.G5, null, null, null, NOTES.E5, null, null, null,
 
     // --- Phase 2: High Octave Intensity Rise (Steps 64 - 127) ---
-    // Bar 5 (Steps 64 - 79)
     NOTES.A5, null, NOTES.B5, null, NOTES.C6, null, NOTES.D6, null,
     NOTES.E6, null, NOTES.C6, null, NOTES.E6, null, null, null,
-    // Bar 6 (Steps 80 - 95)
     NOTES.Gs5, null, NOTES.E6, null, NOTES.Gs5, null, null, null,
     NOTES.G5, null, NOTES.Eb5, null, NOTES.G5, null, null, null,
-    // Bar 7 (Steps 96 - 111)
     NOTES.A5, null, NOTES.B5, null, NOTES.C6, null, NOTES.D6, null,
     NOTES.E6, null, NOTES.C6, null, NOTES.E6, null, NOTES.A5, null,
-    // Bar 8 (Steps 112 - 127)
     NOTES.G5, null, NOTES.E5, null, NOTES.C5, null, NOTES.E5, null,
     NOTES.G5, null, null, null, NOTES.E5, null, null, null,
 
     // --- Phase 3: Accelerating Crescendo & Climax (Steps 128 - 191) ---
-    // Bar 9 (Steps 128 - 143: Fast 16th Ascending Run)
     NOTES.A4, NOTES.B4, NOTES.C5, NOTES.D5, NOTES.E5, NOTES.F5, NOTES.E5, NOTES.D5,
     NOTES.C5, NOTES.B4, NOTES.A4, NOTES.Gs4, NOTES.A4, NOTES.B4, NOTES.C5, NOTES.D5,
-    // Bar 10 (Steps 144 - 159: Fast Octave Run Up)
     NOTES.E5, NOTES.F5, NOTES.Fs5, NOTES.Gs5, NOTES.A5, NOTES.B5, NOTES.C6, NOTES.D6,
     NOTES.E6, NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.Gs5, NOTES.F5, NOTES.E5,
-    // Bar 11 (Steps 160 - 175: Staccato Tutti Hits)
     NOTES.E5, null, NOTES.E5, null, NOTES.E5, null, NOTES.E5, null,
     NOTES.D5, null, NOTES.D5, null, NOTES.C5, null, NOTES.B4, null,
-    // Bar 12 (Steps 176 - 191: Grand Finale Cadence)
     NOTES.A4, NOTES.C5, NOTES.E5, NOTES.A5, NOTES.Gs5, NOTES.E5, NOTES.B4, NOTES.Gs4,
     NOTES.A4, null, NOTES.A4, null, NOTES.A4, null, null, null
 ];
 
-// --- LEVEL 2 TRACK: "Hungarian Dance No. 5" (Johannes Brahms - 192-step D Minor Resonant Synth Adaptation) ---
-export const BASS_PATTERN_L2 = [
-    // --- Phase 1: Marching Dm / A7 Bass Drive (Steps 0 - 63) ---
+// --- LEVEL 2 TRACK: "Hungarian Dance No. 5" ---
+export const BASS_PATTERN_L2: PatternArray = [
     NOTES.D2, NOTES.D3, NOTES.F2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.F2, NOTES.C3,
     NOTES.D2, NOTES.D3, NOTES.F2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.C3, NOTES.A2,
     NOTES.A2, NOTES.A3, NOTES.Cs3, NOTES.A3, NOTES.E3, NOTES.A3, NOTES.G3, NOTES.E3,
@@ -97,7 +86,6 @@ export const BASS_PATTERN_L2 = [
     NOTES.A2, NOTES.A3, NOTES.Cs3, NOTES.A3, NOTES.E3, NOTES.A3, NOTES.G3, NOTES.E3,
     NOTES.D2, NOTES.F2, NOTES.A2, NOTES.D3, NOTES.F3, NOTES.D3, NOTES.A2, NOTES.F2,
 
-    // --- Phase 2: Octave Bouncing Synth Bass (Steps 64 - 127) ---
     NOTES.D2, NOTES.D3, NOTES.F2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.F2, NOTES.C3,
     NOTES.A2, NOTES.A3, NOTES.Cs3, NOTES.A3, NOTES.E3, NOTES.A3, NOTES.G3, NOTES.E3,
     NOTES.D2, NOTES.D3, NOTES.F2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.C3, NOTES.A2,
@@ -108,7 +96,6 @@ export const BASS_PATTERN_L2 = [
     NOTES.A2, NOTES.A3, NOTES.Cs3, NOTES.A3, NOTES.E3, NOTES.A3, NOTES.G3, NOTES.E3,
     NOTES.D2, NOTES.D3, NOTES.F2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.F2, NOTES.D2,
 
-    // --- Phase 3: Virtuoso Crescendo & Fast Bass Drive (Steps 128 - 191) ---
     NOTES.D2, NOTES.D2, NOTES.D2, NOTES.D2, NOTES.D2, NOTES.D2, NOTES.D2, NOTES.D2,
     NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2,
     NOTES.D2, NOTES.D2, NOTES.D2, NOTES.D2, NOTES.F2, NOTES.F2, NOTES.A2, NOTES.A2,
@@ -120,53 +107,37 @@ export const BASS_PATTERN_L2 = [
     NOTES.D2, null, NOTES.D2, null, NOTES.D2, null, null, null
 ];
 
-export const MELODY_PATTERN_L2 = [
-    // --- Phase 1: Hungarian Dance Main Theme (Steps 0 - 63) ---
-    // Bar 1 (Steps 0 - 15)
+export const MELODY_PATTERN_L2: PatternArray = [
     NOTES.D5, null, NOTES.F5, null, NOTES.A5, null, null, null,
     NOTES.F5, null, NOTES.D5, null, NOTES.A4, null, NOTES.F4, null,
-    // Bar 2 (Steps 16 - 31)
     NOTES.E4, null, NOTES.G4, null, NOTES.Bb4, null, null, null,
     NOTES.G4, null, NOTES.E4, null, NOTES.Cs4, null, NOTES.E4, null,
-    // Bar 3 (Steps 32 - 47)
     NOTES.D4, null, NOTES.F4, null, NOTES.A4, null, NOTES.D5, null,
     NOTES.F5, null, null, null, NOTES.E5, null, NOTES.D5, null,
-    // Bar 4 (Steps 48 - 63)
     NOTES.Cs5, null, null, null, NOTES.E5, null, null, null,
     NOTES.D5, null, null, null, null, null, null, null,
 
-    // --- Phase 2: Octave Jump & High Energy Syncopation (Steps 64 - 127) ---
-    // Bar 5 (Steps 64 - 79)
     NOTES.D5, null, NOTES.F5, null, NOTES.A5, null, null, null,
     NOTES.F5, null, NOTES.D5, null, NOTES.A5, null, NOTES.D6, null,
-    // Bar 6 (Steps 80 - 95)
     NOTES.E5, null, NOTES.G5, null, NOTES.Bb5, null, null, null,
     NOTES.G5, null, NOTES.E5, null, NOTES.Cs5, null, NOTES.E5, null,
-    // Bar 7 (Steps 96 - 111)
     NOTES.D5, null, NOTES.F5, null, NOTES.A5, null, NOTES.D6, null,
     NOTES.F6, null, NOTES.E6, null, NOTES.D6, null, NOTES.Cs6, null,
-    // Bar 8 (Steps 112 - 127)
     NOTES.D6, null, null, null, NOTES.A5, null, NOTES.F5, null,
     NOTES.D5, null, NOTES.A4, null, null, null, null, null,
 
-    // --- Phase 3: Virtuoso 16th Run & Climax (Steps 128 - 191) ---
-    // Bar 9 (Steps 128 - 143: Fast 16th Ascending Bounce)
     NOTES.D5, NOTES.F5, NOTES.A5, NOTES.D6, NOTES.Cs6, NOTES.D6, NOTES.E6, NOTES.D6,
     NOTES.Bb5, NOTES.G5, NOTES.E5, NOTES.Cs5, NOTES.D5, NOTES.E5, NOTES.F5, NOTES.G5,
-    // Bar 10 (Steps 144 - 159: Arpeggio Cascade)
     NOTES.A5, NOTES.D6, NOTES.F6, NOTES.D6, NOTES.A5, NOTES.F5, NOTES.D5, NOTES.A4,
     NOTES.G4, NOTES.Bb4, NOTES.E5, NOTES.G5, NOTES.Bb5, NOTES.A5, NOTES.G5, NOTES.E5,
-    // Bar 11 (Steps 160 - 175: Staccato Resonant Hits)
     NOTES.F5, null, NOTES.D5, null, NOTES.F5, null, NOTES.A5, null,
     NOTES.G5, null, NOTES.E5, null, NOTES.Cs5, null, NOTES.A4, null,
-    // Bar 12 (Steps 176 - 191: Grand Finale Cadence)
     NOTES.D5, NOTES.E5, NOTES.F5, NOTES.G5, NOTES.A5, NOTES.Bb5, NOTES.Cs6, NOTES.D6,
     NOTES.D6, null, NOTES.D5, null, NOTES.D4, null, null, null
 ];
 
-// --- LEVEL 3 TRACK: "Storm - Summer Presto" (Antonio Vivaldi - 192-step E Minor Chiptune Storm Adaptation) ---
-export const BASS_PATTERN_L3 = [
-    // --- Phase 1: Rapid 16th Pulse Bass (Steps 0 - 63) ---
+// --- LEVEL 3 TRACK: "Storm - Summer Presto" ---
+export const BASS_PATTERN_L3: PatternArray = [
     NOTES.E2, NOTES.E2, NOTES.B2, NOTES.E2, NOTES.G2, NOTES.E2, NOTES.B2, NOTES.E2,
     NOTES.E2, NOTES.E2, NOTES.B2, NOTES.E2, NOTES.G2, NOTES.E2, NOTES.B2, NOTES.E2,
     NOTES.E2, NOTES.E2, NOTES.B2, NOTES.E2, NOTES.G2, NOTES.E2, NOTES.B2, NOTES.E2,
@@ -177,7 +148,6 @@ export const BASS_PATTERN_L3 = [
     NOTES.B2, NOTES.B2, NOTES.Fs3, NOTES.B2, NOTES.Ds3, NOTES.B2, NOTES.Fs3, NOTES.B2,
     NOTES.E2, NOTES.G2, NOTES.B2, NOTES.E3, NOTES.G3, NOTES.E3, NOTES.B2, NOTES.G2,
 
-    // --- Phase 2: Virtuoso Driving Bass (Steps 64 - 127) ---
     NOTES.E2, NOTES.E3, NOTES.B2, NOTES.E3, NOTES.G2, NOTES.E3, NOTES.B2, NOTES.E3,
     NOTES.D2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.Fs2, NOTES.D3, NOTES.A2, NOTES.D3,
     NOTES.C2, NOTES.C3, NOTES.G2, NOTES.C3, NOTES.E2, NOTES.C3, NOTES.G2, NOTES.C3,
@@ -188,7 +158,6 @@ export const BASS_PATTERN_L3 = [
     NOTES.B2, NOTES.B3, NOTES.Fs3, NOTES.B3, NOTES.Ds3, NOTES.B3, NOTES.Fs3, NOTES.B2,
     NOTES.E2, NOTES.G2, NOTES.B2, NOTES.E3, NOTES.G3, NOTES.E3, NOTES.B2, NOTES.G2,
 
-    // --- Phase 3: Storm Crescendo & Finale (Steps 128 - 191) ---
     NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2,
     NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.B2, NOTES.B2, NOTES.B2, NOTES.B2,
     NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.G2, NOTES.G2, NOTES.B2, NOTES.B2,
@@ -200,53 +169,37 @@ export const BASS_PATTERN_L3 = [
     NOTES.E2, null, NOTES.E2, null, NOTES.E2, null, null, null
 ];
 
-export const MELODY_PATTERN_L3 = [
-    // --- Phase 1: Storm Warning & Repeated Note Drop (Steps 0 - 63) ---
-    // Bar 1 (Steps 0 - 15)
+export const MELODY_PATTERN_L3: PatternArray = [
     NOTES.E5, NOTES.E5, NOTES.E5, NOTES.E5, NOTES.B4, NOTES.B4, NOTES.B4, NOTES.B4,
     NOTES.G4, NOTES.G4, NOTES.E4, NOTES.E4, NOTES.B3, null, NOTES.E4, null,
-    // Bar 2 (Steps 16 - 31)
     NOTES.G5, NOTES.G5, NOTES.G5, NOTES.G5, NOTES.E5, NOTES.E5, NOTES.E5, NOTES.E5,
     NOTES.B4, NOTES.B4, NOTES.G4, NOTES.G4, NOTES.E4, null, NOTES.G4, null,
-    // Bar 3 (Steps 32 - 47)
     NOTES.B5, NOTES.G5, NOTES.E5, NOTES.B4, NOTES.G5, NOTES.E5, NOTES.B4, NOTES.G4,
     NOTES.E5, NOTES.B4, NOTES.G4, NOTES.E4, NOTES.Fs4, NOTES.G4, NOTES.A4, NOTES.B4,
-    // Bar 4 (Steps 48 - 63)
     NOTES.C5, NOTES.B4, NOTES.A4, NOTES.G4, NOTES.Fs4, NOTES.E4, NOTES.Ds4, NOTES.Fs4,
     NOTES.E4, null, NOTES.E5, null, NOTES.E4, null, null, null,
 
-    // --- Phase 2: Virtuoso Storm Arpeggios (Steps 64 - 127) ---
-    // Bar 5 (Steps 64 - 79)
     NOTES.E5, NOTES.B5, NOTES.G5, NOTES.B5, NOTES.E5, NOTES.B5, NOTES.G5, NOTES.B5,
     NOTES.E5, NOTES.B5, NOTES.G5, NOTES.B5, NOTES.E5, NOTES.B5, NOTES.G5, NOTES.B5,
-    // Bar 6 (Steps 80 - 95)
     NOTES.D5, NOTES.B5, NOTES.Fs5, NOTES.B5, NOTES.D5, NOTES.B5, NOTES.Fs5, NOTES.B5,
     NOTES.D5, NOTES.B5, NOTES.Fs5, NOTES.B5, NOTES.D5, NOTES.B5, NOTES.Fs5, NOTES.B5,
-    // Bar 7 (Steps 96 - 111)
     NOTES.C5, NOTES.A5, NOTES.E5, NOTES.A5, NOTES.C5, NOTES.A5, NOTES.E5, NOTES.A5,
     NOTES.B4, NOTES.G5, NOTES.E5, NOTES.G5, NOTES.A4, NOTES.Fs5, NOTES.Ds5, NOTES.Fs5,
-    // Bar 8 (Steps 112 - 127)
     NOTES.E5, NOTES.B4, NOTES.G4, NOTES.B4, NOTES.E5, NOTES.B4, NOTES.G4, NOTES.B4,
     NOTES.E5, null, NOTES.B4, null, NOTES.E5, null, null, null,
 
-    // --- Phase 3: Fast Chromatic Lightning Run & Climax (Steps 128 - 191) ---
-    // Bar 9 (Steps 128 - 143: Descending Cascade Run)
     NOTES.E6, NOTES.Ds6, NOTES.E6, NOTES.B5, NOTES.G5, NOTES.E5, NOTES.Ds5, NOTES.E5,
     NOTES.B4, NOTES.G4, NOTES.Fs4, NOTES.G4, NOTES.E4, NOTES.Ds4, NOTES.E4, NOTES.Fs4,
-    // Bar 10 (Steps 144 - 159: Chromatic Storm Rise)
     NOTES.G4, NOTES.Gs4, NOTES.A4, NOTES.As4, NOTES.B4, NOTES.C5, NOTES.Cs5, NOTES.D5,
     NOTES.Ds5, NOTES.E5, NOTES.Fs5, NOTES.G5, NOTES.A5, NOTES.B5, NOTES.C6, NOTES.Ds6,
-    // Bar 11 (Steps 160 - 175: Heavy Staccato Chords)
     NOTES.E6, null, NOTES.E6, null, NOTES.B5, null, NOTES.B5, null,
     NOTES.G5, null, NOTES.G5, null, NOTES.E5, null, NOTES.E5, null,
-    // Bar 12 (Steps 176 - 191: Grand Finale Cadence into Loop)
     NOTES.E5, NOTES.G5, NOTES.B5, NOTES.E6, NOTES.B5, NOTES.G5, NOTES.E5, NOTES.B4,
     NOTES.E5, null, NOTES.E5, null, NOTES.E5, null, null, null
 ];
 
-// --- LEVEL 4 TRACK: "Maple Leaf Rag" (Scott Joplin - 192-step C Major Retro Chiptune Ragtime Adaptation) ---
-export const BASS_PATTERN_L4 = [
-    // --- Phase 1: Clean Ragtime Stride Bass (Steps 0 - 63) ---
+// --- LEVEL 4 TRACK: "Maple Leaf Rag" ---
+export const BASS_PATTERN_L4: PatternArray = [
     NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.G2, null, NOTES.G2, null, NOTES.D2, null, NOTES.D2, null,
@@ -257,7 +210,6 @@ export const BASS_PATTERN_L4 = [
     NOTES.F2, null, NOTES.F2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.C2, null, NOTES.E2, null, NOTES.G2, null, NOTES.C2, null,
 
-    // --- Phase 2: Steady Bouncing Ragtime Bass (Steps 64 - 127) ---
     NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.G2, null, NOTES.G2, null, NOTES.D2, null, NOTES.D2, null,
@@ -268,7 +220,6 @@ export const BASS_PATTERN_L4 = [
     NOTES.F2, null, NOTES.F2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.C2, null, NOTES.E2, null, NOTES.G2, null, NOTES.C2, null,
 
-    // --- Phase 3: Virtuoso Ragtime Bass Finale (Steps 128 - 191) ---
     NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.G2, null,
     NOTES.F2, null, NOTES.F2, null, NOTES.F2, null, NOTES.F2, null,
     NOTES.G2, null, NOTES.G2, null, NOTES.G2, null, NOTES.G2, null,
@@ -280,229 +231,149 @@ export const BASS_PATTERN_L4 = [
     NOTES.C2, null, NOTES.C2, null, NOTES.C2, null, null, null
 ];
 
-export const MELODY_PATTERN_L4 = [
-    // --- Phase 1: Main Ragtime Theme (Steps 0 - 63) ---
-    // Bar 1 (Steps 0 - 15)
+export const MELODY_PATTERN_L4: PatternArray = [
     NOTES.C5, null, NOTES.E5, null, NOTES.G5, null, NOTES.C6, null,
     NOTES.E6, null, null, NOTES.C6, null, NOTES.E6, null, null,
-    // Bar 2 (Steps 16 - 31)
     NOTES.G5, null, NOTES.C6, null, NOTES.E6, null, NOTES.G6, null,
     NOTES.E6, null, null, NOTES.C6, null, NOTES.G5, null, null,
-    // Bar 3 (Steps 32 - 47)
     NOTES.A5, null, NOTES.C6, null, NOTES.E6, null, NOTES.G5, null,
     NOTES.A5, null, NOTES.C6, null, NOTES.E6, null, NOTES.D6, null,
-    // Bar 4 (Steps 48 - 63)
     NOTES.C6, null, null, null, NOTES.G5, null, null, null,
     NOTES.C5, null, null, null, null, null, null, null,
 
-    // --- Phase 2: Second Ragtime Strain & Staccato Jump (Steps 64 - 127) ---
-    // Bar 5 (Steps 64 - 79)
     NOTES.G5, NOTES.A5, NOTES.Bb5, NOTES.B5, NOTES.C6, NOTES.E6, NOTES.G6, NOTES.E6,
     NOTES.C6, NOTES.A5, NOTES.F5, NOTES.D5, NOTES.C5, NOTES.E5, NOTES.G5, null,
-    // Bar 6 (Steps 80 - 95)
     NOTES.G5, NOTES.A5, NOTES.Bb5, NOTES.B5, NOTES.C6, NOTES.E6, NOTES.G6, NOTES.E6,
     NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.G5, null, NOTES.B5, null,
-    // Bar 7 (Steps 96 - 111)
     NOTES.E6, NOTES.D6, NOTES.C6, NOTES.A5, NOTES.G5, NOTES.E5, NOTES.C5, NOTES.G4,
     NOTES.A4, NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.D6, NOTES.E6, NOTES.F6,
-    // Bar 8 (Steps 112 - 127)
     NOTES.G6, null, NOTES.E6, null, NOTES.C6, null, NOTES.G5, null,
     NOTES.C6, null, null, null, null, null, null, null,
 
-    // --- Phase 3: Virtuoso Ragtime Flourish & High Finale (Steps 128 - 191) ---
-    // Bar 9 (Steps 128 - 143: 16th Ragtime Run)
     NOTES.C5, NOTES.Ds5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.Ds6, NOTES.E6, NOTES.G6,
     NOTES.A6, NOTES.G6, NOTES.E6, NOTES.C6, NOTES.A5, NOTES.G5, NOTES.E5, NOTES.C5,
-    // Bar 10 (Steps 144 - 159: Bouncy Ascent)
     NOTES.D5, NOTES.F5, NOTES.A5, NOTES.C6, NOTES.D6, NOTES.F6, NOTES.A6, NOTES.F6,
     NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.G5, NOTES.F5, NOTES.E5, NOTES.D5,
-    // Bar 11 (Steps 160 - 175: Jubilant Chords)
     NOTES.C6, null, NOTES.E6, null, NOTES.G6, null, NOTES.C6, null,
     NOTES.B5, null, NOTES.D6, null, NOTES.G6, null, NOTES.B5, null,
-    // Bar 12 (Steps 176 - 191: Grand Finale Cadence into Loop)
     NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.E6, NOTES.G6, NOTES.C6, NOTES.E6,
     NOTES.C6, null, NOTES.C6, null, NOTES.C6, null, null, null
 ];
 
-
-// --- LEVEL 5 TRACK: "Piano Sonata No. 8 in A Minor, K.310 – I. Allegro maestoso"
-//     (Wolfgang Amadeus Mozart - 192-step dramatic fortepiano/chiptune adaptation) ---
-// The composition is public domain. This compact game arrangement follows the work's
-// forceful repeated-note character, A-minor harmony, rapid passagework, and cadential drive.
-export const BASS_PATTERN_L5 = [
-    // --- Phase 1: Stern A-minor broken-chord accompaniment (Steps 0 - 63) ---
-    // Bar 1: A minor
+// --- LEVEL 5 TRACK: Mozart Sonata K.310 ---
+export const BASS_PATTERN_L5: PatternArray = [
     NOTES.A2, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3,
     NOTES.A2, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.B2, NOTES.Gs2,
-    // Bar 2: E dominant
     NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
     NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
-    // Bar 3: F major / D minor colour
     NOTES.F2, NOTES.C3, NOTES.F3, NOTES.A3, NOTES.C3, NOTES.A3, NOTES.F3, NOTES.C3,
     NOTES.D2, NOTES.A2, NOTES.D3, NOTES.F3, NOTES.A3, NOTES.F3, NOTES.D3, NOTES.A2,
-    // Bar 4: Dominant return to A minor
     NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
     NOTES.A2, NOTES.E3, NOTES.A3, NOTES.C3, NOTES.E3, NOTES.C3, NOTES.B2, NOTES.Gs2,
 
-    // --- Phase 2: Rapid Classical Alberti-bass drive (Steps 64 - 127) ---
-    // Bar 5: A minor rising pressure
     NOTES.A2, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.E3,
     NOTES.A2, NOTES.E3, NOTES.C3, NOTES.E3, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.E3,
-    // Bar 6: C major / G dominant
     NOTES.C2, NOTES.G2, NOTES.E3, NOTES.G3, NOTES.C3, NOTES.G3, NOTES.E3, NOTES.G3,
     NOTES.G2, NOTES.D3, NOTES.B2, NOTES.D3, NOTES.G3, NOTES.D3, NOTES.B2, NOTES.D3,
-    // Bar 7: D minor / F major sequence
     NOTES.D2, NOTES.A2, NOTES.F3, NOTES.A3, NOTES.D3, NOTES.A3, NOTES.F3, NOTES.A3,
     NOTES.F2, NOTES.C3, NOTES.A3, NOTES.C3, NOTES.F3, NOTES.C3, NOTES.A2, NOTES.C3,
-    // Bar 8: E7 dominant tension
     NOTES.E2, NOTES.B2, NOTES.Gs3, NOTES.B3, NOTES.E3, NOTES.B3, NOTES.Gs3, NOTES.B3,
     NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
 
-    // --- Phase 3: Fortissimo drive and final cadence (Steps 128 - 191) ---
-    // Bar 9: Repeated A-minor pedal
     NOTES.A2, NOTES.A2, NOTES.E3, NOTES.E3, NOTES.A3, NOTES.A3, NOTES.E3, NOTES.E3,
     NOTES.C3, NOTES.C3, NOTES.E3, NOTES.E3, NOTES.B2, NOTES.B2, NOTES.Gs2, NOTES.Gs2,
-    // Bar 10: Sequential descent
     NOTES.F2, NOTES.F2, NOTES.C3, NOTES.C3, NOTES.D2, NOTES.D2, NOTES.A2, NOTES.A2,
     NOTES.E2, NOTES.E2, NOTES.B2, NOTES.B2, NOTES.E3, NOTES.E3, NOTES.Gs2, NOTES.Gs2,
-    // Bar 11: Dominant hammering
     NOTES.E2, NOTES.B2, NOTES.E3, NOTES.B2, NOTES.E2, NOTES.B2, NOTES.E3, NOTES.B2,
     NOTES.E2, NOTES.B2, NOTES.E3, NOTES.Gs3, NOTES.B3, NOTES.Gs3, NOTES.E3, NOTES.B2,
-    // Bar 12: A-minor cadence into the loop
     NOTES.A2, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.B2, NOTES.Gs2,
     NOTES.A2, null, NOTES.E2, null, NOTES.A2, null, NOTES.A2, null
 ];
 
-export const MELODY_PATTERN_L5 = [
-    // --- Phase 1: Severe opening statement (Steps 0 - 63) ---
-    // Bar 1: Repeated-note, chord-top gesture
+export const MELODY_PATTERN_L5: PatternArray = [
     NOTES.A5, null, NOTES.A5, null, NOTES.E6, null, NOTES.E6, null,
     NOTES.C6, null, NOTES.A5, null, NOTES.Gs5, null, NOTES.E5, null,
-    // Bar 2: Dominant answer
     NOTES.A5, null, NOTES.C6, null, NOTES.B5, null, NOTES.A5, null,
     NOTES.Gs5, null, NOTES.B5, null, NOTES.E6, null, null, null,
-    // Bar 3: Contrasting F-major/D-minor phrase
     NOTES.F5, null, NOTES.A5, null, NOTES.C6, null, NOTES.A5, null,
     NOTES.D6, null, NOTES.C6, null, NOTES.B5, null, NOTES.A5, null,
-    // Bar 4: Descending cadence
     NOTES.E6, null, NOTES.D6, null, NOTES.C6, null, NOTES.B5, null,
     NOTES.A5, null, NOTES.Gs5, null, NOTES.A5, null, null, null,
 
-    // --- Phase 2: Agile Classical passagework (Steps 64 - 127) ---
-    // Bar 5: A-minor ascending and descending run
     NOTES.A4, NOTES.B4, NOTES.C5, NOTES.D5, NOTES.E5, NOTES.F5, NOTES.Gs5, NOTES.A5,
     NOTES.Gs5, NOTES.F5, NOTES.E5, NOTES.D5, NOTES.C5, NOTES.B4, NOTES.A4, NOTES.E5,
-    // Bar 6: C-major sequence
     NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.B5, NOTES.G5, NOTES.E5, NOTES.C5,
     NOTES.D5, NOTES.F5, NOTES.G5, NOTES.B5, NOTES.A5, NOTES.F5, NOTES.D5, NOTES.B4,
-    // Bar 7: D-minor/F-major sequence
     NOTES.D5, NOTES.F5, NOTES.A5, NOTES.D6, NOTES.C6, NOTES.A5, NOTES.F5, NOTES.D5,
     NOTES.F5, NOTES.A5, NOTES.C6, NOTES.F6, NOTES.E6, NOTES.C6, NOTES.A5, NOTES.F5,
-    // Bar 8: Dominant trill-like tension
     NOTES.E5, NOTES.F5, NOTES.E5, NOTES.Ds5, NOTES.E5, NOTES.F5, NOTES.E5, NOTES.Ds5,
     NOTES.E5, NOTES.Gs5, NOTES.B5, NOTES.E6, NOTES.D6, NOTES.B5, NOTES.Gs5, NOTES.E5,
 
-    // --- Phase 3: Virtuoso climax and A-minor resolution (Steps 128 - 191) ---
-    // Bar 9: High-register repeated-note assault
     NOTES.A5, NOTES.A5, NOTES.C6, NOTES.C6, NOTES.E6, NOTES.E6, NOTES.A6, NOTES.A6,
     NOTES.Gs6, NOTES.F6, NOTES.E6, NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.Gs5,
-    // Bar 10: Rapid descending sequence
     NOTES.F6, NOTES.E6, NOTES.D6, NOTES.C6, NOTES.B5, NOTES.A5, NOTES.Gs5, NOTES.F5,
     NOTES.E5, NOTES.D5, NOTES.C5, NOTES.B4, NOTES.A4, NOTES.B4, NOTES.C5, NOTES.D5,
-    // Bar 11: Dominant hammering and ascent
     NOTES.E5, null, NOTES.E5, null, NOTES.Gs5, null, NOTES.Gs5, null,
     NOTES.B5, NOTES.C6, NOTES.D6, NOTES.E6, NOTES.F6, NOTES.E6, NOTES.D6, NOTES.B5,
-    // Bar 12: Final maestoso cadence into loop
     NOTES.A5, NOTES.C6, NOTES.E6, NOTES.A6, NOTES.Gs6, NOTES.E6, NOTES.B5, NOTES.Gs5,
     NOTES.A5, null, NOTES.E5, null, NOTES.A5, null, null, null
 ];
 
-// --- MENU TRACK: "Cosmic Legato - Ambient Space Horizon" (192-step 100 BPM Legato Space Theme) ---
-// Key: C Minor Ambient Space (Legato Phrasing & Floating Melodic Lines)
-export const MENU_BASS_PATTERN = [
-    // --- Phase 1: Sustained Deep Sub-Bass Legato (Steps 0 - 63) ---
-    // Bar 1 (Steps 0 - 15: C Minor Deep Root)
+// --- MENU TRACK: "Cosmic Legato - Ambient Space Horizon" ---
+export const MENU_BASS_PATTERN: PatternArray = [
     NOTES.C2, NOTES.C2, NOTES.C3, NOTES.C3, NOTES.G2, NOTES.G2, NOTES.C3, NOTES.C3,
     NOTES.C2, NOTES.C2, NOTES.G2, NOTES.G2, NOTES.C3, NOTES.C3, NOTES.G2, NOTES.G2,
-    // Bar 2 (Steps 16 - 31: C Minor Legato Swell)
     NOTES.C2, NOTES.C2, NOTES.Eb2, NOTES.Eb2, NOTES.G2, NOTES.G2, NOTES.C3, NOTES.C3,
     NOTES.G2, NOTES.G2, NOTES.Eb2, NOTES.Eb2, NOTES.C2, NOTES.C2, NOTES.G2, NOTES.G2,
-    // Bar 3 (Steps 32 - 47: Ab Major 7 Legato Drift)
     NOTES.Ab2, NOTES.Ab2, NOTES.C3, NOTES.C3, NOTES.Eb3, NOTES.Eb3, NOTES.Ab2, NOTES.Ab2,
     NOTES.C3, NOTES.C3, NOTES.Eb3, NOTES.Eb3, NOTES.Ab2, NOTES.Ab2, NOTES.C3, NOTES.C3,
-    // Bar 4 (Steps 48 - 63: F Minor Deep Space Sustain)
     NOTES.F2, NOTES.F2, NOTES.C3, NOTES.C3, NOTES.F2, NOTES.F2, NOTES.Ab2, NOTES.Ab2,
     NOTES.C3, NOTES.C3, NOTES.F2, NOTES.F2, NOTES.Ab2, NOTES.Ab2, NOTES.C3, NOTES.C3,
 
-    // --- Phase 2: Interstellar Legato Horizon (Steps 64 - 127) ---
-    // Bar 5 (Steps 64 - 79: Bb Suspended / G Minor Legato Shift)
     NOTES.Bb2, NOTES.Bb2, NOTES.D3, NOTES.D3, NOTES.F3, NOTES.F3, NOTES.Bb2, NOTES.Bb2,
     NOTES.D3, NOTES.D3, NOTES.F3, NOTES.F3, NOTES.Bb2, NOTES.Bb2, NOTES.D3, NOTES.D3,
-    // Bar 6 (Steps 80 - 95: G Minor Deep Orbit)
     NOTES.G2, NOTES.G2, NOTES.D3, NOTES.D3, NOTES.G2, NOTES.G2, NOTES.Bb2, NOTES.Bb2,
     NOTES.D3, NOTES.D3, NOTES.G2, NOTES.G2, NOTES.Bb2, NOTES.Bb2, NOTES.D3, NOTES.D3,
-    // Bar 7 (Steps 96 - 111: Eb Major 7 Legato Waves)
     NOTES.Eb2, NOTES.Eb2, NOTES.G2, NOTES.G2, NOTES.Bb2, NOTES.Bb2, NOTES.Eb3, NOTES.Eb3,
     NOTES.Bb2, NOTES.Bb2, NOTES.G2, NOTES.G2, NOTES.Eb2, NOTES.Eb2, NOTES.G2, NOTES.G2,
-    // Bar 8 (Steps 112 - 127: C Minor Turnaround)
     NOTES.C2, NOTES.C2, NOTES.G2, NOTES.G2, NOTES.C3, NOTES.C3, NOTES.Eb3, NOTES.Eb3,
     NOTES.C3, NOTES.C3, NOTES.G2, NOTES.G2, NOTES.C2, NOTES.C2, NOTES.G2, NOTES.G2,
 
-    // --- Phase 3: Cosmic Void & Resolution (Steps 128 - 191) ---
-    // Bar 9 (Steps 128 - 143: Ab Major Legato Rise)
     NOTES.Ab2, NOTES.Ab2, NOTES.C3, NOTES.C3, NOTES.Eb3, NOTES.Eb3, NOTES.Ab3, NOTES.Ab3,
     NOTES.Eb3, NOTES.Eb3, NOTES.C3, NOTES.C3, NOTES.Ab2, NOTES.Ab2, NOTES.C3, NOTES.C3,
-    // Bar 10 (Steps 144 - 159: Bb Major Legato Cascade)
     NOTES.Bb2, NOTES.Bb2, NOTES.D3, NOTES.D3, NOTES.F3, NOTES.F3, NOTES.Bb3, NOTES.Bb3,
     NOTES.F3, NOTES.F3, NOTES.D3, NOTES.D3, NOTES.Bb2, NOTES.Bb2, NOTES.D3, NOTES.D3,
-    // Bar 11 (Steps 160 - 175: G Dominant Suspense)
     NOTES.G2, NOTES.G2, NOTES.D3, NOTES.D3, NOTES.F3, NOTES.F3, NOTES.G3, NOTES.G3,
     NOTES.F3, NOTES.F3, NOTES.D3, NOTES.D3, NOTES.G2, NOTES.G2, NOTES.D3, NOTES.D3,
-    // Bar 12 (Steps 176 - 191: C Minor Final Legato Fade)
     NOTES.C2, NOTES.C2, NOTES.G2, NOTES.G2, NOTES.C3, NOTES.C3, NOTES.Eb3, NOTES.Eb3,
     NOTES.C3, NOTES.C3, NOTES.G2, NOTES.G2, NOTES.C2, null,     NOTES.C2, null
 ];
 
-export const MENU_CHIME_PATTERN = [
-    // --- Phase 1: Soaring Legato Space Theme (Steps 0 - 63) ---
-    // Bar 1 (Steps 0 - 15: C Minor Legato Ascending Arc)
+export const MENU_CHIME_PATTERN: PatternArray = [
     NOTES.C5, NOTES.Eb5, NOTES.G5, NOTES.Bb5, NOTES.C6, NOTES.Eb6, NOTES.D6, NOTES.Bb5,
     NOTES.G5, NOTES.Eb5, NOTES.C5, NOTES.G4, NOTES.C5, NOTES.Eb5, NOTES.G5, NOTES.Bb5,
-    // Bar 2 (Steps 16 - 31: Floating Legato Orbit)
     NOTES.C6, NOTES.Eb6, NOTES.F6, NOTES.G6, NOTES.Eb6, NOTES.D6, NOTES.C6, NOTES.Bb5,
     NOTES.G5, NOTES.Bb5, NOTES.C6, NOTES.D6, NOTES.C6, NOTES.G5, NOTES.Eb5, NOTES.G5,
-    // Bar 3 (Steps 32 - 47: Ab Major 7 Legato Nebula Arc)
     NOTES.Ab5, NOTES.C6, NOTES.Eb6, NOTES.G6, NOTES.F6, NOTES.Eb6, NOTES.C6, NOTES.Ab5,
     NOTES.Eb5, NOTES.Ab5, NOTES.C6, NOTES.Eb6, NOTES.C6, NOTES.Ab5, NOTES.Eb5, NOTES.C5,
-    // Bar 4 (Steps 48 - 63: Descending Legato Cascade)
     NOTES.F5, NOTES.Ab5, NOTES.C6, NOTES.Eb6, NOTES.D6, NOTES.C6, NOTES.Bb5, NOTES.G5,
     NOTES.Eb5, NOTES.G5, NOTES.Bb5, NOTES.C6, NOTES.Bb5, NOTES.G5, NOTES.Eb5, NOTES.C5,
 
-    // --- Phase 2: Interstellar Legato Flight (Steps 64 - 127) ---
-    // Bar 5 (Steps 64 - 79: Bb Suspended / G Minor Legato Swell)
     NOTES.Bb5, NOTES.D6, NOTES.F6, NOTES.G6, NOTES.F6, NOTES.D6, NOTES.Bb5, NOTES.G5,
     NOTES.D5, NOTES.G5, NOTES.Bb5, NOTES.D6, NOTES.Bb5, NOTES.G5, NOTES.D5, NOTES.Bb4,
-    // Bar 6 (Steps 80 - 95: High Cosmic Legato Flight)
     NOTES.G6, NOTES.F6, NOTES.Eb6, NOTES.D6, NOTES.C6, NOTES.Bb5, NOTES.Ab5, NOTES.G5,
     NOTES.Eb5, NOTES.G5, NOTES.Bb5, NOTES.C6, NOTES.D6, NOTES.Eb6, NOTES.F6, NOTES.G6,
-    // Bar 7 (Steps 96 - 111: Eb Major 7 Legato Wave)
     NOTES.Eb5, NOTES.G5, NOTES.Bb5, NOTES.C6, NOTES.D6, NOTES.Eb6, NOTES.G6, NOTES.Eb6,
     NOTES.C6, NOTES.Bb5, NOTES.G5, NOTES.Eb5, NOTES.Bb4, NOTES.Eb5, NOTES.G5, NOTES.Bb5,
-    // Bar 8 (Steps 112 - 127: C Minor Turnaround Legato)
     NOTES.C6, NOTES.D6, NOTES.Eb6, NOTES.F6, NOTES.G6, NOTES.Eb6, NOTES.D6, NOTES.C6,
     NOTES.Bb5, NOTES.G5, NOTES.Eb5, NOTES.C5, NOTES.G4, NOTES.C5, NOTES.Eb5, NOTES.G5,
 
-    // --- Phase 3: Grand Legato Climax & Resolution (Steps 128 - 191) ---
-    // Bar 9 (Steps 128 - 143: Ab Major Legato Soar)
     NOTES.Ab5, NOTES.C6, NOTES.Eb6, NOTES.G6, NOTES.Ab6, NOTES.G6, NOTES.Eb6, NOTES.C6,
     NOTES.Ab5, NOTES.Eb5, NOTES.Ab5, NOTES.C6, NOTES.Eb6, NOTES.G6, NOTES.Eb6, NOTES.C6,
-    // Bar 10 (Steps 144 - 159: Cascading Legato Stardust)
     NOTES.F6, NOTES.Eb6, NOTES.D6, NOTES.C6, NOTES.Bb5, NOTES.G5, NOTES.Eb5, NOTES.D5,
     NOTES.Bb4, NOTES.D5, NOTES.F5, NOTES.Bb5, NOTES.D6, NOTES.F6, NOTES.D6, NOTES.Bb5,
-    // Bar 11 (Steps 160 - 175: Cosmic Suspense Legato)
     NOTES.G5, NOTES.B5, NOTES.D6, NOTES.F6, NOTES.G6, NOTES.F6, NOTES.D6, NOTES.B5,
     NOTES.G5, NOTES.D5, NOTES.G5, NOTES.B5, NOTES.D6, NOTES.F6, NOTES.D6, NOTES.B5,
-    // Bar 12 (Steps 176 - 191: Fade into Infinite Void)
     NOTES.C6, NOTES.G5, NOTES.Eb5, NOTES.C5, NOTES.G4, NOTES.C5, NOTES.Eb5, NOTES.G5,
     NOTES.C6, null,     NOTES.G5, null,     NOTES.C5, null,     null,     null
 ];

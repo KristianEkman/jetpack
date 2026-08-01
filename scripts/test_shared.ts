@@ -27,18 +27,17 @@ console.log('2️⃣  Testing TileMap, Event Dispatches, & Phase Bricks...');
 const tileMap = new TileMap();
 tileMap.loadLevelData(CAMPAIGN_LEVELS[0]);
 
-let phasedEventReceived = null;
-let restoredEventReceived = null;
+let phasedEventReceived: any = null;
+let restoredEventReceived: any = null;
 
-tileMap.on(GAME_EVENTS.TILE_PHASED, (data) => {
+tileMap.on(GAME_EVENTS.TILE_PHASED, (data: any) => {
     phasedEventReceived = data;
 });
 
-tileMap.on(GAME_EVENTS.TILE_RESTORED, (data) => {
+tileMap.on(GAME_EVENTS.TILE_RESTORED, (data: any) => {
     restoredEventReceived = data;
 });
 
-// Find a PHASE_BRICK tile in level 0 or set one for testing
 let targetCol = -1, targetRow = -1;
 for (let r = 0; r < tileMap.rows; r++) {
     for (let c = 0; c < tileMap.cols; c++) {
@@ -57,7 +56,6 @@ if (targetCol === -1) {
     tileMap.setTile(targetCol, targetRow, TILES.PHASE_BRICK);
 }
 
-// Phase the tile
 const phased = tileMap.phaseTile(targetCol, targetRow);
 assert.equal(phased, true);
 assert.equal(tileMap.getTile(targetCol, targetRow), TILES.AIR);
@@ -66,7 +64,6 @@ assert.equal(phasedEventReceived.col, targetCol);
 assert.equal(phasedEventReceived.row, targetRow);
 console.log('   ✅ Tile Phase event dispatched successfully.');
 
-// Fast-forward time to trigger tile restoration
 tileMap.update(5.1);
 assert.equal(tileMap.getTile(targetCol, targetRow), TILES.PHASE_BRICK);
 assert.notEqual(restoredEventReceived, null);
@@ -88,13 +85,11 @@ const spawnX = 128, spawnY = 100;
 p1.spawn(spawnX, spawnY);
 const initialY = p1.y;
 
-// Simulate thrusting input
 const thrustInput = InputHandler.deserializeInputState({ thrust: true, sequenceId: 1 });
 p1.update(0.1, thrustInput, null);
 assert.ok(p1.vy < 0, `Player velocity (${p1.vy}) should be negative (upward) under thrust`);
 assert.ok(p1.y < initialY, 'Player Y coordinate should decrease (rise)');
 
-// Simulate gravity tick (no thrust)
 const idleInput = InputHandler.deserializeInputState({ sequenceId: 2 });
 p1.update(0.1, idleInput, null);
 console.log('   ✅ Multi-Player headless physics simulation passed.\n');
@@ -126,14 +121,12 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(pLocal.isLocal, true);
     assert.equal(pRemote.isLocal, false);
 
-    // Apply snapshot update
     manager.updateFromSnapshot([
         [ 'socket_1', pLocal.id, 200, 150, 0, 0, 85, 3, 0, PLAYER_FLAGS.IS_THRUSTING, 0, 0 ],
         [ 'socket_2', pRemote.id, 300, 180, 0, 0, 90, 3, 0, PLAYER_FLAGS.IS_PHASING, 0, 0 ],
         [ 'socket_3', 'p3', 400, 200, 0, 0, 100, 3, 0, 0, 0, 0 ]
     ]);
 
-    // Local player properties should NOT be overwritten by server snapshot
     assert.equal(pLocal.x, 100);
     assert.equal(pLocal.fuel, 100);
     assert.equal(pLocal.isThrusting, false);
@@ -143,7 +136,6 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     const p3 = manager.getPlayer('socket_3');
     assert.notEqual(p3, null);
 
-    // Snapshot omitting socket_2 should prune socket_2
     manager.updateFromSnapshot([
         [ 'socket_1', pLocal.id, 210, 150, 0, 0, 85, 3, 0, 0, 0, 0 ],
         [ 'socket_3', 'p3', 410, 200, 0, 0, 100, 3, 0, 0, 0, 0 ]
@@ -152,19 +144,14 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(manager.getPlayer('socket_2'), undefined);
     assert.equal(manager.players.size, 2);
 
-    // Test multiplayer death snapshot synchronization:
-    // 1. Local player takes damage
     pLocal.takeDamage();
     assert.equal(pLocal.isDead, true);
 
-    // 2. Incoming stale server snapshot (sent before server processed death, so isDead: false)
     manager.updateFromSnapshot([
         [ 'socket_1', pLocal.id, 210, 150, 0, 0, 85, 3, 0, 0, 0, 0 ]
     ]);
-    // Should NOT revive local player prematurely!
     assert.equal(pLocal.isDead, true);
 
-    // 3. Server acknowledges death (isDead: true)
     manager.updateFromSnapshot([
         [ 'socket_1', pLocal.id, 210, 150, 0, 0, 85, 2, 0, PLAYER_FLAGS.IS_DEAD, 0, 0 ]
     ]);
@@ -172,7 +159,6 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(pLocal.serverAcknowledgedDeath, true);
     assert.equal(pLocal.lives, 2);
 
-    // 4. Server signals respawn (isDead: false with new spawn coordinates)
     manager.updateFromSnapshot([
         [ 'socket_1', pLocal.id, 128, 100, 0, 0, 100, 2, 0, 0, 0, 0 ]
     ]);
@@ -180,29 +166,26 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(pLocal.x, 128);
     assert.equal(pLocal.y, 100);
 
-    // 4.5 Test fallback respawn if server's isDead: true snapshot was dropped by network
     pLocal.takeDamage();
     assert.equal(pLocal.isDead, true);
-    pLocal._localDeathTimestamp = Date.now() - 600; // Simulate 600ms passed
+    pLocal._localDeathTimestamp = Date.now() - 600;
     manager.updateFromSnapshot([
         [ 'socket_1', pLocal.id, 128, 100, 0, 0, 100, 1, 0, 0, 0, 0 ]
     ]);
     assert.equal(pLocal.isDead, false, 'Player should recover from dropped death snapshot after 500ms');
     assert.equal(pLocal.lives, 1);
 
-    // 4.6 Test Spawn Invulnerability
     pLocal.spawn(128, 100);
     assert.ok(pLocal.respawnInvulnerability > 0, 'Spawn should set respawnInvulnerability');
     const livesBefore = pLocal.lives;
     pLocal.takeDamage();
     assert.equal(pLocal.lives, livesBefore, 'takeDamage must be ignored during respawnInvulnerability');
 
-    // 5. Test EnemyManager interpolation and animTimer advancement
     const enemyMgr = new EnemyManager(tileMap);
     enemyMgr.addFlitzer(100, 100, 50, 50, 'flitzer_test');
-    const initialAnimTimer = enemyMgr.enemies[0].animTimer;
+    const initialAnimTimer = enemyMgr.enemies[0].animTimer!;
     enemyMgr.interpolateEnemies(0.1);
-    assert.ok(enemyMgr.enemies[0].animTimer > initialAnimTimer, 'Flitzer animTimer must advance during interpolation');
+    assert.ok(enemyMgr.enemies[0].animTimer! > initialAnimTimer, 'Flitzer animTimer must advance during interpolation');
 
     console.log('   ✅ PlayerManager entity lifecycle & snapshot sync passed.\n');
     console.log('🎉 ALL SHARED CORE MODULE TESTS PASSED SUCCESSFULLY!');

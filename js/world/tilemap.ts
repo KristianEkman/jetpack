@@ -2,11 +2,57 @@
    TILEMAP & WORLD ENGINE
    ========================================================================== */
 
-import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, GAME_EVENTS } from '../shared/constants.js';
+import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, GAME_EVENTS, TileTypeValue } from '../shared/constants.js';
+import { ParticleSpec, LevelData } from '../shared/types.js';
 
 export { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES };
 
+export interface DissolvedBrick {
+    index: number;
+    col: number;
+    row: number;
+    originalTile: number;
+    timer: number;
+}
+
+export interface TeleporterPad {
+    tiles: number[];
+    col: number;
+    row: number;
+    x: number;
+    y: number;
+}
+
+export interface DebrisObject {
+    type: string;
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    rot: number;
+    rotSpeed: number;
+    gravity?: number;
+    life: number;
+    maxLife: number;
+    bounce?: number;
+    radius?: number;
+    speed?: number;
+}
+
 export class TileMap {
+    cols: number;
+    rows: number;
+    grid: number[];
+    dissolvedBricks: DissolvedBrick[];
+    portalAngle: number;
+    totalEmeralds: number;
+    collectedEmeralds: number;
+    teleporters: TeleporterPad[];
+    particles: ParticleSpec[];
+    debris: DebrisObject[];
+    listeners: Record<string, Function[]>;
+    spawnPoints: { x: number; y: number; }[];
+
     constructor() {
         this.cols = GRID_COLS;
         this.rows = GRID_ROWS;
@@ -29,19 +75,21 @@ export class TileMap {
 
         // Event listeners for world updates
         this.listeners = {};
+
+        this.spawnPoints = [];
     }
 
-    on(event, callback) {
+    on(event: string, callback: Function): void {
         if (!this.listeners[event]) this.listeners[event] = [];
         this.listeners[event].push(callback);
     }
 
-    off(event, callback) {
+    off(event: string, callback: Function): void {
         if (!this.listeners[event]) return;
         this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
     }
 
-    emit(event, payload) {
+    emit(event: string, payload?: any): void {
         if (this.listeners[event]) {
             for (const cb of this.listeners[event]) {
                 cb(payload);
@@ -49,7 +97,7 @@ export class TileMap {
         }
     }
 
-    loadLevelData(levelData) {
+    loadLevelData(levelData: LevelData): void {
         this.grid = [...levelData.grid];
         this.dissolvedBricks = [];
         this.particles = [];
@@ -59,21 +107,21 @@ export class TileMap {
         this.rebuildTeleporters();
     }
 
-    getTile(col, row) {
+    getTile(col: number, row: number): number {
         if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) {
             return TILES.BRICK; // Out of bounds is solid brick
         }
         return this.grid[row * this.cols + col];
     }
 
-    setTile(col, row, tileType) {
+    setTile(col: number, row: number, tileType: number): void {
         if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
             this.grid[row * this.cols + col] = tileType;
             this.rebuildTeleporters();
         }
     }
 
-    countTotalEmeralds() {
+    countTotalEmeralds(): void {
         let count = 0;
         for (let i = 0; i < this.grid.length; i++) {
             if (this.grid[i] === TILES.EMERALD) {
@@ -83,22 +131,22 @@ export class TileMap {
         this.totalEmeralds = count;
     }
 
-    rebuildTeleporters() {
+    rebuildTeleporters(): void {
         this.teleporters = [];
 
-        const visited = new Set();
+        const visited = new Set<number>();
         for (let i = 0; i < this.grid.length; i++) {
             if (this.grid[i] === TILES.TELEPORTER && !visited.has(i)) {
                 // Group contiguous teleporter tiles into a single Teleporter Pad node
-                const padTiles = [];
-                const queue = [i];
+                const padTiles: number[] = [];
+                const queue: number[] = [i];
                 visited.add(i);
 
                 let sumCol = 0;
                 let sumRow = 0;
 
                 while (queue.length > 0) {
-                    const curr = queue.shift();
+                    const curr = queue.shift()!;
                     padTiles.push(curr);
 
                     const c = curr % this.cols;
@@ -139,19 +187,19 @@ export class TileMap {
     }
 
     // Check if tile is solid for collision
-    isSolid(col, row) {
+    isSolid(col: number, row: number): boolean {
         const tile = this.getTile(col, row);
-        return [TILES.BRICK, TILES.PHASE_BRICK, TILES.ICE, TILES.CONVEYOR_LEFT, TILES.CONVEYOR_RIGHT].includes(tile);
+        return [TILES.BRICK, TILES.PHASE_BRICK, TILES.ICE, TILES.CONVEYOR_LEFT, TILES.CONVEYOR_RIGHT].includes(tile as any);
     }
 
     // Check climbable
-    isClimbable(col, row) {
+    isClimbable(col: number, row: number): boolean {
         const tile = this.getTile(col, row);
         return tile === TILES.LADDER || tile === TILES.VINE;
     }
 
     // Phase Shifter beam targeting: dissolves phaseable brick at tile
-    phaseTile(col, row) {
+    phaseTile(col: number, row: number): boolean {
         const tile = this.getTile(col, row);
         if (tile === TILES.PHASE_BRICK) {
             const index = row * this.cols + col;
@@ -176,7 +224,7 @@ export class TileMap {
     }
 
     // Force re-solidifying a dissolved phase brick
-    restoreTile(col, row) {
+    restoreTile(col: number, row: number): boolean {
         if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return false;
         const index = row * this.cols + col;
         this.grid[index] = TILES.PHASE_BRICK;
@@ -189,12 +237,12 @@ export class TileMap {
         return true;
     }
 
-    update(dt, player = null, enemyManager = null) {
+    update(dt: number, player: any = null, enemyManager: any = null): void {
         // Update portal animation rotation
         this.portalAngle += dt * 3;
 
         // Collect entities to check for tile occupancy
-        const entities = [];
+        const entities: any[] = [];
         if (player && !player.isDead) entities.push(player);
         if (enemyManager && enemyManager.enemies) {
             for (const enemy of enemyManager.enemies) {
@@ -241,7 +289,7 @@ export class TileMap {
         // Update particles
         if (this.particles) {
             for (let i = this.particles.length - 1; i >= 0; i--) {
-                const p = this.particles[i];
+                const p = this.particles[i] as any;
                 p.x += p.vx;
                 p.y += p.vy;
                 p.life -= dt;
@@ -263,50 +311,50 @@ export class TileMap {
         if (this.debris) {
             for (let i = this.debris.length - 1; i >= 0; i--) {
                 const d = this.debris[i];
-            d.life -= dt;
-            if (d.life <= 0) {
-                this.debris.splice(i, 1);
-                continue;
-            }
+                d.life -= dt;
+                if (d.life <= 0) {
+                    this.debris.splice(i, 1);
+                    continue;
+                }
 
-            if (d.type === 'shockwave') {
-                d.radius += d.speed * dt;
-                continue;
-            }
+                if (d.type === 'shockwave') {
+                    if (d.radius !== undefined && d.speed !== undefined) {
+                        d.radius += d.speed * dt;
+                    }
+                    continue;
+                }
 
-            // Gravity & Velocity
-            if (d.gravity) {
-                d.vy += d.gravity * dt;
-            }
-            d.x += d.vx * dt;
-            d.y += d.vy * dt;
-            if (d.rotSpeed) {
-                d.rot += d.rotSpeed * dt;
-            }
+                // Gravity & Velocity
+                if (d.gravity) {
+                    d.vy += d.gravity * dt;
+                }
+                d.x += d.vx * dt;
+                d.y += d.vy * dt;
+                if (d.rotSpeed) {
+                    d.rot += d.rotSpeed * dt;
+                }
 
-            // Tile Collision & Bouncing for physical debris
-            if (d.bounce) {
-                const col = Math.floor(d.x / TILE_SIZE);
-                const row = Math.floor(d.y / TILE_SIZE);
-                if (this.isSolid(col, row)) {
-                    d.vy = -d.vy * d.bounce;
-                    d.vx *= 0.65;
-                    d.y += d.vy * dt * 2;
-                    d.rotSpeed *= -0.4;
-                    if (Math.abs(d.vy) < 20) d.vy = 0;
+                // Tile Collision & Bouncing for physical debris
+                if (d.bounce) {
+                    const col = Math.floor(d.x / TILE_SIZE);
+                    const row = Math.floor(d.y / TILE_SIZE);
+                    if (this.isSolid(col, row)) {
+                        d.vy = -d.vy * d.bounce;
+                        d.vx *= 0.65;
+                        d.y += d.vy * dt * 2;
+                        d.rotSpeed *= -0.4;
+                        if (Math.abs(d.vy) < 20) d.vy = 0;
+                    }
                 }
             }
         }
     }
-}
 
-    addDeathExplosion(x, y, facingRight = true) {
+    addDeathExplosion(x: number, y: number, facingRight: boolean = true): void {
         const packX = facingRight ? x - 4 : x + 18;
         const packY = y + 6;
 
         // 1. JETPACK BREAKING INTO PARTS:
-
-        // A) Jetpack Top Casing (Grey metallic block 6x8)
         this.debris.push({
             type: 'jetpack_top',
             x: packX,
@@ -321,7 +369,6 @@ export class TileMap {
             bounce: 0.5
         });
 
-        // B) Jetpack Bottom Casing (Grey block 6x8)
         this.debris.push({
             type: 'jetpack_bottom',
             x: packX,
@@ -336,7 +383,6 @@ export class TileMap {
             bounce: 0.5
         });
 
-        // C) Red Fuel Cell Tank (Red block 4x4)
         this.debris.push({
             type: 'fuel_cell',
             x: packX + 1,
@@ -351,7 +397,6 @@ export class TileMap {
             bounce: 0.6
         });
 
-        // D) Detached Thruster Nozzle (Dark metal nozzle 4x3)
         this.debris.push({
             type: 'nozzle',
             x: packX + 1,
@@ -367,8 +412,6 @@ export class TileMap {
         });
 
         // 2. CHARACTER / SUIT PARTS:
-
-        // A) Helmet (White dome + blue visor)
         this.debris.push({
             type: 'helmet',
             x: x + 11,
@@ -383,7 +426,6 @@ export class TileMap {
             bounce: 0.55
         });
 
-        // B) Cyan Suit Torso (Cyan block 14x12)
         this.debris.push({
             type: 'suit',
             x: x + 4,
@@ -398,7 +440,6 @@ export class TileMap {
             bounce: 0.4
         });
 
-        // C) Boots (Left & Right boots)
         this.debris.push({
             type: 'boot',
             x: x + 4,
@@ -427,7 +468,7 @@ export class TileMap {
         });
     }
 
-    addSparkles(x, y, color = '#00ffcc', count = 8) {
+    addSparkles(x: number, y: number, color: string = '#00ffcc', count: number = 8): void {
         if (!this.particles) return;
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -439,16 +480,17 @@ export class TileMap {
                 vy: Math.sin(angle) * speed * 0.016,
                 color,
                 size: Math.random() * 4 + 2,
-                life: Math.random() * 0.4 + 0.2
+                life: Math.random() * 0.4 + 0.2,
+                maxLife: 0.6
             });
         }
     }
 
     // Canvas Render Engine for TileMap
-    render(ctx, isEditor = false) {
+    render(ctx: CanvasRenderingContext2D, isEditor: boolean = false): void {
         ctx.clearRect(0, 0, this.cols * TILE_SIZE, this.rows * TILE_SIZE);
 
-        // Draw Background Grid Lines (Single batched path stroke for high performance)
+        // Draw Background Grid Lines
         ctx.strokeStyle = 'rgba(0, 255, 204, 0.04)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -496,7 +538,7 @@ export class TileMap {
             ctx.fill();
         }
 
-        // Render Debris Objects Layer (Helmet, Jetpack components, Fuel Cell, Suit, Boots)
+        // Render Debris Objects Layer
         for (let d of this.debris) {
             const alpha = Math.max(0, Math.min(1, d.life / (d.maxLife || 1)));
             ctx.save();
@@ -505,23 +547,19 @@ export class TileMap {
             if (d.type === 'helmet') {
                 ctx.translate(d.x, d.y);
                 ctx.rotate(d.rot);
-                // Dome
                 ctx.fillStyle = '#ecf0f1';
                 ctx.beginPath();
                 ctx.arc(0, 0, 7, 0, Math.PI * 2);
                 ctx.fill();
-                // Visor
                 ctx.fillStyle = '#3498db';
                 ctx.fillRect(0, -3, 6, 5);
             } else if (d.type === 'jetpack_top') {
                 ctx.translate(d.x, d.y);
                 ctx.rotate(d.rot);
-                // Grey Jetpack Top Casing Part
                 ctx.fillStyle = '#7f8c8d';
                 ctx.fillRect(-3, -4, 6, 8);
                 ctx.fillStyle = '#95a5a6';
                 ctx.fillRect(-2, -3, 2, 6);
-                // Broken Jagged Edge Line
                 ctx.strokeStyle = '#34495e';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -533,16 +571,13 @@ export class TileMap {
             } else if (d.type === 'jetpack_bottom') {
                 ctx.translate(d.x, d.y);
                 ctx.rotate(d.rot);
-                // Grey Jetpack Bottom Casing Part
                 ctx.fillStyle = '#7f8c8d';
                 ctx.fillRect(-3, -4, 6, 8);
-                // Thruster Nozzle Base
                 ctx.fillStyle = '#34495e';
                 ctx.fillRect(-2, 4, 4, 3);
             } else if (d.type === 'fuel_cell') {
                 ctx.translate(d.x, d.y);
                 ctx.rotate(d.rot);
-                // Red Fuel Cell Tank Component
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(-2.5, -2.5, 5, 5);
                 ctx.strokeStyle = '#c0392b';
@@ -556,7 +591,6 @@ export class TileMap {
             } else if (d.type === 'suit') {
                 ctx.translate(d.x, d.y);
                 ctx.rotate(d.rot);
-                // Cyan Suit Torso
                 ctx.fillStyle = '#00ffcc';
                 ctx.fillRect(-7, -6, 14, 12);
                 ctx.fillStyle = '#00e5ff';
@@ -572,10 +606,9 @@ export class TileMap {
         }
     }
 
-    renderTile(ctx, tile, x, y, c, r) {
+    renderTile(ctx: CanvasRenderingContext2D, tile: number, x: number, y: number, c: number, r: number): void {
         switch (tile) {
             case TILES.BRICK:
-                // Classic Red-Brown Metallic Brick
                 ctx.fillStyle = '#8b263e';
                 ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 ctx.strokeStyle = '#b83b5e';
@@ -586,19 +619,16 @@ export class TileMap {
                 break;
 
             case TILES.PHASE_BRICK:
-                // Phaseable Cyan Glass Brick
                 ctx.fillStyle = 'rgba(0, 204, 255, 0.4)';
                 ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 ctx.strokeStyle = '#00f0ff';
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-                // Glowing inner core
                 ctx.fillStyle = '#00f0ff';
                 ctx.fillRect(x + 10, y + 10, TILE_SIZE - 20, TILE_SIZE - 20);
                 break;
 
             case TILES.ICE:
-                // Ice Floor Block
                 ctx.fillStyle = 'rgba(180, 240, 255, 0.6)';
                 ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 ctx.strokeStyle = '#ffffff';
@@ -615,7 +645,6 @@ export class TileMap {
                 ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(x, y + 4, TILE_SIZE, 6);
-                // Animated arrows
                 ctx.fillStyle = '#f1c40f';
                 ctx.font = '12px Orbitron, sans-serif';
                 const arrow = tile === TILES.CONVEYOR_LEFT ? '◄' : '►';
@@ -656,20 +685,17 @@ export class TileMap {
                 ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 ctx.strokeStyle = '#ff0055';
                 ctx.strokeRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-                // Lightning bolt icon
                 ctx.fillStyle = '#ff0055';
                 ctx.font = '14px sans-serif';
                 ctx.fillText('⚡', x + 8, y + 22);
                 break;
 
             case TILES.EMERALD: {
-                // 3D Brilliant-Cut Diamond Gem with Emerald Radiant Aura (matches HUD icon)
                 const hoverOffset = Math.sin(Date.now() / 250) * 1.5;
                 const cx = x + 16;
                 const cy = y + 16 + hoverOffset;
                 const pulseGlow = (Math.sin(Date.now() / 180) + 1) * 0.5;
 
-                // 1. Multi-layered Luminous Emerald Ambient Aura (matching HUD green glow)
                 const glowRadius = 17 + pulseGlow * 2.5;
                 const outerGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
                 outerGlow.addColorStop(0, `rgba(0, 255, 136, ${0.5 + pulseGlow * 0.25})`);
@@ -680,20 +706,16 @@ export class TileMap {
                 ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 2. Medium-Large Brilliant Diamond Geometry (Flat top table, angled crown shoulders, wide girdle, deep pavilion)
-                // Width = 22px (from cx - 11 to cx + 11), Height = 21px (from cy - 10 to cy + 11)
-                const pTL = { x: cx - 6.5, y: cy - 10 };   // Top Left table corner
-                const pTR = { x: cx + 6.5, y: cy - 10 };   // Top Right table corner
-                const pML = { x: cx - 11,  y: cy - 3 };    // Mid Left girdle
-                const pMR = { x: cx + 11,  y: cy - 3 };    // Mid Right girdle
-                const pB  = { x: cx,       y: cy + 11 };   // Bottom culet tip
-                const pC  = { x: cx,       y: cy - 2 };    // Center junction facet
+                const pTL = { x: cx - 6.5, y: cy - 10 };
+                const pTR = { x: cx + 6.5, y: cy - 10 };
+                const pML = { x: cx - 11, y: cy - 3 };
+                const pMR = { x: cx + 11, y: cy - 3 };
+                const pB = { x: cx, y: cy + 11 };
+                const pC = { x: cx, y: cy - 2 };
 
-                const pCrownL = { x: cx - 3.5, y: cy - 3 }; // Inner girdle left
-                const pCrownR = { x: cx + 3.5, y: cy - 3 }; // Inner girdle right
+                const pCrownL = { x: cx - 3.5, y: cy - 3 };
+                const pCrownR = { x: cx + 3.5, y: cy - 3 };
 
-                // 3. Lower Pavilion Facets (Deep Blue Shading for 3D depth)
-                // Outer Left Pavilion Facet (Dark Sapphire)
                 ctx.fillStyle = '#003c73';
                 ctx.beginPath();
                 ctx.moveTo(pML.x, pML.y);
@@ -702,7 +724,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // Mid Left Pavilion Facet (Deep Ocean Blue)
                 ctx.fillStyle = '#00549e';
                 ctx.beginPath();
                 ctx.moveTo(pCrownL.x, pCrownL.y);
@@ -711,7 +732,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // Mid Right Pavilion Facet (Cobalt Blue)
                 ctx.fillStyle = '#006ec7';
                 ctx.beginPath();
                 ctx.moveTo(pCrownR.x, pCrownR.y);
@@ -720,7 +740,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // Outer Right Pavilion Facet (Vibrant Royal Blue)
                 ctx.fillStyle = '#0085ed';
                 ctx.beginPath();
                 ctx.moveTo(pMR.x, pMR.y);
@@ -729,8 +748,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // 4. Crown Side Facets (Cyan & Sky Blue)
-                // Far Left Crown Facet
                 ctx.fillStyle = '#009ee3';
                 ctx.beginPath();
                 ctx.moveTo(pTL.x, pTL.y);
@@ -739,7 +756,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // Upper Left Crown Facet
                 ctx.fillStyle = '#1ad1ff';
                 ctx.beginPath();
                 ctx.moveTo(pTL.x, pTL.y);
@@ -748,7 +764,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // Upper Right Crown Facet
                 ctx.fillStyle = '#4de1ff';
                 ctx.beginPath();
                 ctx.moveTo(pTR.x, pTR.y);
@@ -757,7 +772,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // Far Right Crown Facet
                 ctx.fillStyle = '#00c3ff';
                 ctx.beginPath();
                 ctx.moveTo(pTR.x, pTR.y);
@@ -766,7 +780,6 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // 5. Top Table Facet (Bright Reflective Diamond Surface)
                 const tableGrad = ctx.createLinearGradient(pTL.x, pTL.y, pTR.x, pC.y);
                 tableGrad.addColorStop(0, '#ffffff');
                 tableGrad.addColorStop(0.35, '#cceeff');
@@ -780,18 +793,15 @@ export class TileMap {
                 ctx.closePath();
                 ctx.fill();
 
-                // 6. Crisp Facet Edges & Perimeter Outlines
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                // Perimeter
                 ctx.moveTo(pTL.x, pTL.y);
                 ctx.lineTo(pTR.x, pTR.y);
                 ctx.lineTo(pMR.x, pMR.y);
                 ctx.lineTo(pB.x, pB.y);
                 ctx.lineTo(pML.x, pML.y);
                 ctx.closePath();
-                // Facet inner lines
                 ctx.moveTo(pTL.x, pTL.y); ctx.lineTo(pCrownL.x, pCrownL.y); ctx.lineTo(pB.x, pB.y);
                 ctx.moveTo(pTR.x, pTR.y); ctx.lineTo(pCrownR.x, pCrownR.y); ctx.lineTo(pB.x, pB.y);
                 ctx.moveTo(pML.x, pML.y); ctx.lineTo(pCrownL.x, pCrownL.y);
@@ -801,7 +811,6 @@ export class TileMap {
                 ctx.moveTo(pC.x, pC.y); ctx.lineTo(pB.x, pB.y);
                 ctx.stroke();
 
-                // 7. Dynamic Star Flare Sparkle on Top-Left Corner
                 const flareTime = Date.now() / 180;
                 const flareSize = (Math.sin(flareTime) + 1) * 3 + 2.5;
                 const flareAlpha = (Math.sin(flareTime) + 1) * 0.4 + 0.5;
@@ -813,7 +822,6 @@ export class TileMap {
                 ctx.beginPath();
                 ctx.moveTo(fx - flareSize, fy); ctx.lineTo(fx + flareSize, fy);
                 ctx.moveTo(fx, fy - flareSize); ctx.lineTo(fx, fy + flareSize);
-                // Diagonal rays for 8-point sparkle effect
                 const diag = flareSize * 0.6;
                 ctx.moveTo(fx - diag, fy - diag); ctx.lineTo(fx + diag, fy + diag);
                 ctx.moveTo(fx + diag, fy - diag); ctx.lineTo(fx - diag, fy + diag);
@@ -827,7 +835,6 @@ export class TileMap {
             }
 
             case TILES.FUEL: {
-                // Instantly Recognizable Classic Jerrycan Fuel Canister
                 const now = Date.now();
                 const hoverY = Math.sin(now / 220) * 1.5;
                 const pulse = (Math.sin(now / 180) + 1) * 0.5;
@@ -836,7 +843,6 @@ export class TileMap {
 
                 ctx.save();
 
-                // 1. Radiant Outer Energy Glow (Amber/Yellow Warm Aura)
                 const outerGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 16 + pulse * 2);
                 outerGlow.addColorStop(0, `rgba(255, 170, 0, ${0.45 + pulse * 0.2})`);
                 outerGlow.addColorStop(0.6, `rgba(255, 80, 0, ${0.15 + pulse * 0.1})`);
@@ -846,58 +852,50 @@ export class TileMap {
                 ctx.arc(cx, cy, 16 + pulse * 2, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 2. Floating Drop Shadow underneath
                 const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
                 ctx.beginPath();
                 ctx.ellipse(cx, y + 29, 8 * shadowScale, 2.5 * shadowScale, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Jerrycan Main Dimensions (centered at cx, cy)
                 const w = 16;
                 const h = 18;
                 const bx = cx - w / 2;
                 const by = cy - h / 2 + 2;
 
-                // 3. Jerrycan Carrying Handle (Top 3-Rib Heavy Industrial Bar)
                 ctx.fillStyle = '#1c2833';
                 ctx.fillRect(cx - 6, by - 5, 12, 3);
-                
-                // Chrome Handle Grip Highlights
+
                 ctx.fillStyle = '#bdc3c7';
                 ctx.fillRect(cx - 5, by - 5, 3, 2);
                 ctx.fillRect(cx - 1, by - 5, 3, 2);
                 ctx.fillRect(cx + 3, by - 5, 3, 2);
 
-                // 4. Heavy Brass Filler Cap / Spout (Angled Top Left)
                 ctx.fillStyle = '#d35400';
                 ctx.fillRect(bx + 1, by - 4, 4, 3);
-                ctx.fillStyle = '#f1c40f'; // Cap highlight
+                ctx.fillStyle = '#f1c40f';
                 ctx.fillRect(bx + 1.5, by - 5, 3, 1.5);
 
-                // 5. Jerrycan Main Body (Vibrant High-Contrast Industrial Red-Orange)
                 const bodyGrad = ctx.createLinearGradient(bx, 0, bx + w, 0);
-                bodyGrad.addColorStop(0, '#b02a00');   // Deep red left border
-                bodyGrad.addColorStop(0.25, '#e74c3c'); // Racing red
-                bodyGrad.addColorStop(0.55, '#ff5522'); // Vibrant bright orange-red
-                bodyGrad.addColorStop(0.75, '#ff8800'); // Specular highlight ridge
-                bodyGrad.addColorStop(1, '#800c2f');   // Shaded right edge
+                bodyGrad.addColorStop(0, '#b02a00');
+                bodyGrad.addColorStop(0.25, '#e74c3c');
+                bodyGrad.addColorStop(0.55, '#ff5522');
+                bodyGrad.addColorStop(0.75, '#ff8800');
+                bodyGrad.addColorStop(1, '#800c2f');
 
                 ctx.fillStyle = bodyGrad;
                 ctx.beginPath();
-                if (ctx.roundRect) {
-                    ctx.roundRect(bx, by, w, h, 2);
+                if ((ctx as any).roundRect) {
+                    (ctx as any).roundRect(bx, by, w, h, 2);
                 } else {
                     ctx.rect(bx, by, w, h);
                 }
                 ctx.fill();
 
-                // Crisp Dark Perimeter Outline for Maximum Contrast against any background
                 ctx.strokeStyle = '#200500';
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
-                // 6. Iconic Stamped Jerrycan "X" Structural Embossing
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
@@ -912,11 +910,9 @@ export class TileMap {
                 ctx.moveTo(bx + w - 3.5, by + 4); ctx.lineTo(bx + 3.5, by + h - 2);
                 ctx.stroke();
 
-                // 7. Center Emblem: Glowing Vector Fuel Flame Symbol (Ultra-sharp & Recognizable)
                 const fx = cx;
                 const fy = by + h / 2 - 0.5;
 
-                // Outer Flame (Red-Orange)
                 ctx.fillStyle = '#ff2200';
                 ctx.beginPath();
                 ctx.moveTo(fx, fy - 5);
@@ -924,7 +920,6 @@ export class TileMap {
                 ctx.bezierCurveTo(fx - 4, fy + 4, fx - 4, fy - 1, fx, fy - 5);
                 ctx.fill();
 
-                // Inner Flame (Bright Yellow)
                 ctx.fillStyle = '#ffeb3b';
                 ctx.beginPath();
                 ctx.moveTo(fx, fy - 3);
@@ -932,7 +927,6 @@ export class TileMap {
                 ctx.bezierCurveTo(fx - 2.5, fy + 3, fx - 2.5, fy, fx, fy - 3);
                 ctx.fill();
 
-                // Flame Core (White Hot)
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.moveTo(fx, fy - 1);
@@ -940,7 +934,6 @@ export class TileMap {
                 ctx.bezierCurveTo(fx - 1.2, fy + 2, fx - 1.2, fy + 0.8, fx, fy - 1);
                 ctx.fill();
 
-                // 8. Animated Liquid Sight Gauge (Right Edge Vertical Glass Strip)
                 const gw = 2.5;
                 const gh = 10;
                 const gx = bx + w - 3.5;
@@ -960,11 +953,9 @@ export class TileMap {
                 ctx.fillStyle = fuelGrad;
                 ctx.fillRect(gx, fillY, gw, gh - (fillY - gy));
 
-                // 9. High-Gloss Specular Chrome Reflection Streak on Left Rim
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
                 ctx.fillRect(bx + 1.5, by + 2, 1.2, h - 4);
 
-                // Animated Sparkle Glint on Brass Cap
                 const glintTime = now / 180;
                 const glintAlpha = (Math.sin(glintTime) + 1) * 0.45 + 0.1;
                 const glintSize = (Math.sin(glintTime) + 1) * 1.5 + 1;
@@ -983,7 +974,6 @@ export class TileMap {
             }
 
             case TILES.GOLD:
-                // Gold Coin
                 ctx.fillStyle = '#f1c40f';
                 ctx.beginPath();
                 ctx.arc(x + 16, y + 16, 10, 0, Math.PI * 2);
@@ -1001,7 +991,6 @@ export class TileMap {
                 break;
 
             case TILES.EXIT_PORTAL:
-                // Swirling Exit Portal
                 const isUnlocked = this.collectedEmeralds >= this.totalEmeralds;
                 ctx.save();
                 ctx.translate(x + 16, y + 16);
@@ -1021,7 +1010,6 @@ export class TileMap {
                 ctx.restore();
 
                 if (isUnlocked) {
-                    // Multi-layer glowing core (Fast vector alternative to software shadowBlur)
                     ctx.fillStyle = 'rgba(0, 255, 204, 0.35)';
                     ctx.beginPath();
                     ctx.arc(x + 16, y + 16, 8, 0, Math.PI * 2);
@@ -1043,7 +1031,6 @@ export class TileMap {
 
                 ctx.save();
 
-                // 1. Ambient Purple Radiant Aura
                 const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 17 + pulse * 2);
                 glow.addColorStop(0, `rgba(155, 89, 182, ${0.5 + pulse * 0.25})`);
                 glow.addColorStop(0.6, `rgba(0, 206, 201, ${0.2 + pulse * 0.1})`);
@@ -1053,7 +1040,6 @@ export class TileMap {
                 ctx.arc(cx, cy, 17 + pulse * 2, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 2. Metallic Teleporter Base Platform
                 ctx.fillStyle = '#1b0e27';
                 ctx.fillRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
 
@@ -1061,14 +1047,12 @@ export class TileMap {
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
 
-                // Corner Sci-fi Beacon Lights
                 ctx.fillStyle = '#00cec9';
                 ctx.fillRect(x + 3, y + 3, 2, 2);
                 ctx.fillRect(x + TILE_SIZE - 5, y + 3, 2, 2);
                 ctx.fillRect(x + 3, y + TILE_SIZE - 5, 2, 2);
                 ctx.fillRect(x + TILE_SIZE - 5, y + TILE_SIZE - 5, 2, 2);
 
-                // 3. Rotating Swirling Warp Vortex Rings
                 ctx.translate(cx, cy);
                 ctx.rotate(rot);
 
@@ -1086,7 +1070,6 @@ export class TileMap {
 
                 ctx.restore();
 
-                // 4. Bright Energy Core Focus
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(cx, cy, 2.5 + pulse * 1, 0, Math.PI * 2);
@@ -1095,16 +1078,13 @@ export class TileMap {
             }
 
             case TILES.ENEMY_FLITZER: {
-                // Flitzer Preview Icon in Level Editor
                 const cx = x + 16;
                 const cy = y + 16;
                 ctx.save();
-                // Aura
                 ctx.fillStyle = 'rgba(255, 0, 85, 0.4)';
                 ctx.beginPath();
                 ctx.arc(cx, cy, 14, 0, Math.PI * 2);
                 ctx.fill();
-                // Core
                 ctx.fillStyle = '#ff0033';
                 ctx.beginPath();
                 ctx.arc(cx, cy, 8, 0, Math.PI * 2);
@@ -1112,11 +1092,9 @@ export class TileMap {
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 1;
                 ctx.stroke();
-                // Eyes
                 ctx.fillStyle = '#ffee00';
                 ctx.fillRect(cx - 5, cy - 3, 3, 3);
                 ctx.fillRect(cx + 2, cy - 3, 3, 3);
-                // Spikes
                 ctx.fillStyle = '#ff0055';
                 ctx.beginPath();
                 ctx.moveTo(cx - 10, cy); ctx.lineTo(cx - 6, cy - 4); ctx.lineTo(cx - 6, cy + 4);
@@ -1127,12 +1105,10 @@ export class TileMap {
             }
 
             case TILES.ENEMY_MISSILE: {
-                // Homing Missile Preview Icon in Level Editor
                 const cx = x + 16;
                 const cy = y + 16;
                 ctx.save();
                 ctx.translate(cx, cy);
-                // Body
                 ctx.fillStyle = '#1c040d';
                 ctx.beginPath();
                 ctx.moveTo(10, 0); ctx.lineTo(3, -6); ctx.lineTo(-8, -5); ctx.lineTo(-8, 5); ctx.lineTo(3, 6);
@@ -1141,14 +1117,11 @@ export class TileMap {
                 ctx.strokeStyle = '#ff0044';
                 ctx.lineWidth = 1.2;
                 ctx.stroke();
-                // Fins
                 ctx.fillStyle = '#4a081a';
                 ctx.fillRect(-8, -8, 4, 3);
                 ctx.fillRect(-8, 5, 4, 3);
-                // Lens
                 ctx.fillStyle = '#ff0033';
                 ctx.beginPath(); ctx.arc(4, 0, 2.5, 0, Math.PI * 2); ctx.fill();
-                // Flame preview
                 ctx.fillStyle = '#ffaa00';
                 ctx.beginPath();
                 ctx.moveTo(-8, -3); ctx.lineTo(-13, 0); ctx.lineTo(-8, 3);
@@ -1158,25 +1131,20 @@ export class TileMap {
             }
 
             case TILES.ENEMY_TURRET: {
-                // Turret Preview Icon in Level Editor
                 const cx = x + 16;
                 const cy = y + 16;
                 ctx.save();
-                // Base
                 ctx.fillStyle = '#1e272e';
                 ctx.fillRect(x + 4, y + 12, 24, 16);
                 ctx.strokeStyle = '#485460';
                 ctx.lineWidth = 1;
                 ctx.strokeRect(x + 4, y + 12, 24, 16);
-                // Hazard Stripes
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(x + 6, y + 22, 4, 4);
                 ctx.fillRect(x + 14, y + 22, 4, 4);
                 ctx.fillRect(x + 22, y + 22, 4, 4);
-                // Barrels
                 ctx.fillStyle = '#0f171e';
                 ctx.fillRect(cx - 2, y + 2, 4, 10);
-                // Dome
                 ctx.fillStyle = '#2c3e50';
                 ctx.beginPath();
                 ctx.arc(cx, cy, 7, 0, Math.PI * 2);
@@ -1184,7 +1152,6 @@ export class TileMap {
                 ctx.strokeStyle = '#e74c3c';
                 ctx.lineWidth = 1.2;
                 ctx.stroke();
-                // Lens
                 ctx.fillStyle = '#ff0033';
                 ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();

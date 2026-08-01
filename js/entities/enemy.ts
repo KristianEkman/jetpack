@@ -8,30 +8,61 @@ export const ENEMY_TYPES = {
     FLITZER: 'flitzer',
     HOMING_MISSILE: 'homing_missile',
     TURRET: 'turret'
-};
+} as const;
+
+export interface Enemy {
+    id: string;
+    type: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    vx?: number;
+    vy?: number;
+    speed?: number;
+    timer?: number;
+    fireInterval?: number;
+    animTimer?: number;
+    targetX?: number;
+    targetY?: number;
+    dead?: boolean;
+}
+
+export interface Projectile {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    life: number;
+}
 
 export class EnemyManager {
-    constructor(tileMap) {
+    tileMap: any;
+    enemies: Enemy[];
+    projectiles: Projectile[];
+    nextEnemyId: number;
+    onEnemyDestroyed: ((data: { enemyId: string; playerId: string }) => void) | null;
+
+    constructor(tileMap: any) {
         this.tileMap = tileMap;
         this.enemies = [];
         this.projectiles = [];
         this.nextEnemyId = 0;
-
-        // Called when the local player shoots an enemy.
         this.onEnemyDestroyed = null;
     }
 
-    clear() {
+    clear(): void {
         this.enemies = [];
         this.projectiles = [];
         this.nextEnemyId = 0;
     }
 
-    allocateEnemyId(explicitId = null) {
+    allocateEnemyId(explicitId: string | null = null): string {
         return explicitId ?? `enemy_${this.nextEnemyId++}`;
     }
 
-    addFlitzer(x, y, vx = 100, vy = 100, id = null) {
+    addFlitzer(x: number, y: number, vx: number = 100, vy: number = 100, id: string | null = null): void {
         this.enemies.push({
             id: this.allocateEnemyId(id),
             type: ENEMY_TYPES.FLITZER,
@@ -45,7 +76,7 @@ export class EnemyManager {
         });
     }
 
-    addHomingMissile(x, y, id = null) {
+    addHomingMissile(x: number, y: number, id: string | null = null): void {
         this.enemies.push({
             id: this.allocateEnemyId(id),
             type: ENEMY_TYPES.HOMING_MISSILE,
@@ -59,7 +90,7 @@ export class EnemyManager {
         });
     }
 
-    addTurret(x, y, fireInterval = 2.0, id = null) {
+    addTurret(x: number, y: number, fireInterval: number = 2.0, id: string | null = null): void {
         this.enemies.push({
             id: this.allocateEnemyId(id),
             type: ENEMY_TYPES.TURRET,
@@ -72,19 +103,17 @@ export class EnemyManager {
         });
     }
 
-    removeEnemyById(enemyId) {
+    removeEnemyById(enemyId: string): Enemy | null {
         const index = this.enemies.findIndex(enemy => enemy.id === enemyId);
-
         if (index === -1) {
             return null;
         }
-
         return this.enemies.splice(index, 1)[0];
     }
 
-    getClosestPlayer(enemy, playerInput) {
+    getClosestPlayer(enemy: Enemy, playerInput: any): any {
         if (!playerInput) return null;
-        let playersList = [];
+        let playersList: any[] = [];
         if (Array.isArray(playerInput)) {
             playersList = playerInput;
         } else if (playerInput instanceof Map) {
@@ -93,7 +122,7 @@ export class EnemyManager {
             playersList = [playerInput];
         }
 
-        let closest = null;
+        let closest: any = null;
         let minDistSq = Infinity;
         const ex = enemy.x + enemy.width / 2;
         const ey = enemy.y + enemy.height / 2;
@@ -111,19 +140,19 @@ export class EnemyManager {
         return closest;
     }
 
-    getLivingPlayers(playerInput) {
+    getLivingPlayers(playerInput: any): any[] {
         if (!playerInput) return [];
         if (Array.isArray(playerInput)) {
             return playerInput.filter(p => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0);
         } else if (playerInput instanceof Map) {
-            return Array.from(playerInput.values()).filter(p => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0);
+            return Array.from(playerInput.values()).filter((p: any) => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0);
         } else if (playerInput && playerInput.x !== undefined && !playerInput.isDead && (playerInput.respawnInvulnerability || 0) <= 0) {
             return [playerInput];
         }
         return [];
     }
 
-    serializeEnemies() {
+    serializeEnemies(): any[] {
         return this.enemies.map(e => [
             e.id,
             e.type,
@@ -137,7 +166,7 @@ export class EnemyManager {
         ]);
     }
 
-    serializeProjectiles() {
+    serializeProjectiles(): any[] {
         return this.projectiles.map(p => [
             Math.round(p.x * 100) / 100,
             Math.round(p.y * 100) / 100,
@@ -148,7 +177,7 @@ export class EnemyManager {
         ]);
     }
 
-    applyEnemySnapshot(snapshotEnemies, snapshotProjectiles) {
+    applyEnemySnapshot(snapshotEnemies: any, snapshotProjectiles: any): void {
         if (!Array.isArray(snapshotEnemies)) return;
         const parsedEnemies = snapshotEnemies.map(e => Array.isArray(e) ? {
             id: e[0], type: e[1], x: e[2], y: e[3], vx: e[4], vy: e[5], animTimer: e[6], timer: e[7], fireInterval: e[8]
@@ -192,7 +221,7 @@ export class EnemyManager {
         }
     }
 
-    interpolateEnemies(dt) {
+    interpolateEnemies(dt: number): void {
         for (const enemy of this.enemies) {
             enemy.animTimer = (enemy.animTimer || 0) + dt;
             if (enemy.targetX !== undefined && enemy.targetY !== undefined) {
@@ -209,17 +238,15 @@ export class EnemyManager {
         }
     }
 
-    update(dt, player) {
+    update(dt: number, player: any): void {
         const livingPlayers = this.getLivingPlayers(player);
 
-        // 1. Update Enemies
         for (let enemy of this.enemies) {
             enemy.animTimer = (enemy.animTimer || 0) + dt;
 
             if (enemy.type === ENEMY_TYPES.FLITZER) {
-                // Bounce along walls & tile boundaries
-                enemy.x += enemy.vx * dt;
-                enemy.y += enemy.vy * dt;
+                enemy.x += (enemy.vx || 0) * dt;
+                enemy.y += (enemy.vy || 0) * dt;
 
                 const colLeft = Math.floor(enemy.x / TILE_SIZE);
                 const colRight = Math.floor((enemy.x + enemy.width) / TILE_SIZE);
@@ -229,13 +256,12 @@ export class EnemyManager {
                 if (this.tileMap.isSolid(colLeft, rowTop) || this.tileMap.isSolid(colRight, rowTop) ||
                     this.tileMap.isSolid(colLeft, rowBottom) || this.tileMap.isSolid(colRight, rowBottom) ||
                     enemy.x <= 0 || enemy.x + enemy.width >= this.tileMap.cols * TILE_SIZE) {
-                    enemy.vx *= -1;
+                    enemy.vx = (enemy.vx || 0) * -1;
                 }
                 if (enemy.y <= 0 || enemy.y + enemy.height >= this.tileMap.rows * TILE_SIZE) {
-                    enemy.vy *= -1;
+                    enemy.vy = (enemy.vy || 0) * -1;
                 }
 
-                // Bio-luminescent particle trail
                 if (Math.random() < 0.35 && this.tileMap && this.tileMap.addSparkles) {
                     this.tileMap.addSparkles(
                         enemy.x + 10 + (Math.random() * 6 - 3),
@@ -245,34 +271,31 @@ export class EnemyManager {
                     );
                 }
             } else if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
-                // Tracking vector physics towards closest living player
                 const targetPlayer = this.getClosestPlayer(enemy, livingPlayers);
                 if (targetPlayer) {
                     const dx = (targetPlayer.x + targetPlayer.width / 2) - (enemy.x + enemy.width / 2);
                     const dy = (targetPlayer.y + targetPlayer.height / 2) - (enemy.y + enemy.height / 2);
                     const angle = Math.atan2(dy, dx);
 
-                    enemy.vx = Math.cos(angle) * enemy.speed;
-                    enemy.vy = Math.sin(angle) * enemy.speed;
+                    enemy.vx = Math.cos(angle) * (enemy.speed || 90);
+                    enemy.vy = Math.sin(angle) * (enemy.speed || 90);
                 }
 
-                enemy.x += enemy.vx * dt;
-                enemy.y += enemy.vy * dt;
+                enemy.x += (enemy.vx || 0) * dt;
+                enemy.y += (enemy.vy || 0) * dt;
 
-                // Fire trail sparkles
                 if (Math.random() < 0.5 && this.tileMap && this.tileMap.addSparkles) {
                     this.tileMap.addSparkles(
-                        enemy.x + 8 - enemy.vx * 0.05,
-                        enemy.y + 8 - enemy.vy * 0.05,
+                        enemy.x + 8 - (enemy.vx || 0) * 0.05,
+                        enemy.y + 8 - (enemy.vy || 0) * 0.05,
                         '#ff5500',
                         1
                     );
                 }
             } else if (enemy.type === ENEMY_TYPES.TURRET) {
-                // Fire periodic projectile towards closest living player
-                enemy.timer += dt;
+                enemy.timer = (enemy.timer || 0) + dt;
                 const targetPlayer = this.getClosestPlayer(enemy, livingPlayers);
-                if (enemy.timer >= enemy.fireInterval && targetPlayer) {
+                if (enemy.timer >= (enemy.fireInterval || 2.0) && targetPlayer) {
                     enemy.timer = 0;
                     const dx = (targetPlayer.x + targetPlayer.width / 2) - (enemy.x + enemy.width / 2);
                     const dy = (targetPlayer.y + targetPlayer.height / 2) - (enemy.y + enemy.height / 2);
@@ -289,15 +312,12 @@ export class EnemyManager {
                 }
             }
 
-            // Check Collision with any living Player
             for (const p of livingPlayers) {
                 if (this.checkAABB(enemy, p)) {
                     p.takeDamage();
 
-                    // Homing missiles are destroyed on impact
                     if (enemy.type === ENEMY_TYPES.HOMING_MISSILE) {
                         enemy.dead = true;
-                        // Explosion sparkles at impact point
                         if (this.tileMap && this.tileMap.addSparkles) {
                             for (let s = 0; s < 8; s++) {
                                 this.tileMap.addSparkles(
@@ -314,10 +334,8 @@ export class EnemyManager {
             }
         }
 
-        // Remove dead enemies (e.g. homing missiles destroyed on impact)
         this.enemies = this.enemies.filter(e => !e.dead);
 
-        // 2. Update Turret Projectiles
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const p = this.projectiles[i];
             p.x += p.vx * dt;
@@ -328,7 +346,6 @@ export class EnemyManager {
                 this.tileMap.addSparkles(p.x, p.y, '#ff0055', 1);
             }
 
-            // Check player hit
             for (const targetPlayer of livingPlayers) {
                 const dx = p.x - (targetPlayer.x + targetPlayer.width / 2);
                 const dy = p.y - (targetPlayer.y + targetPlayer.height / 2);
@@ -339,7 +356,6 @@ export class EnemyManager {
                 }
             }
 
-            // Wall hit or expired
             const col = Math.floor(p.x / TILE_SIZE);
             const row = Math.floor(p.y / TILE_SIZE);
             if (this.tileMap.isSolid(col, row) || p.life <= 0) {
@@ -348,7 +364,7 @@ export class EnemyManager {
         }
     }
 
-    checkAABB(rect1, rect2) {
+    checkAABB(rect1: any, rect2: any): boolean {
         return (
             rect1.x < rect2.x + rect2.width &&
             rect1.x + rect1.width > rect2.x &&
@@ -357,8 +373,7 @@ export class EnemyManager {
         );
     }
 
-    render(ctx, player = null) {
-        // Render Enemies
+    render(ctx: CanvasRenderingContext2D, player: any = null): void {
         for (let enemy of this.enemies) {
             ctx.save();
             if (enemy.type === ENEMY_TYPES.FLITZER) {
@@ -371,22 +386,18 @@ export class EnemyManager {
             ctx.restore();
         }
 
-        // Render Turret Projectiles
         for (let p of this.projectiles) {
             ctx.save();
-            // Outer Energy Halo
             ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius + 5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Mid Plasma Glow
             ctx.fillStyle = '#ff0055';
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius + 1.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Intense Hot Core
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
@@ -395,13 +406,12 @@ export class EnemyManager {
         }
     }
 
-    renderFlitzer(ctx, enemy, player) {
+    renderFlitzer(ctx: CanvasRenderingContext2D, enemy: Enemy, player: any): void {
         const cx = enemy.x + enemy.width / 2;
         const cy = enemy.y + enemy.height / 2;
-        const moveAngle = Math.atan2(enemy.vy, enemy.vx);
+        const moveAngle = Math.atan2(enemy.vy || 0, enemy.vx || 0);
         const animTimer = enemy.animTimer || 0;
 
-        // 1. Pulsing Crimson Void Aura
         const auraRad = 15 + Math.sin(animTimer * 10) * 3;
         const auraGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, auraRad);
         auraGrad.addColorStop(0, 'rgba(255, 0, 85, 0.85)');
@@ -414,7 +424,6 @@ export class EnemyManager {
 
         ctx.translate(cx, cy);
 
-        // 2. Rotating Serrated Demonic Horns / Spikes
         const spikeCount = 8;
         const rotAngle = animTimer * 4;
         ctx.save();
@@ -437,7 +446,6 @@ export class EnemyManager {
         }
         ctx.restore();
 
-        // 3. Dark Bio-Chitin Carapace Hull
         const hullGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, 9);
         hullGrad.addColorStop(0, '#3a0614');
         hullGrad.addColorStop(0.7, '#150208');
@@ -450,23 +458,19 @@ export class EnemyManager {
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // 4. Snapping Demonic Fangs
         const jawOpen = Math.sin(animTimer * 14) * 2;
         ctx.fillStyle = '#ffeef2';
-        // Left fang
         ctx.beginPath();
         ctx.moveTo(-4, 4);
         ctx.lineTo(-2.5, 8.5 + jawOpen);
         ctx.lineTo(-1, 4);
         ctx.fill();
-        // Right fang
         ctx.beginPath();
         ctx.moveTo(1, 4);
         ctx.lineTo(2.5, 8.5 + jawOpen);
         ctx.lineTo(4, 4);
         ctx.fill();
 
-        // 5. Piercing Predator Eyes
         let eyeAngle = moveAngle;
         if (player && !player.isDead) {
             eyeAngle = Math.atan2((player.y + player.height / 2) - cy, (player.x + player.width / 2) - cx);
@@ -474,7 +478,6 @@ export class EnemyManager {
         const eyeDx = Math.cos(eyeAngle) * 2.2;
         const eyeDy = Math.sin(eyeAngle) * 2.2;
 
-        // Left Eye
         ctx.fillStyle = '#ff0033';
         ctx.beginPath();
         ctx.arc(-3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 2.5, 0, Math.PI * 2);
@@ -484,7 +487,6 @@ export class EnemyManager {
         ctx.arc(-3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 1.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Right Eye
         ctx.fillStyle = '#ff0033';
         ctx.beginPath();
         ctx.arc(3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 2.5, 0, Math.PI * 2);
@@ -494,7 +496,6 @@ export class EnemyManager {
         ctx.arc(3.5 + eyeDx * 0.5, -2.5 + eyeDy * 0.5, 1.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // 6. Arcing Lightning Sparks
         if (Math.random() < 0.45) {
             const sparkAngle = Math.random() * Math.PI * 2;
             ctx.strokeStyle = '#00ffff';
@@ -506,15 +507,14 @@ export class EnemyManager {
         }
     }
 
-    renderHomingMissile(ctx, enemy) {
+    renderHomingMissile(ctx: CanvasRenderingContext2D, enemy: Enemy): void {
         const cx = enemy.x + enemy.width / 2;
         const cy = enemy.y + enemy.height / 2;
-        const angle = Math.atan2(enemy.vy, enemy.vx);
+        const angle = Math.atan2(enemy.vy || 0, enemy.vx || 0);
 
         ctx.translate(cx, cy);
         ctx.rotate(angle);
 
-        // 1. Thruster Engine Plume
         const flameLen = 10 + Math.random() * 8;
         const flameGrad = ctx.createLinearGradient(-8, 0, -8 - flameLen, 0);
         flameGrad.addColorStop(0, '#ffffff');
@@ -529,7 +529,6 @@ export class EnemyManager {
         ctx.closePath();
         ctx.fill();
 
-        // 2. Obsidian Demonic Rocket Hull
         ctx.fillStyle = '#1c040d';
         ctx.beginPath();
         ctx.moveTo(10, 0);
@@ -544,7 +543,6 @@ export class EnemyManager {
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // 3. Stabilizer Fins
         ctx.fillStyle = '#4a081a';
         ctx.beginPath();
         ctx.moveTo(-2, -5);
@@ -557,7 +555,6 @@ export class EnemyManager {
         ctx.lineTo(-5, 3);
         ctx.fill();
 
-        // 4. Glowing Target-Seeking Nose Lens
         ctx.fillStyle = '#ff0033';
         ctx.beginPath();
         ctx.arc(4, 0, 3, 0, Math.PI * 2);
@@ -568,7 +565,7 @@ export class EnemyManager {
         ctx.fill();
     }
 
-    renderTurret(ctx, enemy, player) {
+    renderTurret(ctx: CanvasRenderingContext2D, enemy: Enemy, player: any): void {
         const cx = enemy.x + enemy.width / 2;
         const cy = enemy.y + enemy.height / 2;
 
@@ -577,20 +574,17 @@ export class EnemyManager {
             angle = Math.atan2((player.y + player.height / 2) - cy, (player.x + player.width / 2) - cx);
         }
 
-        // 1. Armored Base Platform
         ctx.fillStyle = '#1e272e';
         ctx.fillRect(enemy.x + 2, enemy.y + 10, 20, 14);
         ctx.strokeStyle = '#485460';
         ctx.lineWidth = 1;
         ctx.strokeRect(enemy.x + 2, enemy.y + 10, 20, 14);
 
-        // Hazard Stripes on Base
         ctx.fillStyle = '#e74c3c';
         ctx.fillRect(enemy.x + 4, enemy.y + 20, 4, 3);
         ctx.fillRect(enemy.x + 10, enemy.y + 20, 4, 3);
         ctx.fillRect(enemy.x + 16, enemy.y + 20, 4, 3);
 
-        // 2. Faint Targeting Laser Line towards Player
         if (player && !player.isDead) {
             ctx.save();
             ctx.strokeStyle = 'rgba(255, 0, 85, 0.3)';
@@ -603,11 +597,9 @@ export class EnemyManager {
             ctx.restore();
         }
 
-        // 3. Rotating Turret Head
         ctx.translate(cx, cy);
         ctx.rotate(angle);
 
-        // Double Gun Barrels
         ctx.fillStyle = '#0f171e';
         ctx.fillRect(2, -5, 10, 3);
         ctx.fillRect(2, 2, 10, 3);
@@ -616,7 +608,6 @@ export class EnemyManager {
         ctx.fillRect(10, -5, 2, 3);
         ctx.fillRect(10, 2, 2, 3);
 
-        // Cannon Base Dome
         ctx.fillStyle = '#2c3e50';
         ctx.beginPath();
         ctx.arc(0, 0, 7, 0, Math.PI * 2);
@@ -625,8 +616,7 @@ export class EnemyManager {
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // 4. Optic Charging Lens
-        const chargeRatio = Math.min(1, enemy.timer / enemy.fireInterval);
+        const chargeRatio = Math.min(1, (enemy.timer || 0) / (enemy.fireInterval || 2.0));
         const glowRad = 2 + chargeRatio * 2;
         ctx.fillStyle = chargeRatio > 0.8 ? '#ffffff' : '#ff0033';
         ctx.beginPath();

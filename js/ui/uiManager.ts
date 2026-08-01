@@ -7,11 +7,29 @@ import { GAME_STATES } from '../game.js';
 import { CAMPAIGN_LEVELS } from '../levels/campaign.js';
 import { TILES } from '../world/tilemap.js';
 
+export interface HUDState {
+    level: string | null;
+    score: number | null;
+    lives: number | null;
+    emeralds: string | null;
+    fuel: number | null;
+}
+
 export class UIManager {
-    constructor(game) {
+    game: any;
+
+    hudLevelEl: HTMLElement | null;
+    hudScoreEl: HTMLElement | null;
+    hudLivesEl: HTMLElement | null;
+    hudEmeraldsEl: HTMLElement | null;
+    fuelBarFillEl: HTMLElement | null;
+    fuelTextEl: HTMLElement | null;
+
+    hudState: HUDState;
+
+    constructor(game: any) {
         this.game = game;
 
-        // Cache HUD DOM Element References
         this.hudLevelEl = document.getElementById('hudLevel');
         this.hudScoreEl = document.getElementById('hudScore');
         this.hudLivesEl = document.getElementById('hudLives');
@@ -19,7 +37,6 @@ export class UIManager {
         this.fuelBarFillEl = document.getElementById('fuelBarFill');
         this.fuelTextEl = document.getElementById('fuelText');
 
-        // Dirty state tracking to prevent unnecessary DOM mutations
         this.hudState = {
             level: null,
             score: null,
@@ -32,22 +49,21 @@ export class UIManager {
         this.initVersionBadge();
     }
 
-    bindUI() {
+    bindUI(): void {
         const game = this.game;
 
         this.initVersionBadge();
 
-        // HUD buttons
         document.getElementById('btnPause')?.addEventListener('click', () => game.togglePause());
         document.getElementById('btnSound')?.addEventListener('click', () => {
             const muted = game.audio.toggleMute();
-            document.getElementById('btnSound').textContent = muted ? '🔇' : '🔊';
+            const soundBtn = document.getElementById('btnSound');
+            if (soundBtn) soundBtn.textContent = muted ? '🔇' : '🔊';
         });
         document.getElementById('btnCRT')?.addEventListener('click', () => {
             document.getElementById('crtOverlay')?.classList.toggle('active');
         });
 
-        // Main Menu buttons
         document.getElementById('btnStartGame')?.addEventListener('click', () => {
             game.isMultiplayer = false;
             game.currentLevelIndex = 0;
@@ -83,7 +99,6 @@ export class UIManager {
             }
         });
 
-        // Pause Menu buttons
         document.getElementById('btnResume')?.addEventListener('click', () => game.resumeGame());
         document.getElementById('btnRestartLevel')?.addEventListener('click', () => {
             this.closeAllDialogs();
@@ -100,7 +115,6 @@ export class UIManager {
             this.showDialog('dlgMainMenu');
         });
 
-        // Game Over buttons
         document.getElementById('btnRetryLevel')?.addEventListener('click', () => {
             if (game.isMultiplayer) {
                 game.network.startMatch();
@@ -116,7 +130,6 @@ export class UIManager {
             this.showDialog('dlgMainMenu');
         });
 
-        // Stage Complete buttons
         document.getElementById('btnNextLevel')?.addEventListener('click', () => {
             if (game.isMultiplayer) {
                 game.network.nextLevel();
@@ -141,12 +154,10 @@ export class UIManager {
             this.showDialog('dlgMainMenu');
         });
 
-        // Level Select Close button
         document.getElementById('btnCloseLevelSelect')?.addEventListener('click', () => {
             this.showDialog('dlgMainMenu');
         });
 
-        // Editor Toolbar buttons
         document.getElementById('btnEditorPlay')?.addEventListener('click', () => game.levelManager.playtestCustomLevel());
         document.getElementById('btnEditorSave')?.addEventListener('click', () => {
             game.editor.autoSaveLocal();
@@ -156,7 +167,7 @@ export class UIManager {
         document.getElementById('btnEditorImport')?.addEventListener('click', () => {
             document.getElementById('fileImportInput')?.click();
         });
-        document.getElementById('fileImportInput')?.addEventListener('change', (e) => game.levelManager.importLevelJSON(e));
+        document.getElementById('fileImportInput')?.addEventListener('change', (e: any) => game.levelManager.importLevelJSON(e));
         document.getElementById('btnEditorClear')?.addEventListener('click', () => {
             game.tileMap.grid.fill(TILES.AIR);
             this.showBanner('CANVAS CLEARED');
@@ -167,7 +178,6 @@ export class UIManager {
             this.showDialog('dlgMainMenu');
         });
 
-        // Pause Key Listener
         game.input.onPausePress = () => {
             if (game.gameState === GAME_STATES.PLAYING) {
                 game.togglePause();
@@ -177,10 +187,10 @@ export class UIManager {
         };
     }
 
-    showDialog(dialogId) {
+    showDialog(dialogId: string): void {
         this.game.isCanvasRenderedForState = false;
         this.closeAllDialogs();
-        const dlg = document.getElementById(dialogId);
+        const dlg = document.getElementById(dialogId) as HTMLDialogElement | null;
         if (dlg) {
             const badge = document.getElementById('gameVersionBadge');
             if (badge) {
@@ -193,7 +203,7 @@ export class UIManager {
         }
     }
 
-    closeAllDialogs() {
+    closeAllDialogs(): void {
         const badge = document.getElementById('gameVersionBadge');
         const appContainer = document.getElementById('appContainer');
         if (badge && appContainer && badge.parentElement !== appContainer) {
@@ -204,7 +214,7 @@ export class UIManager {
         });
     }
 
-    showBanner(text) {
+    showBanner(text: string): void {
         const banner = document.getElementById('bannerNotification');
         const bannerText = document.getElementById('bannerText');
         if (bannerText) bannerText.textContent = text;
@@ -216,7 +226,7 @@ export class UIManager {
         }
     }
 
-    setupVisibilityHandler() {
+    setupVisibilityHandler(): void {
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.game.loop.stop();
@@ -229,7 +239,7 @@ export class UIManager {
         });
     }
 
-    updateHUD() {
+    updateHUD(): void {
         const game = this.game;
         const levelStr = game.isCustomLevel ? 'CUSTOM' : `${game.currentLevelIndex + 1}`;
         if (this.hudState.level !== levelStr) {
@@ -263,7 +273,7 @@ export class UIManager {
         }
     }
 
-    initVersionBadge() {
+    initVersionBadge(): void {
         const hashEl = document.getElementById('versionCommit');
         const dateEl = document.getElementById('versionDate');
 

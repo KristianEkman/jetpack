@@ -9,19 +9,17 @@ import { GAME_EVENTS } from '../js/shared/constants.js';
 
 console.log('🧪 Starting Node.js Backend Server Integration Test Suite...\n');
 
-// 1. Start Server on ephemeral test port (3099)
 const TEST_PORT = 3099;
 const SERVER_URL = `http://localhost:${TEST_PORT}`;
 
-await new Promise((resolve) => httpServer.listen(TEST_PORT, resolve));
+await new Promise((resolve) => httpServer.listen(TEST_PORT, resolve as () => void));
 gameLoop.start();
 console.log(`1️⃣  Server started on ${SERVER_URL}`);
 
-let client1 = null;
-let client2 = null;
+let client1: any = null;
+let client2: any = null;
 
 try {
-    // 2. HTTP Health Endpoint Verification
     console.log('2️⃣  Testing GET /health Endpoint...');
     const res = await fetch(`${SERVER_URL}/health`);
     assert.equal(res.status, 200);
@@ -29,7 +27,6 @@ try {
     assert.equal(health.status, 'ok');
     console.log('   ✅ HTTP Health check endpoint responded correctly.\n');
 
-    // 2.5 HTTP Version Endpoint Verification
     console.log('2️⃣.5️⃣  Testing GET /api/version Endpoint...');
     const versionRes = await fetch(`${SERVER_URL}/api/version`);
     assert.equal(versionRes.status, 200);
@@ -38,7 +35,6 @@ try {
     assert.ok(versionData.deployedAt, 'Should contain deployedAt');
     console.log(`   ✅ HTTP Version endpoint returned commit ${versionData.commitHash} (${versionData.deployedAt}).\n`);
 
-    // 3. Socket.IO Client 1 Connection & Handshake
     console.log('3️⃣  Testing Socket.IO Client Connection & Handshake...');
     client1 = ioClient(SERVER_URL, { forceNew: true });
 
@@ -46,17 +42,15 @@ try {
     assert.ok(client1.id, 'Client 1 should receive a valid socket ID');
     console.log(`   ✅ Client 1 connected with socket ID: ${client1.id}`);
 
-    // Ping / Pong Handshake
-    const handshakeReply = await new Promise((resolve) => {
-        client1.emit('ping_handshake', (data) => resolve(data));
+    const handshakeReply: any = await new Promise((resolve) => {
+        client1.emit('ping_handshake', (data: any) => resolve(data));
     });
     assert.equal(handshakeReply.pong, true);
     assert.equal(handshakeReply.socketId, client1.id);
     console.log('   ✅ Handshake ping/pong verified successfully.\n');
 
-    // 4. Room Creation
     console.log('4️⃣  Testing Room Creation...');
-    const createResult = await new Promise((resolve) => {
+    const createResult: any = await new Promise((resolve) => {
         client1.emit('create_room', { playerName: 'Host Pilot', playerColor: '#ff0000' }, resolve);
     });
     assert.equal(createResult.success, true);
@@ -68,20 +62,19 @@ try {
     assert.equal(createResult.room.players[0].name, 'Host Pilot');
     console.log('   ✅ Host room metadata verified.\n');
 
-    // 5. Client 2 Joining Room
     console.log('5️⃣  Testing Client 2 Joining Room & Event Broadcasts...');
     client2 = ioClient(SERVER_URL, { forceNew: true });
     await new Promise((resolve) => client2.on('connect', resolve));
 
-    let client1PlayerJoinedEvent = null;
+    let client1PlayerJoinedEvent: any = null;
     const playerJoinedPromise = new Promise((resolve) => {
-        client1.on('player_joined', (data) => {
+        client1.on('player_joined', (data: any) => {
             client1PlayerJoinedEvent = data;
             resolve(data);
         });
     });
 
-    const joinResult = await new Promise((resolve) => {
+    const joinResult: any = await new Promise((resolve) => {
         client2.emit('join_room', { roomId: roomId, playerName: 'Wingman', playerColor: '#00ff00' }, resolve);
     });
 
@@ -90,7 +83,6 @@ try {
     assert.equal(joinResult.room.players.length, 2);
     console.log('   ✅ Client 2 joined room successfully.');
 
-    // Wait for player_joined event or timeout after 500ms
     await Promise.race([
         playerJoinedPromise,
         new Promise((resolve) => setTimeout(resolve, 500))
@@ -100,14 +92,12 @@ try {
     assert.equal(client1PlayerJoinedEvent.player.name, 'Wingman');
     console.log('   ✅ player_joined broadcast event received by host.\n');
 
-    // 6. World Snapshot Broadcasting (60 Hz Game Loop)
     console.log('6️⃣  Testing 60 Hz World Snapshot Ticks...');
-    const snapshotsReceived = [];
-    client1.on(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', (snapshot) => {
+    const snapshotsReceived: any[] = [];
+    client1.on(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', (snapshot: any) => {
         snapshotsReceived.push(snapshot);
     });
 
-    // Collect snapshots for ~350ms
     await new Promise((resolve) => setTimeout(resolve, 350));
     assert.ok(snapshotsReceived.length >= 3, `Should receive at least 3 snapshot ticks (received ${snapshotsReceived.length})`);
 
@@ -117,55 +107,50 @@ try {
     assert.ok(latestSnapshot.tick > 0);
     console.log(`   ✅ Received ${snapshotsReceived.length} ticks. Latest tick: #${latestSnapshot.tick} with ${latestSnapshot.players.length} players.\n`);
 
-    // 7. Player Input Emission
     console.log('7️⃣  Testing Player Input Processing...');
     client2.emit(GAME_EVENTS.PLAYER_INPUT || 'player_input', {
         thrust: true,
         sequenceId: 101
     });
-    // Wait one tick
     await new Promise((resolve) => setTimeout(resolve, 30));
-    const room = roomManager.getRoom(roomId);
-    const client2Config = room.playerConfigs.get(client2.id);
+    const room = roomManager.getRoom(roomId)!;
+    const client2Config = room.playerConfigs.get(client2.id)!;
     assert.equal(client2Config.lastSequenceId, 101);
     console.log('   ✅ Client 2 input sequenceId updated on server.\n');
 
-    // 8. Multiplayer Match Start, Level Completion & Next Level Transition
     console.log('8️⃣  Testing Multiplayer Level Complete & Next Level Flow...');
-    const startMatchResult = await new Promise((resolve) => {
+    const startMatchResult: any = await new Promise((resolve) => {
         client1.emit(GAME_EVENTS.START_MATCH || 'start_match', {}, resolve);
     });
     assert.equal(startMatchResult.success, true);
     assert.equal(room.status, 'playing');
     console.log('   ✅ Match started successfully.');
 
-    // Verify late-join prevention and room list hiding
     const client3 = ioClient(SERVER_URL, { forceNew: true });
-    await new Promise((resolve) => client3.on('connect', resolve));
-    const lateJoinResult = await new Promise((resolve) => {
+    await new Promise((resolve: any) => client3.on('connect', resolve));
+    const lateJoinResult: any = await new Promise((resolve) => {
         client3.emit('join_room', { roomId: roomId, playerName: 'LateComer' }, resolve);
     });
     assert.equal(lateJoinResult.success, false);
     assert.equal(lateJoinResult.error, 'Game in progress');
     console.log('   ✅ Late-join attempt rejected for in-progress game.');
 
-    const roomList = await new Promise((resolve) => {
+    const roomList: any[] = await new Promise((resolve) => {
         client3.emit('list_rooms', resolve);
     });
     assert.equal(roomList.some(r => r.id === roomId), false, 'Playing room should not appear in public room list');
     console.log('   ✅ In-progress room hidden from public room list.');
     client3.disconnect();
 
-    // Client 2 completes level
-    let client1LevelCompleteEvent = null;
+    let client1LevelCompleteEvent: any = null;
     const levelCompletePromise = new Promise((resolve) => {
-        client1.on(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', (data) => {
+        client1.on(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', (data: any) => {
             client1LevelCompleteEvent = data;
             resolve(data);
         });
     });
 
-    const completeResult = await new Promise((resolve) => {
+    const completeResult: any = await new Promise((resolve) => {
         client2.emit(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', {}, resolve);
     });
     assert.equal(completeResult.success, true);
@@ -181,24 +166,22 @@ try {
     assert.equal(room.status, 'level_complete');
     console.log('   ✅ level_complete broadcast and room state verified.');
 
-    // Non-host attempts next_level (should be rejected)
-    const nonHostNextResult = await new Promise((resolve) => {
+    const nonHostNextResult: any = await new Promise((resolve) => {
         client2.emit(GAME_EVENTS.NEXT_LEVEL || 'next_level', {}, resolve);
     });
     assert.equal(nonHostNextResult.success, false);
     assert.equal(nonHostNextResult.error, 'Only the room host can advance to the next level');
     console.log('   ✅ Non-host next_level permission restriction verified.');
 
-    // Host emits next_level
-    let client2GameStartedEvent = null;
+    let client2GameStartedEvent: any = null;
     const gameStartedPromise = new Promise((resolve) => {
-        client2.on(GAME_EVENTS.GAME_STARTED || 'game_started', (data) => {
+        client2.on(GAME_EVENTS.GAME_STARTED || 'game_started', (data: any) => {
             client2GameStartedEvent = data;
             resolve(data);
         });
     });
 
-    const hostNextResult = await new Promise((resolve) => {
+    const hostNextResult: any = await new Promise((resolve) => {
         client1.emit(GAME_EVENTS.NEXT_LEVEL || 'next_level', {}, resolve);
     });
     assert.equal(hostNextResult.success, true);
@@ -214,17 +197,16 @@ try {
     assert.equal(room.status, 'playing');
     console.log('   ✅ Host next_level advanced room levelIndex to 1 and synchronized clients.\n');
 
-    // 8.5 Enemy Destruction Synchronization Verification
     console.log('8️⃣.5️⃣  Testing Enemy Destruction Synchronization...');
-    let client2EnemyDestroyedData = null;
+    let client2EnemyDestroyedData: any = null;
     const enemyDestroyedPromise = new Promise((resolve) => {
-        client2.on(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', (data) => {
+        client2.on(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', (data: any) => {
             client2EnemyDestroyedData = data;
             resolve(data);
         });
     });
 
-    const destroyAck = await new Promise((resolve) => {
+    const destroyAck: any = await new Promise((resolve) => {
         client1.emit(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', { enemyId: 'enemy_0' }, resolve);
     });
     assert.equal(destroyAck.success, true);
@@ -239,31 +221,28 @@ try {
     assert.equal(client2EnemyDestroyedData.killedBy, client1.id);
     assert.equal(room.destroyedEnemyIds.has('enemy_0'), true);
 
-    // Verify duplicate shot handling
-    const dupAck = await new Promise((resolve) => {
+    const dupAck: any = await new Promise((resolve) => {
         client1.emit(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', { enemyId: 'enemy_0' }, resolve);
     });
     assert.equal(dupAck.duplicate, true);
     console.log('   ✅ Enemy destruction event broadcast and duplicate handling verified.\n');
 
-    // 8.6 Testing All-Players-Eliminated Game Over Flow
     console.log('8️⃣.6️⃣  Testing All Players Eliminated Game Over Flow...');
-    const targetRoom = roomManager.getRoom(roomId);
+    const targetRoom = roomManager.getRoom(roomId)!;
     targetRoom.status = 'playing';
     for (const p of targetRoom.players.values()) {
         p.isDead = true;
         p.lives = 0;
     }
 
-    let gameOverData = null;
+    let gameOverData: any = null;
     const gameOverPromise = new Promise((resolve) => {
-        client1.on(GAME_EVENTS.GAME_OVER || 'game_over', (data) => {
+        client1.on(GAME_EVENTS.GAME_OVER || 'game_over', (data: any) => {
             gameOverData = data;
             resolve(data);
         });
     });
 
-    // Tick game loop once to evaluate game over
     gameLoop.tick();
 
     await Promise.race([
@@ -275,11 +254,10 @@ try {
     assert.equal(targetRoom.status, 'finished');
     console.log('   ✅ All players eliminated game_over broadcast and room state verified.\n');
 
-    // 9. Client Disconnection & Room Cleanup
     console.log('9️⃣  Testing Client Disconnect & Room Cleanup...');
-    let client1PlayerLeftEvent = null;
+    let client1PlayerLeftEvent: any = null;
     const playerLeftPromise = new Promise((resolve) => {
-        client1.on('player_left', (data) => {
+        client1.on('player_left', (data: any) => {
             client1PlayerLeftEvent = data;
             resolve(data);
         });
@@ -294,7 +272,7 @@ try {
 
     assert.notEqual(client1PlayerLeftEvent, null, 'Client 1 should receive player_left notification');
     assert.equal(client1PlayerLeftEvent.socketId, client2SocketId);
-    assert.equal(roomManager.getRoom(roomId).players.size, 1);
+    assert.equal(roomManager.getRoom(roomId)!.players.size, 1);
     console.log('   ✅ Client 2 leave cleanup verified.');
 
     client1.disconnect();

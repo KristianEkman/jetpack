@@ -6,6 +6,12 @@ import { SoundEffects } from './sfx.js';
 import { MusicSequencer } from './sequencer.js';
 
 export class AudioManager {
+    ctx: AudioContext | null;
+    isMuted: boolean;
+    noiseBuffer: AudioBuffer | null;
+    sfx: SoundEffects;
+    sequencer: MusicSequencer;
+
     constructor() {
         this.ctx = null;
         this.isMuted = false;
@@ -15,25 +21,23 @@ export class AudioManager {
         this.sequencer = new MusicSequencer(this);
     }
 
-    // Property getters/setters for compatibility
-    get thrustOsc() { return this.sfx.thrustOsc; }
-    get thrustGain() { return this.sfx.thrustGain; }
-    get isThrusting() { return this.sfx.isThrusting; }
-    get bgmGain() { return this.sequencer.bgmGain; }
-    get isPlayingMusic() { return this.sequencer.isPlayingMusic; }
-    get currentTrack() { return this.sequencer.currentTrack; }
-    set currentTrack(val) { this.sequencer.currentTrack = val; }
-    get currentLevel() { return this.sequencer.currentLevel; }
-    set currentLevel(val) { this.sequencer.currentLevel = val; }
-    get currentStep() { return this.sequencer.currentStep; }
-    set currentStep(val) { this.sequencer.currentStep = val; }
-    get nextStepTime() { return this.sequencer.nextStepTime; }
-    set nextStepTime(val) { this.sequencer.nextStepTime = val; }
-    get musicTimer() { return this.sequencer.musicTimer; }
+    get thrustGain(): GainNode | null { return this.sfx.thrustGain; }
+    get isThrusting(): boolean { return this.sfx.isThrusting; }
+    get bgmGain(): GainNode | null { return this.sequencer.bgmGain; }
+    get isPlayingMusic(): boolean { return this.sequencer.isPlayingMusic; }
+    get currentTrack(): string { return this.sequencer.currentTrack; }
+    set currentTrack(val: string) { this.sequencer.currentTrack = val; }
+    get currentLevel(): number { return this.sequencer.currentLevel; }
+    set currentLevel(val: number) { this.sequencer.currentLevel = val; }
+    get currentStep(): number { return this.sequencer.currentStep; }
+    set currentStep(val: number) { this.sequencer.currentStep = val; }
+    get nextStepTime(): number { return this.sequencer.nextStepTime; }
+    set nextStepTime(val: number) { this.sequencer.nextStepTime = val; }
+    get musicTimer(): any { return this.sequencer.musicTimer; }
 
-    init() {
+    init(): void {
         if (!this.ctx) {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
             this.ctx = new AudioCtx();
         }
         if (this.ctx && this.ctx.state === 'suspended') {
@@ -49,7 +53,7 @@ export class AudioManager {
         }
     }
 
-    hideAudioPrompt() {
+    hideAudioPrompt(): void {
         const prompt = document.getElementById('audioUnlockPrompt');
         if (prompt) {
             prompt.style.visibility = 'hidden';
@@ -57,7 +61,7 @@ export class AudioManager {
         }
     }
 
-    setupUserUnlock() {
+    setupUserUnlock(): void {
         if (this.ctx && this.ctx.state === 'running') {
             this.hideAudioPrompt();
             return;
@@ -76,7 +80,7 @@ export class AudioManager {
             this.init();
             if (this.ctx && this.ctx.state === 'suspended') {
                 this.ctx.resume().then(() => {
-                    this.nextStepTime = this.ctx.currentTime + 0.05;
+                    if (this.ctx) this.nextStepTime = this.ctx.currentTime + 0.05;
                     this.hideAudioPrompt();
                 });
             } else {
@@ -95,7 +99,7 @@ export class AudioManager {
         }
     }
 
-    toggleMute() {
+    toggleMute(): boolean {
         this.isMuted = !this.isMuted;
         if (this.sequencer.bgmGain && this.ctx) {
             this.sequencer.bgmGain.gain.setValueAtTime(this.isMuted ? 0 : 0.2, this.ctx.currentTime);
@@ -110,64 +114,64 @@ export class AudioManager {
     }
 
     // Sequencer Methods
-    startMenuMusic(forceReset = false) {
+    startMenuMusic(forceReset: boolean = false): void {
         this.sequencer.startMenuMusic(forceReset);
     }
 
-    startGameMusic(levelIndex = 0) {
+    startGameMusic(levelIndex: number = 0): void {
         this.sequencer.startGameMusic(levelIndex);
     }
 
-    startMusic() {
+    startMusic(): void {
         this.sequencer.startMusic();
     }
 
-    stopMusic() {
+    stopMusic(): void {
         this.sequencer.stopMusic();
     }
 
     // Sound Effects Methods
-    startThrust() {
+    startThrust(): void {
         this.sfx.startThrust();
     }
 
-    stopThrust() {
+    stopThrust(): void {
         this.sfx.stopThrust();
     }
 
-    playPhaseSound() {
+    playPhaseSound(): void {
         this.sfx.playPhaseSound();
     }
 
-    playEmeraldPickup() {
+    playEmeraldPickup(): void {
         this.sfx.playEmeraldPickup();
     }
 
-    playAllDiamondsCaught() {
+    playAllDiamondsCaught(): void {
         this.sfx.playAllDiamondsCaught();
     }
 
-    playFuelPickup() {
+    playFuelPickup(): void {
         this.sfx.playFuelPickup();
     }
 
-    playExplosion() {
+    playExplosion(): void {
         this.sfx.playExplosion();
     }
 
-    playPortalWarp() {
+    playPortalWarp(): void {
         this.sfx.playPortalWarp();
     }
 
-    playTeleport() {
+    playTeleport(): void {
         this.sfx.playTeleport();
     }
 
-    startEnergyDrain() {
+    startEnergyDrain(): void {
         this.sfx.startEnergyDrain();
     }
 
-    stopEnergyDrain() {
+    stopEnergyDrain(): void {
         this.sfx.stopEnergyDrain();
     }
 }

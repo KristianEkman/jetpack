@@ -4,7 +4,15 @@
 
 import { TILES, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
 
-const CHAR_TO_TILE = {
+export interface CampaignLevelConfig {
+    name: string;
+    grid: number[];
+    flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
+    missiles?: Array<{ x: number; y: number }>;
+    turrets?: Array<{ x: number; y: number; fireInterval: number }>;
+}
+
+const CHAR_TO_TILE: Record<string, number> = {
     '.': TILES.AIR,
     '#': TILES.BRICK,
     'P': TILES.PHASE_BRICK,
@@ -26,9 +34,9 @@ const CHAR_TO_TILE = {
     '3': TILES.ENEMY_TURRET
 };
 
-function parseLevelString(str) {
+function parseLevelString(str: string): number[] {
     const lines = str.trim().split('\n').map(l => l.trim());
-    const grid = [];
+    const grid: number[] = [];
     for (let r = 0; r < GRID_ROWS; r++) {
         const line = lines[r] || '.'.repeat(GRID_COLS);
         for (let c = 0; c < GRID_COLS; c++) {
@@ -39,7 +47,7 @@ function parseLevelString(str) {
     return grid;
 }
 
-// Level 1: Genesis (Introductory level with emeralds, fuel, ladder)
+// Level 1: Genesis
 const LEVEL_1_STR = `
 ##############################
 #S..........#..............E.#
@@ -61,7 +69,7 @@ const LEVEL_1_STR = `
 ##############################
 `;
 
-// Level 2: Phase Shift Caverns (Introducing phaseable bricks & ice)
+// Level 2: Phase Shift Caverns
 const LEVEL_2_STR = `
 ##############################
 #S......PPP..............E...#
@@ -83,7 +91,7 @@ const LEVEL_2_STR = `
 ##############################
 `;
 
-// Level 3: Conveyor Factory (Introducing conveyors, ladders & Flitzers)
+// Level 3: Conveyor Factory
 const LEVEL_3_STR = `
 ##############################
 #S..........E..............E.#
@@ -105,7 +113,7 @@ const LEVEL_3_STR = `
 ##############################
 `;
 
-// Level 4: Teleporter Matrix (Teleporters & Hazards)
+// Level 4: Teleporter Matrix
 const LEVEL_4_STR = `
 ##############################
 #S....T.....#......E...T.....#
@@ -127,7 +135,7 @@ const LEVEL_4_STR = `
 ##############################
 `;
 
-// Level 5: The Emerald Core (Master Challenge)
+// Level 5: The Emerald Core
 const LEVEL_5_STR = `
 ##############################
 #S....PPP....E....PPP......E.#
@@ -149,7 +157,7 @@ const LEVEL_5_STR = `
 ##############################
 `;
 
-export const CAMPAIGN_LEVELS = [
+export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
     {
         name: "Stage 1: Genesis Caverns",
         grid: parseLevelString(LEVEL_1_STR),

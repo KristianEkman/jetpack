@@ -8,34 +8,37 @@ import { CAMPAIGN_LEVELS } from '../levels/campaign.js';
 import { TILE_SIZE, TILES } from '../world/tilemap.js';
 
 export class MultiplayerController {
-    constructor(game) {
+    game: any;
+    customMapDataPayload: any;
+
+    constructor(game: any) {
         this.game = game;
         this.customMapDataPayload = null;
     }
 
-    initNetwork() {
+    initNetwork(): void {
         const game = this.game;
 
-        game.network.onRoomCreatedCb = (data) => {
+        game.network.onRoomCreatedCb = (data: any) => {
             game.playerManager.setLocalSocketId(game.network.socketId);
             this.updateLobbyUI(data.room);
             this.showLobbyView();
             game.uiManager.showBanner(`ROOM ${data.roomId} CREATED!`);
         };
 
-        game.network.onRoomJoinedCb = (data) => {
+        game.network.onRoomJoinedCb = (data: any) => {
             game.playerManager.setLocalSocketId(game.network.socketId);
             this.updateLobbyUI(data.room);
             this.showLobbyView();
             game.uiManager.showBanner(`JOINED ROOM ${data.room.id}!`);
         };
 
-        game.network.onPlayerJoinedCb = (data) => {
+        game.network.onPlayerJoinedCb = (data: any) => {
             if (data.room) this.updateLobbyUI(data.room);
             if (data.player) game.uiManager.showBanner(`${data.player.name.toUpperCase()} JOINED!`);
         };
 
-        game.network.onPlayerLeftCb = (data) => {
+        game.network.onPlayerLeftCb = (data: any) => {
             if (data.room) this.updateLobbyUI(data.room);
             if (data.leavingPlayer) game.uiManager.showBanner(`${data.leavingPlayer.name.toUpperCase()} LEFT`);
             if (game.gameState === GAME_STATES.LEVEL_COMPLETE && game.isMultiplayer) {
@@ -43,23 +46,23 @@ export class MultiplayerController {
             }
         };
 
-        game.network.onGameStartedCb = (payload) => {
+        game.network.onGameStartedCb = (payload: any) => {
             this.startMultiplayerMatch(payload);
         };
 
-        game.network.onTilePhasedCb = (data) => {
+        game.network.onTilePhasedCb = (data: any) => {
             if (game.isMultiplayer && game.tileMap && data) {
                 game.tileMap.phaseTile(data.col, data.row);
             }
         };
 
-        game.network.onTileRestoredCb = (data) => {
+        game.network.onTileRestoredCb = (data: any) => {
             if (game.isMultiplayer && game.tileMap && data) {
                 game.tileMap.restoreTile(data.col, data.row);
             }
         };
 
-        game.network.onItemCollectedCb = (data) => {
+        game.network.onItemCollectedCb = (data: any) => {
             if (game.isMultiplayer && game.tileMap && data) {
                 game.tileMap.setTile(data.col, data.row, TILES.AIR);
                 game.tileMap.collectedEmeralds = data.collectedEmeralds;
@@ -82,14 +85,12 @@ export class MultiplayerController {
             }
         };
 
-        game.network.onEnemyDestroyedCb = (data) => {
+        game.network.onEnemyDestroyedCb = (data: any) => {
             if (!game.isMultiplayer || !data?.enemyId) {
                 return;
             }
 
             const enemy = game.enemyManager.removeEnemyById(data.enemyId);
-
-            // The shooter already removed it locally, so enemy will be null there.
             if (!enemy) {
                 return;
             }
@@ -104,19 +105,19 @@ export class MultiplayerController {
             game.audio?.playExplosion?.();
         };
 
-        game.network.onLevelCompleteCb = (data) => {
+        game.network.onLevelCompleteCb = (data: any) => {
             if (game.isMultiplayer) {
                 this.triggerMultiplayerLevelComplete(data);
             }
         };
 
-        game.network.onGameOverCb = (data) => {
+        game.network.onGameOverCb = (data: any) => {
             if (game.isMultiplayer) {
                 this.triggerMultiplayerGameOver(data);
             }
         };
 
-        game.network.onWorldSnapshotCb = (snapshot) => {
+        game.network.onWorldSnapshotCb = (snapshot: any) => {
             if (game.isMultiplayer && (game.gameState === GAME_STATES.PLAYING || game.gameState === GAME_STATES.SPECTATING)) {
                 if (game.network.interpolationDelay) {
                     game.playerManager.interpolationDelay = game.network.interpolationDelay;
@@ -132,16 +133,16 @@ export class MultiplayerController {
             }
         };
 
-        game.network.onRoomListCb = (list) => {
+        game.network.onRoomListCb = (list: any[]) => {
             this.renderPublicRoomsList(list);
         };
 
-        game.network.onErrorCb = (errMsg) => {
+        game.network.onErrorCb = (errMsg: string) => {
             alert(`Multiplayer Error: ${errMsg}`);
         };
     }
 
-    bindMultiplayerUI() {
+    bindMultiplayerUI(): void {
         const game = this.game;
         const tabCreate = document.getElementById('tabCreateRoom');
         const tabPublic = document.getElementById('tabPublicRooms');
@@ -150,7 +151,7 @@ export class MultiplayerController {
         const viewPublic = document.getElementById('viewPublicRooms');
         const viewLobby = document.getElementById('viewRoomLobby');
 
-        const switchTab = (activeTab, activeView) => {
+        const switchTab = (activeTab: HTMLElement | null, activeView: HTMLElement | null) => {
             [tabCreate, tabPublic].forEach(t => {
                 if (t) {
                     t.classList.remove('active');
@@ -175,10 +176,9 @@ export class MultiplayerController {
             game.network.listRooms();
         });
 
-        // Level / Custom Map Selection Controls
-        const selectLevel = document.getElementById('selectRoomLevel');
+        const selectLevel = document.getElementById('selectRoomLevel') as HTMLSelectElement | null;
         const uploadGroup = document.getElementById('groupCustomMapUpload');
-        const fileInput = document.getElementById('inputCustomMapFile');
+        const fileInput = document.getElementById('inputCustomMapFile') as HTMLInputElement | null;
         const statusText = document.getElementById('customMapStatusText');
 
         selectLevel?.addEventListener('change', () => {
@@ -196,11 +196,11 @@ export class MultiplayerController {
             }
         });
 
-        fileInput?.addEventListener('change', (e) => {
+        fileInput?.addEventListener('change', (e: any) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = (event: any) => {
                 try {
                     const parsed = JSON.parse(event.target.result);
                     if (parsed && Array.isArray(parsed.grid) && parsed.grid.length === 540) {
@@ -216,8 +216,7 @@ export class MultiplayerController {
             reader.readAsText(file);
         });
 
-        // Pilot Profile Persistence & Setup
-        const hostNameInput = document.getElementById('inputHostName');
+        const hostNameInput = document.getElementById('inputHostName') as HTMLInputElement | null;
         if (hostNameInput) {
             try {
                 const savedName = localStorage.getItem('jetpack_player_name');
@@ -236,7 +235,6 @@ export class MultiplayerController {
             });
         }
 
-        // Color Picker Chips & Persistence
         try {
             const savedColor = localStorage.getItem('jetpack_player_color');
             if (savedColor) {
@@ -244,7 +242,7 @@ export class MultiplayerController {
             }
         } catch (e) { }
 
-        const colorChips = document.querySelectorAll('.color-chip');
+        const colorChips = document.querySelectorAll<HTMLElement>('.color-chip');
         if (colorChips.length > 0) {
             colorChips.forEach(chip => {
                 const chipColor = chip.dataset.color || '#ff4444';
@@ -266,9 +264,8 @@ export class MultiplayerController {
             });
         }
 
-        // Form Submit Buttons
         document.getElementById('btnCreateRoomSubmit')?.addEventListener('click', () => {
-            const hostName = document.getElementById('inputHostName')?.value.trim() || 'Host Pilot';
+            const hostName = (document.getElementById('inputHostName') as HTMLInputElement | null)?.value.trim() || 'Host Pilot';
             try {
                 localStorage.setItem('jetpack_player_name', hostName);
                 if (game.selectedColor) {
@@ -276,9 +273,9 @@ export class MultiplayerController {
                 }
             } catch (e) { }
 
-            const levelVal = document.getElementById('selectRoomLevel')?.value || '0';
+            const levelVal = (document.getElementById('selectRoomLevel') as HTMLSelectElement | null)?.value || '0';
 
-            const createOpts = {
+            const createOpts: any = {
                 playerName: hostName,
                 playerColor: game.selectedColor
             };
@@ -323,7 +320,7 @@ export class MultiplayerController {
         });
     }
 
-    showLobbyView() {
+    showLobbyView(): void {
         const viewCreate = document.getElementById('viewCreateRoom');
         const viewPublic = document.getElementById('viewPublicRooms');
         const viewLobby = document.getElementById('viewRoomLobby');
@@ -335,7 +332,7 @@ export class MultiplayerController {
         document.getElementById('mpProfileSetup')?.classList.add('hidden');
     }
 
-    updateLobbyUI(room) {
+    updateLobbyUI(room: any): void {
         if (!room) return;
 
         const codeEl = document.getElementById('displayRoomCode');
@@ -364,7 +361,7 @@ export class MultiplayerController {
             }
         }
 
-        room.players.forEach(p => {
+        room.players.forEach((p: any) => {
             const card = document.createElement('div');
             card.className = 'lobby-player-card';
             card.innerHTML = `
@@ -378,7 +375,7 @@ export class MultiplayerController {
         });
     }
 
-    renderPublicRoomsList(list) {
+    renderPublicRoomsList(list: any[]): void {
         try {
             const container = document.getElementById('publicRoomsList');
             if (!container) {
@@ -411,7 +408,7 @@ export class MultiplayerController {
                 `;
 
                 row.addEventListener('click', () => {
-                    const joinName = document.getElementById('inputHostName')?.value?.trim() || 'Wingman';
+                    const joinName = (document.getElementById('inputHostName') as HTMLInputElement | null)?.value?.trim() || 'Wingman';
                     try {
                         localStorage.setItem('jetpack_player_name', joinName);
                         if (this.game.selectedColor) {
@@ -431,7 +428,7 @@ export class MultiplayerController {
         }
     }
 
-    startMultiplayerMatch(payload = null) {
+    startMultiplayerMatch(payload: any = null): void {
         const game = this.game;
         game.isMultiplayer = true;
         const room = payload?.room || game.network.currentRoom;
@@ -480,7 +477,7 @@ export class MultiplayerController {
         game.playerManager.setLocalSocketId(game.network.socketId);
 
         if (room && room.players) {
-            room.players.forEach(p => {
+            room.players.forEach((p: any) => {
                 game.playerManager.addPlayer(p.socketId, {
                     id: p.id,
                     name: p.name,
@@ -503,10 +500,10 @@ export class MultiplayerController {
         game.uiManager.showBanner('MULTIPLAYER MATCH STARTED!');
     }
 
-    updateLevelCompleteHostState(room = this.game.network.currentRoom) {
+    updateLevelCompleteHostState(room: any = this.game.network.currentRoom): void {
         const game = this.game;
         const isHost = room ? (game.network.socketId === room.hostSocketId) : false;
-        const btnNextLevel = document.getElementById('btnNextLevel');
+        const btnNextLevel = document.getElementById('btnNextLevel') as HTMLButtonElement | null;
         if (btnNextLevel) {
             if (isHost) {
                 btnNextLevel.disabled = false;
@@ -518,7 +515,7 @@ export class MultiplayerController {
         }
     }
 
-    triggerMultiplayerLevelComplete(data) {
+    triggerMultiplayerLevelComplete(data: any): void {
         const game = this.game;
         game.gameState = GAME_STATES.LEVEL_COMPLETE;
         game.audio.stopThrust();
@@ -547,9 +544,9 @@ export class MultiplayerController {
         game.uiManager.showDialog('dlgLevelComplete');
     }
 
-    updateGameOverHostState(room = this.game.network.currentRoom) {
+    updateGameOverHostState(room: any = this.game.network.currentRoom): void {
         const game = this.game;
-        const btnRetryLevel = document.getElementById('btnRetryLevel');
+        const btnRetryLevel = document.getElementById('btnRetryLevel') as HTMLButtonElement | null;
         if (!btnRetryLevel) return;
 
         if (game.isMultiplayer) {
@@ -567,7 +564,7 @@ export class MultiplayerController {
         }
     }
 
-    triggerMultiplayerGameOver(data = {}) {
+    triggerMultiplayerGameOver(data: any = {}): void {
         const game = this.game;
         game.gameState = GAME_STATES.GAME_OVER;
         game.audio?.stopThrust?.();

@@ -4,7 +4,14 @@
 
 import { TILES, TILE_SIZE, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
 
-export const PALETTE = [
+export interface PaletteItem {
+    type: number;
+    name: string;
+    icon: string;
+    color: string;
+}
+
+export const PALETTE: PaletteItem[] = [
     { type: TILES.AIR, name: 'Eraser', icon: '🧹', color: 'rgba(255,255,255,0.1)' },
     { type: TILES.BRICK, name: 'Brick', icon: '🧱', color: '#8b263e' },
     { type: TILES.PHASE_BRICK, name: 'Phase Brick', icon: '⚡', color: '#00f0ff' },
@@ -27,7 +34,16 @@ export const PALETTE = [
 ];
 
 export class LevelEditor {
-    constructor(canvas, tileMap, onPlaytest, isEditorActive = () => true) {
+    canvas: HTMLCanvasElement;
+    tileMap: any;
+    onPlaytest: any;
+    isEditorActive: () => boolean;
+    selectedTile: number;
+    isPainting: boolean;
+    hoverCol: number;
+    hoverRow: number;
+
+    constructor(canvas: HTMLCanvasElement, tileMap: any, onPlaytest: any, isEditorActive: () => boolean = () => true) {
         this.canvas = canvas;
         this.tileMap = tileMap;
         this.onPlaytest = onPlaytest;
@@ -42,7 +58,7 @@ export class LevelEditor {
         this.bindCanvasEvents();
     }
 
-    initPaletteUI() {
+    initPaletteUI(): void {
         const paletteContainer = document.getElementById('tilePalette');
         if (!paletteContainer) return;
 
@@ -50,7 +66,7 @@ export class LevelEditor {
         PALETTE.forEach(item => {
             const btn = document.createElement('button');
             btn.className = `tile-btn ${item.type === this.selectedTile ? 'active' : ''}`;
-            btn.dataset.tile = item.type;
+            btn.dataset.tile = String(item.type);
             
             btn.innerHTML = `
                 <div class="tile-preview" style="background:${item.color}; display:flex; align-items:center; justify-content:center; font-size:12px;">${item.icon}</div>
@@ -67,8 +83,8 @@ export class LevelEditor {
         });
     }
 
-    bindCanvasEvents() {
-        const getCanvasCoords = (e) => {
+    bindCanvasEvents(): void {
+        const getCanvasCoords = (e: any) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
             const scaleY = this.canvas.height / rect.height;
@@ -80,14 +96,14 @@ export class LevelEditor {
             return { col, row };
         };
 
-        const handleStart = (e) => {
+        const handleStart = (e: any) => {
             if (this.isEditorActive && !this.isEditorActive()) return;
             this.isPainting = true;
             const { col, row } = getCanvasCoords(e);
             this.paintTile(col, row);
         };
 
-        const handleMove = (e) => {
+        const handleMove = (e: any) => {
             if (this.isEditorActive && !this.isEditorActive()) {
                 this.hoverCol = -1;
                 this.hoverRow = -1;
@@ -118,11 +134,10 @@ export class LevelEditor {
         window.addEventListener('touchend', handleEnd);
     }
 
-    paintTile(col, row) {
+    paintTile(col: number, row: number): void {
         if (this.isEditorActive && !this.isEditorActive()) return;
         if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
 
-        // If placing spawn point, ensure only one spawn exists
         if (this.selectedTile === TILES.SPAWN) {
             for (let r = 0; r < GRID_ROWS; r++) {
                 for (let c = 0; c < GRID_COLS; c++) {
@@ -132,7 +147,6 @@ export class LevelEditor {
                 }
             }
         }
-        // If placing exit portal, ensure only one portal exists
         if (this.selectedTile === TILES.EXIT_PORTAL) {
             for (let r = 0; r < GRID_ROWS; r++) {
                 for (let c = 0; c < GRID_COLS; c++) {
@@ -146,7 +160,7 @@ export class LevelEditor {
         this.tileMap.setTile(col, row, this.selectedTile);
     }
 
-    validateLevel() {
+    validateLevel(): { valid: boolean; error?: string } {
         let spawnCount = 0;
         let portalCount = 0;
         let emeraldCount = 0;
@@ -167,7 +181,7 @@ export class LevelEditor {
         return { valid: true };
     }
 
-    getExportData() {
+    getExportData(): any {
         return {
             name: "Custom Jetpack Level",
             author: "User",
@@ -177,7 +191,7 @@ export class LevelEditor {
         };
     }
 
-    autoSaveLocal() {
+    autoSaveLocal(): void {
         try {
             localStorage.setItem('jetpack_custom_level', JSON.stringify(this.getExportData()));
         } catch (e) {
@@ -185,7 +199,7 @@ export class LevelEditor {
         }
     }
 
-    loadFromLocal() {
+    loadFromLocal(): boolean {
         try {
             const data = localStorage.getItem('jetpack_custom_level');
             if (data) {
@@ -199,14 +213,14 @@ export class LevelEditor {
         return false;
     }
 
-    loadFromJSON(jsonData) {
+    loadFromJSON(jsonData: any): boolean {
         if (!jsonData || !Array.isArray(jsonData.grid)) return false;
         this.tileMap.loadLevelData(jsonData);
         this.autoSaveLocal();
         return true;
     }
 
-    renderHoverPreview(ctx) {
+    renderHoverPreview(ctx: CanvasRenderingContext2D): void {
         if (this.hoverCol >= 0 && this.hoverCol < GRID_COLS && this.hoverRow >= 0 && this.hoverRow < GRID_ROWS) {
             ctx.strokeStyle = '#00ffcc';
             ctx.lineWidth = 2;

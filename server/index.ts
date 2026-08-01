@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 
-import { RoomManager } from './roomManager.js';
+import { RoomManager, ServerRoom } from './roomManager.js';
 import { GameLoop } from './gameLoop.js';
 import { GAME_EVENTS, TILES } from '../js/shared/constants.js';
 import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
@@ -24,7 +24,7 @@ const distDir = path.join(rootDir, 'dist');
 let serverCommitHash = 'dev';
 let deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
-function loadVersionInfo() {
+function loadVersionInfo(): void {
     const distVersionFile = path.join(distDir, 'version.json');
     const rootVersionFile = path.join(rootDir, 'version.json');
 
@@ -64,13 +64,11 @@ const io = new Server(httpServer, {
     }
 });
 
-// Serve static frontend assets (prefer Vite build dist/ if present)
 if (fs.existsSync(distDir)) {
     app.use(express.static(distDir));
 }
 app.use(express.static(rootDir));
 
-// Version information endpoint
 app.get('/api/version', (req, res) => {
     res.json({
         commitHash: serverCommitHash,
@@ -78,7 +76,6 @@ app.get('/api/version', (req, res) => {
     });
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
@@ -90,12 +87,36 @@ app.get('/health', (req, res) => {
 export const roomManager = new RoomManager();
 export const gameLoop = new GameLoop(roomManager, io, 60);
 
-// Initialize Socket.IO connection handling
-io.on('connection', (socket) => {
+function initRoomEnemies(room: ServerRoom, levelData: any): void {
+    if (!room.enemyManager) return;
+    room.enemyManager.clear();
+    if (levelData.flitzers) {
+        levelData.flitzers.forEach((f: any) => room.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
+    }
+    if (levelData.missiles) {
+        levelData.missiles.forEach((m: any) => room.enemyManager.addHomingMissile(m.x, m.y));
+    }
+    if (levelData.turrets) {
+        levelData.turrets.forEach((t: any) => room.enemyManager.addTurret(t.x, t.y, t.fireInterval));
+    }
+    for (let r = 0; r < room.tileMap.rows; r++) {
+        for (let c = 0; c < room.tileMap.cols; c++) {
+            const tile = room.tileMap.getTile(c, r);
+            if (tile === TILES.ENEMY_FLITZER) {
+                room.enemyManager.addFlitzer(c * 32 + 6, r * 32 + 6, 100, 100);
+            } else if (tile === TILES.ENEMY_MISSILE) {
+                room.enemyManager.addHomingMissile(c * 32 + 8, r * 32 + 8);
+            } else if (tile === TILES.ENEMY_TURRET) {
+                room.enemyManager.addTurret(c * 32 + 4, r * 32 + 4, 2.0);
+            }
+        }
+    }
+}
+
+io.on('connection', (socket: any) => {
     console.log(`🔌 Client connected: ${socket.id}`);
 
-    // Handshake / Latency check
-    socket.on('ping_handshake', (callback) => {
+    socket.on('ping_handshake', (callback: any) => {
         const reply = { pong: true, serverTime: Date.now(), socketId: socket.id };
         if (typeof callback === 'function') {
             callback(reply);
@@ -104,19 +125,17 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Create Room
-    socket.on('create_room', (data = {}, callback) => {
+    socket.on('create_room', (data: any = {}, callback: any) => {
         const room = roomManager.createRoom(socket.id, data);
         socket.join(room.id);
 
-        // Bind world state tilemap events to broadcast across room
-        room.tileMap.on(GAME_EVENTS.TILE_PHASED, (payload) => {
+        room.tileMap.on(GAME_EVENTS.TILE_PHASED, (payload: any) => {
             io.to(room.id).emit(GAME_EVENTS.TILE_PHASED, payload);
         });
-        room.tileMap.on(GAME_EVENTS.TILE_RESTORED, (payload) => {
+        room.tileMap.on(GAME_EVENTS.TILE_RESTORED, (payload: any) => {
             io.to(room.id).emit(GAME_EVENTS.TILE_RESTORED, payload);
         });
-        room.tileMap.on(GAME_EVENTS.ITEM_COLLECTED, (payload) => {
+        room.tileMap.on(GAME_EVENTS.ITEM_COLLECTED, (payload: any) => {
             io.to(room.id).emit(GAME_EVENTS.ITEM_COLLECTED, payload);
         });
 
@@ -133,8 +152,7 @@ io.on('connection', (socket) => {
         console.log(`🏠 Room created: ${room.id} by Host ${socket.id}`);
     });
 
-    // Join Room
-    socket.on('join_room', (data = {}, callback) => {
+    socket.on('join_room', (data: any = {}, callback: any) => {
         const roomId = data.roomId;
         if (!roomId) {
             const errResponse = { success: false, error: 'Room ID required' };
@@ -155,7 +173,6 @@ io.on('connection', (socket) => {
         if (typeof callback === 'function') callback(result);
         socket.emit('room_joined', result);
 
-        // Notify room participants
         io.to(result.room.id).emit('player_joined', {
             player: result.player,
             room: result.room
@@ -165,8 +182,7 @@ io.on('connection', (socket) => {
         console.log(`👥 Client ${socket.id} joined Room ${result.room.id}`);
     });
 
-    // Leave Room
-    socket.on('leave_room', (callback) => {
+    socket.on('leave_room', (callback: any) => {
         const result = roomManager.leaveRoom(socket.id);
         if (result) {
             socket.leave(result.roomId);
@@ -187,41 +203,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    // List Public Lobbies
-    socket.on('list_rooms', (callback) => {
+    socket.on('list_rooms', (callback: any) => {
         const list = roomManager.listRooms();
         if (typeof callback === 'function') callback(list);
         socket.emit('room_list', list);
     });
 
-function initRoomEnemies(room, levelData) {
-    if (!room.enemyManager) return;
-    room.enemyManager.clear();
-    if (levelData.flitzers) {
-        levelData.flitzers.forEach(f => room.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
-    }
-    if (levelData.missiles) {
-        levelData.missiles.forEach(m => room.enemyManager.addHomingMissile(m.x, m.y));
-    }
-    if (levelData.turrets) {
-        levelData.turrets.forEach(t => room.enemyManager.addTurret(t.x, t.y, t.fireInterval));
-    }
-    for (let r = 0; r < room.tileMap.rows; r++) {
-        for (let c = 0; c < room.tileMap.cols; c++) {
-            const tile = room.tileMap.getTile(c, r);
-            if (tile === TILES.ENEMY_FLITZER) {
-                room.enemyManager.addFlitzer(c * 32 + 6, r * 32 + 6, 100, 100);
-            } else if (tile === TILES.ENEMY_MISSILE) {
-                room.enemyManager.addHomingMissile(c * 32 + 8, r * 32 + 8);
-            } else if (tile === TILES.ENEMY_TURRET) {
-                room.enemyManager.addTurret(c * 32 + 4, r * 32 + 4, 2.0);
-            }
-        }
-    }
-}
-
-    // Start Multiplayer Match (Host only)
-    socket.on(GAME_EVENTS.START_MATCH || 'start_match', (data = {}, callback) => {
+    socket.on(GAME_EVENTS.START_MATCH || 'start_match', (data: any = {}, callback: any) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room) {
             const errRes = { success: false, error: 'Room not found' };
@@ -238,12 +226,10 @@ function initRoomEnemies(room, levelData) {
         room.status = 'playing';
         room.destroyedEnemyIds = new Set();
 
-        // Re-load level tileMap data on server at match start
         const levelData = room.customMapData || CAMPAIGN_LEVELS[room.levelIndex] || CAMPAIGN_LEVELS[0];
         room.tileMap.loadLevelData(levelData);
         initRoomEnemies(room, levelData);
 
-        // Find spawn points from SPAWN tile or default
         let spawnX = 128;
         let spawnY = 100;
         for (let r = 0; r < room.tileMap.rows; r++) {
@@ -276,8 +262,7 @@ function initRoomEnemies(room, levelData) {
         console.log(`🚀 Match started in Room ${room.id} by Host ${socket.id}`);
     });
 
-    // Player Input Handler (Client -> Server)
-    socket.on(GAME_EVENTS.PLAYER_INPUT || 'player_input', (inputState) => {
+    socket.on(GAME_EVENTS.PLAYER_INPUT || 'player_input', (inputState: any) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room || !inputState) return;
 
@@ -295,11 +280,7 @@ function initRoomEnemies(room, levelData) {
         }
     });
 
-    // Player Died Handler (Client reports enemy-caused death)
-    // Enemies run client-side only, so the client must notify the server
-    // when an enemy kills it. The server's existing death timer in the
-    // game loop will then handle respawning.
-    socket.on(GAME_EVENTS.PLAYER_DIED || 'player_died', (data = {}) => {
+    socket.on(GAME_EVENTS.PLAYER_DIED || 'player_died', (data: any = {}) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room || room.status !== 'playing') return;
 
@@ -308,12 +289,11 @@ function initRoomEnemies(room, levelData) {
 
         playerEntity.isDead = true;
         playerEntity.lives--;
-        playerEntity._deathTimer = 0;
+        (playerEntity as any)._deathTimer = 0;
         console.log(`💀 Player ${socket.id} died (reason: ${data.reason || 'enemy'}, lives: ${playerEntity.lives})`);
     });
 
-    // Enemy Destroyed Handler (Client -> Server)
-    socket.on(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', ({ enemyId } = {}, callback) => {
+    socket.on(GAME_EVENTS.ENEMY_DESTROYED || 'enemy_destroyed', ({ enemyId }: { enemyId?: string } = {}, callback: any) => {
         const room = roomManager.getRoomBySocketId(socket.id);
 
         if (!room || room.status !== 'playing' || !enemyId) {
@@ -326,7 +306,6 @@ function initRoomEnemies(room, levelData) {
 
         room.destroyedEnemyIds ??= new Set();
 
-        // Prevent repeated shots or duplicate messages.
         if (room.destroyedEnemyIds.has(enemyId)) {
             callback?.({
                 success: true,
@@ -349,8 +328,7 @@ function initRoomEnemies(room, levelData) {
         callback?.({ success: true });
     });
 
-    // Complete Level Handler (Client -> Server)
-    socket.on(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', (data = {}, callback) => {
+    socket.on(GAME_EVENTS.COMPLETE_LEVEL || 'complete_level', (data: any = {}, callback: any) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room || room.status !== 'playing') {
             const errRes = { success: false, error: 'Room not in playing state' };
@@ -358,7 +336,7 @@ function initRoomEnemies(room, levelData) {
             return;
         }
 
-        room.status = 'level_complete';
+        room.status = 'finished';
         const playerConfig = room.playerConfigs.get(socket.id);
         const playerName = playerConfig ? playerConfig.name : 'Player';
 
@@ -374,8 +352,7 @@ function initRoomEnemies(room, levelData) {
         console.log(`🏆 Level completed in Room ${room.id} by ${playerName}`);
     });
 
-    // Next Level Handler (Host -> Server)
-    socket.on(GAME_EVENTS.NEXT_LEVEL || 'next_level', (data = {}, callback) => {
+    socket.on(GAME_EVENTS.NEXT_LEVEL || 'next_level', (data: any = {}, callback: any) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room) {
             const errRes = { success: false, error: 'Room not found' };
@@ -432,7 +409,6 @@ function initRoomEnemies(room, levelData) {
         console.log(`🚀 Next level (${room.levelIndex}) started in Room ${room.id} by Host ${socket.id}`);
     });
 
-    // Disconnect
     socket.on('disconnect', () => {
         console.log(`❌ Client disconnected: ${socket.id}`);
         const result = roomManager.leaveRoom(socket.id);
@@ -450,8 +426,7 @@ function initRoomEnemies(room, levelData) {
 
 const PORT = process.env.PORT || 3000;
 
-// Start game loop & server when executed directly
-if (process.argv[1] && process.argv[1].endsWith('index.js')) {
+if (process.argv[1] && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'))) {
     gameLoop.start();
     httpServer.listen(PORT, () => {
         console.log(`🚀 Jetpack Multiplayer Server listening on http://localhost:${PORT}`);

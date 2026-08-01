@@ -2,8 +2,22 @@
    GAME LOOP ENGINE MODULE
    ========================================================================== */
 
+export type UpdateCallback = (dt: number) => void;
+export type RenderCallback = (dt: number, alpha: number) => void;
+
 export class GameLoop {
-    constructor(updateFn, renderFn) {
+    update: UpdateCallback;
+    render: RenderCallback;
+    lastTime: number;
+    accumulatedTime: number;
+    step: number;
+    isRunning: boolean;
+    animationFrameId: number | null;
+    fps: number;
+    frameCount: number;
+    fpsTimer: number;
+
+    constructor(updateFn: UpdateCallback, renderFn: RenderCallback) {
         this.update = updateFn;
         this.render = renderFn;
         
@@ -18,14 +32,14 @@ export class GameLoop {
         this.fpsTimer = 0;
     }
 
-    start() {
+    start(): void {
         if (this.isRunning) return;
         this.isRunning = true;
         this.lastTime = performance.now();
         this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
     }
 
-    stop() {
+    stop(): void {
         this.isRunning = false;
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
@@ -33,7 +47,7 @@ export class GameLoop {
         }
     }
 
-    loop(currentTime) {
+    loop(currentTime: number): void {
         if (!this.isRunning) return;
 
         const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1);

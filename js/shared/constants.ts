@@ -26,7 +26,9 @@ export const TILES = {
     ENEMY_FLITZER: 16,
     ENEMY_MISSILE: 17,
     ENEMY_TURRET: 18
-};
+} as const;
+
+export type TileTypeValue = typeof TILES[keyof typeof TILES];
 
 export const PLAYER_PHYSICS = {
     WIDTH: 22,
@@ -49,7 +51,7 @@ export const PLAYER_PHYSICS = {
     PHASE_BEAM_PERSIST_TIME: 0.14,
     PHASE_COOLDOWN_TIME: 0.12,
     PHASE_BRICK_REGEN_TIME: 5.0
-};
+} as const;
 
 export const GAME_EVENTS = {
     TILE_PHASED: 'tile_phased',
@@ -65,7 +67,7 @@ export const GAME_EVENTS = {
     PLAYER_DIED: 'player_died',
     ENEMY_DESTROYED: 'enemy_destroyed',
     GAME_OVER: 'game_over'
-};
+} as const;
 
 export const PLAYER_FLAGS = {
     FACING_RIGHT: 1 << 0, // 1
@@ -74,7 +76,7 @@ export const PLAYER_FLAGS = {
     IS_CLIMBING:  1 << 3, // 8
     IS_PHASING:   1 << 4, // 16
     IS_DEAD:      1 << 5  // 32
-};
+} as const;
 
 export const NETWORK_SETTINGS = {
     SNAPSHOT_INTERVAL_TICKS: 6, // 60 Hz / 6 = 10 Hz snapshot rate
@@ -82,5 +84,4 @@ export const NETWORK_SETTINGS = {
     MAX_EXTRAPOLATION_TIME: 100, // ms max extrapolation duration when packets are late
     SNAP_THRESHOLD_SQ: 64 * 64, // 4096 sq px max error distance before hard snap
     INPUT_HEARTBEAT_INTERVAL: 100 // ms heartbeat rate when input unchanged
-};
-
+} as const;

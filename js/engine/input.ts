@@ -2,7 +2,25 @@
    INPUT HANDLER MODULE
    ========================================================================== */
 
+import { SerializedInputState } from "../shared/types";
+
+export interface KeyState {
+    left: boolean;
+    right: boolean;
+    up: boolean;
+    down: boolean;
+    thrust: boolean;
+    phase: boolean;
+    pause: boolean;
+    suicide: boolean;
+    [key: string]: boolean;
+}
+
 export class InputHandler {
+    keys: KeyState;
+    sequenceCounter: number;
+    onPausePress: (() => void) | null;
+
     constructor() {
         this.keys = {
             left: false,
@@ -24,8 +42,8 @@ export class InputHandler {
         }
     }
 
-    setupKeyboard() {
-        window.addEventListener('keydown', (e) => {
+    setupKeyboard(): void {
+        window.addEventListener('keydown', (e: KeyboardEvent) => {
             // Prevent scrolling for game controls
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
                 e.preventDefault();
@@ -71,7 +89,7 @@ export class InputHandler {
             }
         });
 
-        window.addEventListener('keyup', (e) => {
+        window.addEventListener('keyup', (e: KeyboardEvent) => {
             switch (e.code) {
                 case 'ArrowLeft':
                 case 'KeyA':
@@ -109,7 +127,7 @@ export class InputHandler {
         });
     }
 
-    setupTouch() {
+    setupTouch(): void {
         const touchGamepad = document.getElementById('touchGamepad');
         if (!touchGamepad) return;
 
@@ -118,15 +136,15 @@ export class InputHandler {
             touchGamepad.classList.remove('hidden');
         }
 
-        const bindBtn = (id, keyName) => {
+        const bindBtn = (id: string, keyName: keyof KeyState) => {
             const btn = document.getElementById(id);
             if (!btn) return;
 
-            const start = (e) => {
+            const start = (e: Event) => {
                 e.preventDefault();
                 this.keys[keyName] = true;
             };
-            const end = (e) => {
+            const end = (e: Event) => {
                 e.preventDefault();
                 this.keys[keyName] = false;
             };
@@ -145,14 +163,14 @@ export class InputHandler {
         bindBtn('touchPhase', 'phase');
     }
 
-    reset() {
+    reset(): void {
         for (let key in this.keys) {
             this.keys[key] = false;
         }
     }
 
-    serializeInputState(sequenceId = null, player = null) {
-        const state = {
+    serializeInputState(sequenceId: number | null = null, player: any = null): SerializedInputState {
+        const state: SerializedInputState = {
             left: !!this.keys.left,
             right: !!this.keys.right,
             up: !!this.keys.up,
@@ -178,7 +196,7 @@ export class InputHandler {
         return state;
     }
 
-    static deserializeInputState(payload) {
+    static deserializeInputState(payload: any): SerializedInputState {
         if (!payload) return { left: false, right: false, up: false, down: false, thrust: false, phase: false, suicide: false, sequenceId: 0 };
         return {
             left: !!payload.left,

@@ -25,12 +25,42 @@ export const GAME_STATES = {
     GAME_OVER: 'game_over',
     LEVEL_COMPLETE: 'level_complete',
     SPECTATING: 'spectating'
-};
+} as const;
 
-class Game {
+export type GameState = typeof GAME_STATES[keyof typeof GAME_STATES];
+
+export class Game {
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+
+    audio: AudioManager;
+    input: InputHandler;
+    tileMap: TileMap;
+    player: Player;
+    enemyManager: EnemyManager;
+
+    playerManager: PlayerManager;
+    network: NetworkManager;
+
+    isMultiplayer: boolean;
+    selectedColor: string;
+    currentLevelIndex: number;
+    gameState: GameState;
+    isCustomLevel: boolean;
+    isCanvasRenderedForState: boolean;
+
+    deathSequenceTimer: number;
+    isDeathHandled: boolean;
+
+    uiManager: UIManager;
+    levelManager: LevelManager;
+    multiplayerController: MultiplayerController;
+    editor: LevelEditor;
+    loop: GameLoop;
+
     constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
+        this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+        this.ctx = this.canvas.getContext('2d')!;
 
         this.audio = new AudioManager();
         this.input = new InputHandler();
@@ -41,7 +71,7 @@ class Game {
         this.playerManager = new PlayerManager(this.audio, this.tileMap);
         this.network = new NetworkManager();
 
-        this.enemyManager.onEnemyDestroyed = ({ enemyId }) => {
+        this.enemyManager.onEnemyDestroyed = ({ enemyId }: { enemyId: string }) => {
             if (this.isMultiplayer) {
                 this.network.sendEnemyDestroyed(enemyId);
             }
@@ -59,7 +89,9 @@ class Game {
         this.isCustomLevel = false;
         this.isCanvasRenderedForState = false;
 
-        // Initialize Sub-Managers
+        this.deathSequenceTimer = 0;
+        this.isDeathHandled = false;
+
         this.uiManager = new UIManager(this);
         this.levelManager = new LevelManager(this);
         this.multiplayerController = new MultiplayerController(this);
@@ -72,11 +104,10 @@ class Game {
         );
 
         this.loop = new GameLoop(
-            (dt) => this.update(dt),
-            (dt) => this.render(dt)
+            (dt: number) => this.update(dt),
+            (dt: number) => this.render(dt)
         );
 
-        // Bind UI and Network events
         this.uiManager.bindUI();
         this.multiplayerController.initNetwork();
         this.multiplayerController.bindMultiplayerUI();
@@ -85,7 +116,7 @@ class Game {
         this.loop.start();
     }
 
-    togglePause() {
+    togglePause(): void {
         if (this.gameState === GAME_STATES.PLAYING) {
             this.gameState = GAME_STATES.PAUSED;
             this.audio.stopThrust();
@@ -95,7 +126,7 @@ class Game {
         }
     }
 
-    resumeGame() {
+    resumeGame(): void {
         if (this.gameState === GAME_STATES.PAUSED) {
             this.gameState = GAME_STATES.PLAYING;
             this.audio.startGameMusic(this.currentLevelIndex);
@@ -103,33 +134,30 @@ class Game {
         }
     }
 
-    // Delegate UI & Dialog methods for convenience / compatibility
-    showDialog(dialogId) { this.uiManager.showDialog(dialogId); }
-    closeAllDialogs() { this.uiManager.closeAllDialogs(); }
-    showBanner(text) { this.uiManager.showBanner(text); }
-    updateHUD() { this.uiManager.updateHUD(); }
+    showDialog(dialogId: string): void { this.uiManager.showDialog(dialogId); }
+    closeAllDialogs(): void { this.uiManager.closeAllDialogs(); }
+    showBanner(text: string): void { this.uiManager.showBanner(text); }
+    updateHUD(): void { this.uiManager.updateHUD(); }
 
-    // Delegate Level methods for convenience / compatibility
-    startLevel(index) { this.levelManager.startLevel(index); }
-    openLevelSelect() { this.levelManager.openLevelSelect(); }
-    openLevelEditor() { this.levelManager.openLevelEditor(); }
-    playtestCustomLevel() { this.levelManager.playtestCustomLevel(); }
-    spawnEnemiesFromGrid() { this.levelManager.spawnEnemiesFromGrid(); }
-    triggerLevelComplete() { this.levelManager.triggerLevelComplete(); }
-    exportLevelJSON() { this.levelManager.exportLevelJSON(); }
-    importLevelJSON(e) { this.levelManager.importLevelJSON(e); }
+    startLevel(index: number): void { this.levelManager.startLevel(index); }
+    openLevelSelect(): void { this.levelManager.openLevelSelect(); }
+    openLevelEditor(): void { this.levelManager.openLevelEditor(); }
+    playtestCustomLevel(): void { this.levelManager.playtestCustomLevel(); }
+    spawnEnemiesFromGrid(): void { this.levelManager.spawnEnemiesFromGrid(); }
+    triggerLevelComplete(): void { this.levelManager.triggerLevelComplete(); }
+    exportLevelJSON(): void { this.levelManager.exportLevelJSON(); }
+    importLevelJSON(e: any): void { this.levelManager.importLevelJSON(e); }
 
-    // Delegate Multiplayer methods for convenience / compatibility
-    initNetwork() { this.multiplayerController.initNetwork(); }
-    bindMultiplayerUI() { this.multiplayerController.bindMultiplayerUI(); }
-    showLobbyView() { this.multiplayerController.showLobbyView(); }
-    updateLobbyUI(room) { this.multiplayerController.updateLobbyUI(room); }
-    renderPublicRoomsList(list) { this.multiplayerController.renderPublicRoomsList(list); }
-    startMultiplayerMatch(payload) { this.multiplayerController.startMultiplayerMatch(payload); }
-    triggerMultiplayerLevelComplete(data) { this.multiplayerController.triggerMultiplayerLevelComplete(data); }
-    triggerMultiplayerGameOver(data) { this.multiplayerController.triggerMultiplayerGameOver(data); }
+    initNetwork(): void { this.multiplayerController.initNetwork(); }
+    bindMultiplayerUI(): void { this.multiplayerController.bindMultiplayerUI(); }
+    showLobbyView(): void { this.multiplayerController.showLobbyView(); }
+    updateLobbyUI(room: any): void { this.multiplayerController.updateLobbyUI(room); }
+    renderPublicRoomsList(list: any[]): void { this.multiplayerController.renderPublicRoomsList(list); }
+    startMultiplayerMatch(payload?: any): void { this.multiplayerController.startMultiplayerMatch(payload); }
+    triggerMultiplayerLevelComplete(data?: any): void { this.multiplayerController.triggerMultiplayerLevelComplete(data); }
+    triggerMultiplayerGameOver(data?: any): void { this.multiplayerController.triggerMultiplayerGameOver(data); }
 
-    update(dt) {
+    update(dt: number): void {
         if (this.gameState !== GAME_STATES.PLAYING && this.gameState !== GAME_STATES.SPECTATING) return;
 
         let effectiveDt = dt;
@@ -183,23 +211,17 @@ class Game {
         const wasAlive = !this.player.isDead;
         const currentInput = this.input.serializeInputState();
 
-        // 1. Update TileMap
         this.tileMap.update(effectiveDt, this.player, this.enemyManager);
-
-        // 2. Update Player (pass full input state)
         this.player.update(effectiveDt, currentInput, this.enemyManager);
 
-        // 3. Update Enemies (Singleplayer = local AI update, Multiplayer = server authoritative interpolation)
         if (!this.isMultiplayer) {
             this.enemyManager.update(effectiveDt, this.player);
         }
 
-        // 4. Notify server if local player died this frame
         if (this.isMultiplayer && wasAlive && this.player.isDead) {
             this.network.sendPlayerDied('local_damage');
         }
 
-        // 5. Check Level Clear Condition
         if (!this.player.isDead && this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds) {
             const playerCol = Math.floor((this.player.x + this.player.width / 2) / TILE_SIZE);
             const playerRow = Math.floor((this.player.y + this.player.height / 2) / TILE_SIZE);
@@ -214,11 +236,10 @@ class Game {
             }
         }
 
-        // Update HUD display
         this.uiManager.updateHUD();
     }
 
-    render(dt, alpha = 1) {
+    render(dt: number, alpha: number = 1): void {
         if (this.gameState === GAME_STATES.PAUSED || this.gameState === GAME_STATES.MENU ||
             this.gameState === GAME_STATES.GAME_OVER || this.gameState === GAME_STATES.LEVEL_COMPLETE) {
             if (this.isCanvasRenderedForState) return;
@@ -230,25 +251,19 @@ class Game {
         this.ctx.fillStyle = '#05070c';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Render TileMap World
         this.tileMap.render(this.ctx, this.gameState === GAME_STATES.LEVEL_EDITOR);
-
-        // Render Enemies
         this.enemyManager.render(this.ctx, this.player);
 
-        // Render Player / Multi-Player Entities
         if (this.isMultiplayer) {
             this.playerManager.render(this.ctx);
         } else {
             this.player.render(this.ctx);
         }
 
-        // Render Editor Overlay if in Level Editor Mode
         if (this.gameState === GAME_STATES.LEVEL_EDITOR) {
             this.editor.renderHoverPreview(this.ctx);
         }
 
-        // Render Spectator Banner Overlay if in Spectating Mode
         if (this.gameState === GAME_STATES.SPECTATING) {
             this.ctx.save();
             this.ctx.fillStyle = 'rgba(255, 0, 85, 0.25)';
@@ -262,7 +277,6 @@ class Game {
     }
 }
 
-// Instantiate Game on DOM Content Loaded
 window.addEventListener('DOMContentLoaded', () => {
-    window.gameInstance = new Game();
+    (window as any).gameInstance = new Game();
 });

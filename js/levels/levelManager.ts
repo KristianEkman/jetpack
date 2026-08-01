@@ -8,11 +8,13 @@ import { CAMPAIGN_LEVELS } from './campaign.js';
 import { TILE_SIZE, TILES } from '../world/tilemap.js';
 
 export class LevelManager {
-    constructor(game) {
+    game: any;
+
+    constructor(game: any) {
         this.game = game;
     }
 
-    startLevel(index) {
+    startLevel(index: number): void {
         const game = this.game;
         game.isCustomLevel = false;
         game.currentLevelIndex = index;
@@ -56,7 +58,7 @@ export class LevelManager {
         game.uiManager.showBanner(`${levelData.name.toUpperCase()}`);
     }
 
-    openLevelSelect() {
+    openLevelSelect(): void {
         const game = this.game;
         const grid = document.getElementById('levelGrid');
         if (!grid) return;
@@ -77,7 +79,7 @@ export class LevelManager {
         game.uiManager.showDialog('dlgLevelSelect');
     }
 
-    openLevelEditor() {
+    openLevelEditor(): void {
         const game = this.game;
         game.gameState = GAME_STATES.LEVEL_EDITOR;
         game.audio.stopThrust();
@@ -90,7 +92,7 @@ export class LevelManager {
         }
     }
 
-    playtestCustomLevel() {
+    playtestCustomLevel(): void {
         const game = this.game;
         const validation = game.editor.validateLevel();
         if (!validation.valid) {
@@ -125,7 +127,7 @@ export class LevelManager {
         game.uiManager.showBanner('PLAYTEST CUSTOM LEVEL');
     }
 
-    spawnEnemiesFromGrid() {
+    spawnEnemiesFromGrid(): void {
         const game = this.game;
         for (let r = 0; r < game.tileMap.rows; r++) {
             for (let c = 0; c < game.tileMap.cols; c++) {
@@ -141,7 +143,7 @@ export class LevelManager {
         }
     }
 
-    triggerLevelComplete() {
+    triggerLevelComplete(): void {
         const game = this.game;
         game.gameState = GAME_STATES.LEVEL_COMPLETE;
         game.audio.stopThrust();
@@ -161,7 +163,7 @@ export class LevelManager {
         if (statFuelBonus) statFuelBonus.textContent = `${fuelBonus}`;
         if (statTotalScore) statTotalScore.textContent = `${game.player.score}`;
 
-        const btnNextLevel = document.getElementById('btnNextLevel');
+        const btnNextLevel = document.getElementById('btnNextLevel') as HTMLButtonElement | null;
         if (btnNextLevel) {
             btnNextLevel.disabled = false;
             btnNextLevel.textContent = '🚀 NEXT LEVEL';
@@ -175,7 +177,7 @@ export class LevelManager {
         game.uiManager.showDialog('dlgLevelComplete');
     }
 
-    exportLevelJSON() {
+    exportLevelJSON(): void {
         const data = this.game.editor.getExportData();
         const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
         const a = document.createElement('a');
@@ -186,13 +188,13 @@ export class LevelManager {
         a.remove();
     }
 
-    importLevelJSON(e) {
+    importLevelJSON(e: any): void {
         const game = this.game;
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = (event: any) => {
             try {
                 const parsed = JSON.parse(event.target.result);
                 if (parsed.grid && parsed.grid.length === game.tileMap.grid.length) {

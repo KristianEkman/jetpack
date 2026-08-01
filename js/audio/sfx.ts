@@ -3,7 +3,15 @@
    ========================================================================== */
 
 export class SoundEffects {
-    constructor(audioManager) {
+    audio: any;
+    thrustGain: GainNode | null;
+    thrustNode: AudioBufferSourceNode | null;
+    isThrusting: boolean;
+    drainGain: GainNode | null;
+    drainNodes: any[] | null;
+    isEnergyDraining: boolean;
+
+    constructor(audioManager: any) {
         this.audio = audioManager;
         this.thrustGain = null;
         this.thrustNode = null;
@@ -13,23 +21,22 @@ export class SoundEffects {
         this.isEnergyDraining = false;
     }
 
-    get ctx() {
+    get ctx(): AudioContext | null {
         return this.audio.ctx;
     }
 
-    get isMuted() {
+    get isMuted(): boolean {
         return this.audio.isMuted;
     }
 
     // Play thrust noise
-    startThrust() {
+    startThrust(): void {
         if (this.isMuted || this.isThrusting) return;
         this.audio.init();
         if (!this.ctx) return;
 
         try {
             this.isThrusting = true;
-            // Create white noise buffer for thruster sound
             const bufferSize = this.ctx.sampleRate * 0.5;
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const data = buffer.getChannelData(0);
@@ -59,7 +66,7 @@ export class SoundEffects {
         }
     }
 
-    stopThrust() {
+    stopThrust(): void {
         if (!this.isThrusting) return;
         this.isThrusting = false;
         if (this.thrustGain && this.ctx) {
@@ -79,7 +86,7 @@ export class SoundEffects {
     }
 
     // Laser / Phase Shifter Sound
-    playPhaseSound() {
+    playPhaseSound(): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
@@ -102,13 +109,14 @@ export class SoundEffects {
     }
 
     // Emerald Chime
-    playEmeraldPickup() {
+    playEmeraldPickup(): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
 
         const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
         notes.forEach((freq, idx) => {
+            if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
 
@@ -127,27 +135,18 @@ export class SoundEffects {
         });
     }
 
-    // Rewarding fanfare when all diamonds / 4 diamonds are caught
-    playAllDiamondsCaught() {
+    // Rewarding fanfare when all diamonds are caught
+    playAllDiamondsCaught(): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
 
         const now = this.ctx.currentTime;
 
-        // 1. Rapid ascending arpeggio (C Major 9 flourish)
-        const arpNotes = [
-            523.25,  // C5
-            659.25,  // E5
-            783.99,  // G5
-            987.77,  // B5
-            1046.50, // C6
-            1318.51, // E6
-            1567.98, // G6
-            2093.00  // C7
-        ];
+        const arpNotes = [523.25, 659.25, 783.99, 987.77, 1046.50, 1318.51, 1567.98, 2093.00];
 
         arpNotes.forEach((freq, idx) => {
+            if (!this.ctx) return;
             const startTime = now + idx * 0.04;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -166,12 +165,11 @@ export class SoundEffects {
             osc.stop(startTime + 0.18);
         });
 
-        // 2. Triumphant sustained victory chord & shimmer (at peak of arpeggio)
         const chordTime = now + 0.24;
-        const chordFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+        const chordFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];
 
         chordFreqs.forEach((freq) => {
-            // Primary tone
+            if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
 
@@ -188,7 +186,6 @@ export class SoundEffects {
             osc.start(chordTime);
             osc.stop(chordTime + 0.6);
 
-            // Detuned chorus tone for rich rewarding sparkle
             const detunedOsc = this.ctx.createOscillator();
             const detunedGain = this.ctx.createGain();
 
@@ -208,7 +205,7 @@ export class SoundEffects {
     }
 
     // Fuel Pickup Sound
-    playFuelPickup() {
+    playFuelPickup(): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
@@ -231,19 +228,18 @@ export class SoundEffects {
     }
 
     // Explosion / Damage Sound
-    playExplosion(isGameOver = false) {
+    playExplosion(isGameOver: boolean = false): void {
         this.playDramaticDeath(isGameOver);
     }
 
     // Dramatic Multi-stage Death Synthesizer Sound Effect
-    playDramaticDeath(isGameOver = false) {
+    playDramaticDeath(isGameOver: boolean = false): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
 
         const now = this.ctx.currentTime;
 
-        // Stage 1: Hit Crunch Transient
         try {
             const crunchOsc = this.ctx.createOscillator();
             const crunchGain = this.ctx.createGain();
@@ -260,7 +256,6 @@ export class SoundEffects {
             crunchOsc.stop(now + 0.08);
         } catch (e) {}
 
-        // Stage 2: Speaker-Rumbling Sub-Bass Boom (85Hz -> 18Hz drop)
         try {
             const subOsc = this.ctx.createOscillator();
             const subGain = this.ctx.createGain();
@@ -277,7 +272,6 @@ export class SoundEffects {
             subOsc.stop(now + 0.8);
         } catch (e) {}
 
-        // Stage 3: Descending Death Wail / Synth Siren
         try {
             const sirenOsc1 = this.ctx.createOscillator();
             const sirenOsc2 = this.ctx.createOscillator();
@@ -311,7 +305,6 @@ export class SoundEffects {
             sirenOsc2.stop(now + 0.9);
         } catch (e) {}
 
-        // Stage 4: Debris Crackle & Lowpass Noise Explosion
         try {
             const bufferSize = Math.floor(this.ctx.sampleRate * 1.4);
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -341,12 +334,12 @@ export class SoundEffects {
             noise.start(now);
         } catch (e) {}
 
-        // Stage 5: Game Over Tragic Minor Chords (if 0 lives left) or Minor Drop Tone
         try {
             if (isGameOver) {
                 const chordTime = now + 0.45;
-                const notes = [261.63, 311.13, 392.00, 523.25]; // C4, Eb4, G4, C5 (C Minor)
+                const notes = [261.63, 311.13, 392.00, 523.25];
                 notes.forEach((freq) => {
+                    if (!this.ctx) return;
                     const chordOsc = this.ctx.createOscillator();
                     const chordGain = this.ctx.createGain();
 
@@ -389,9 +382,8 @@ export class SoundEffects {
         } catch (e) {}
     }
 
-
     // Portal Active / Level Clear Fanfare
-    playPortalWarp() {
+    playPortalWarp(): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
@@ -414,7 +406,7 @@ export class SoundEffects {
     }
 
     // Teleporter Warp Sound Effect
-    playTeleport() {
+    playTeleport(): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
@@ -445,7 +437,7 @@ export class SoundEffects {
     }
 
     // Energy Drain hazard sound loop
-    startEnergyDrain() {
+    startEnergyDrain(): void {
         if (this.isMuted || this.isEnergyDraining) return;
         this.audio.init();
         if (!this.ctx) return;
@@ -454,29 +446,25 @@ export class SoundEffects {
             this.isEnergyDraining = true;
             const now = this.ctx.currentTime;
 
-            // Low frequency buzzing oscillator
             const osc1 = this.ctx.createOscillator();
             osc1.type = 'sawtooth';
             osc1.frequency.setValueAtTime(140, now);
 
-            // High frequency zapping oscillator
             const osc2 = this.ctx.createOscillator();
             osc2.type = 'square';
             osc2.frequency.setValueAtTime(280, now);
 
-            // LFO for pulsating electric zaps
             const lfo = this.ctx.createOscillator();
             lfo.type = 'sawtooth';
-            lfo.frequency.setValueAtTime(16, now); // 16 Hz buzz rhythm
+            lfo.frequency.setValueAtTime(16, now);
 
             const lfoGain = this.ctx.createGain();
-            lfoGain.gain.setValueAtTime(80, now); // Pitch modulation depth
+            lfoGain.gain.setValueAtTime(80, now);
 
             lfo.connect(lfoGain);
             lfoGain.connect(osc1.frequency);
             lfoGain.connect(osc2.frequency);
 
-            // Resonant bandpass filter for electrifying sound quality
             const filter = this.ctx.createBiquadFilter();
             filter.type = 'bandpass';
             filter.frequency.setValueAtTime(900, now);
@@ -501,7 +489,7 @@ export class SoundEffects {
         }
     }
 
-    stopEnergyDrain() {
+    stopEnergyDrain(): void {
         if (!this.isEnergyDraining) return;
         this.isEnergyDraining = false;
         if (this.drainGain && this.ctx) {

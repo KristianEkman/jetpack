@@ -12,43 +12,52 @@ import {
 } from './patterns.js';
 
 export class MusicSequencer {
-    constructor(audioManager) {
+    audio: any;
+    bgmGain: GainNode | null;
+    isPlayingMusic: boolean;
+    currentTrack: string;
+    currentLevel: number;
+    currentStep: number;
+    nextStepTime: number;
+    musicTimer: any;
+
+    constructor(audioManager: any) {
         this.audio = audioManager;
         this.bgmGain = null;
         this.isPlayingMusic = false;
-        this.currentTrack = 'none'; // 'none', 'menu', 'game_0', 'game_1', etc.
+        this.currentTrack = 'none';
         this.currentLevel = 0;
         this.currentStep = 0;
         this.nextStepTime = 0;
         this.musicTimer = null;
     }
 
-    get ctx() {
+    get ctx(): AudioContext | null {
         return this.audio.ctx;
     }
 
-    get isMuted() {
+    get isMuted(): boolean {
         return this.audio.isMuted;
     }
 
-    get noiseBuffer() {
+    get noiseBuffer(): AudioBuffer | null {
         return this.audio.noiseBuffer;
     }
 
-    startMenuMusic(forceReset = false) {
+    startMenuMusic(forceReset: boolean = false): void {
         this.stopMusic();
     }
 
-    startGameMusic(levelIndex = 0) {
+    startGameMusic(levelIndex: number = 0): void {
         if (this.ctx && this.ctx.state === 'suspended') {
             this.ctx.resume().then(() => {
-                this.nextStepTime = this.ctx.currentTime + 0.05;
+                if (this.ctx) this.nextStepTime = this.ctx.currentTime + 0.05;
             });
         }
         this.currentLevel = levelIndex;
         const trackName = 'game_' + levelIndex;
         if (this.currentTrack === trackName && this.isPlayingMusic) {
-            if (this.nextStepTime < this.ctx.currentTime) {
+            if (this.ctx && this.nextStepTime < this.ctx.currentTime) {
                 this.nextStepTime = this.ctx.currentTime + 0.05;
             }
             return;
@@ -58,14 +67,14 @@ export class MusicSequencer {
         this.startMusic();
     }
 
-    startMusic() {
+    startMusic(): void {
         this.audio.init();
         if (!this.ctx) return;
 
         if (this.isPlayingMusic) {
             if (this.ctx.state === 'suspended') {
                 this.ctx.resume().then(() => {
-                    this.nextStepTime = this.ctx.currentTime + 0.05;
+                    if (this.ctx) this.nextStepTime = this.ctx.currentTime + 0.05;
                 });
             }
             return;
@@ -87,7 +96,7 @@ export class MusicSequencer {
         this.musicTimer = setInterval(() => this.scheduleMusic(), 25);
     }
 
-    stopMusic() {
+    stopMusic(): void {
         this.isPlayingMusic = false;
         this.currentTrack = 'none';
         if (this.musicTimer) {
@@ -96,17 +105,15 @@ export class MusicSequencer {
         }
     }
 
-    scheduleMusic() {
+    scheduleMusic(): void {
         if (!this.isPlayingMusic || !this.ctx) return;
         if (this.ctx.state === 'suspended') return;
 
-        // Auto-align lookahead timer if context was resumed
         if (this.nextStepTime < this.ctx.currentTime) {
             this.nextStepTime = this.ctx.currentTime + 0.05;
         }
 
-        // Zero-based level indices: L1=0, L2=1, L3=2, L4=3, L5=4.
-        const gameBpms = [112, 132, 110, 96, 138];
+        const gameBpms = [112, 132, 110, 96, 120];
         const bpm = this.currentTrack === 'menu' ? 100 : (gameBpms[this.currentLevel] ?? 112);
         const maxSteps = 192;
         const stepDuration = (60 / bpm) / 4;
@@ -118,7 +125,7 @@ export class MusicSequencer {
         }
     }
 
-    playMusicStep(step, time, stepDuration) {
+    playMusicStep(step: number, time: number, stepDuration: number): void {
         if (this.isMuted) return;
 
         if (this.currentTrack === 'menu') {
@@ -128,8 +135,9 @@ export class MusicSequencer {
         }
     }
 
-    playMenuStep(step, time, stepDuration) {
-        // 1. Soaring Legato Space Lead (Lush Warm Sine + Triangle Chorus Synth)
+    playMenuStep(step: number, time: number, stepDuration: number): void {
+        if (!this.ctx || !this.bgmGain) return;
+
         const leadFreq = MENU_CHIME_PATTERN[step];
         if (leadFreq) {
             const osc1 = this.ctx.createOscillator();
@@ -138,15 +146,12 @@ export class MusicSequencer {
             const filter = this.ctx.createBiquadFilter();
             const gain = this.ctx.createGain();
 
-            // Pure fundamental
             osc1.type = 'sine';
             osc1.frequency.setValueAtTime(leadFreq, time);
 
-            // Warm detuned body for smooth legato voice
             osc2.type = 'triangle';
             osc2.frequency.setValueAtTime(leadFreq * 1.0015, time);
 
-            // High octave celestial shimmer
             osc3.type = 'sine';
             osc3.frequency.setValueAtTime(leadFreq * 2.0, time);
 
@@ -155,7 +160,6 @@ export class MusicSequencer {
             filter.frequency.setValueAtTime(3600, time);
             filter.frequency.exponentialRampToValueAtTime(1200, time + stepDuration * 3.0);
 
-            // Legato anti-click attack & long overlapping sustain envelope
             gain.gain.setValueAtTime(0.0001, time);
             gain.gain.linearRampToValueAtTime(0.13, time + 0.012);
             gain.gain.exponentialRampToValueAtTime(0.002, time + stepDuration * 3.2);
@@ -174,7 +178,6 @@ export class MusicSequencer {
             osc3.stop(time + stepDuration * 3.3);
         }
 
-        // 2. Deep Legato Sub-Bass Waves (Continuous Low-End Support)
         const bassFreq = MENU_BASS_PATTERN[step];
         if (bassFreq) {
             const osc = this.ctx.createOscillator();
@@ -188,7 +191,6 @@ export class MusicSequencer {
             filter.Q.setValueAtTime(1.8, time);
             filter.frequency.setValueAtTime(450, time);
 
-            // Smooth legato swell attack & extended sustain tail
             gain.gain.setValueAtTime(0.0001, time);
             gain.gain.linearRampToValueAtTime(0.22, time + 0.04);
             gain.gain.exponentialRampToValueAtTime(0.004, time + stepDuration * 3.5);
@@ -201,7 +203,6 @@ export class MusicSequencer {
             osc.stop(time + stepDuration * 3.6);
         }
 
-        // 3. Ethereal Cosmic Dust / Solar Shimmer (Soft Highpass Noise Sweep)
         if (step % 16 === 0 && this.noiseBuffer) {
             const noise = this.ctx.createBufferSource();
             noise.buffer = this.noiseBuffer;
@@ -223,13 +224,14 @@ export class MusicSequencer {
         }
     }
 
-    playGameStep(step, time, stepDuration) {
+    playGameStep(step: number, time: number, stepDuration: number): void {
+        if (!this.ctx || !this.bgmGain) return;
+
         const isLevel2 = this.currentLevel === 1;
         const isLevel3 = this.currentLevel === 2;
         const isLevel4 = this.currentLevel === 3;
         const isLevel5 = this.currentLevel === 4;
 
-        // 1. Synth Bass Channel (L1: Chiptune Triangle / L2: Resonant Synth / L3: Galloping Bass / L4: Ragtime Stride Bass)
         let bassPattern = BASS_PATTERN;
         if (isLevel2) bassPattern = BASS_PATTERN_L2;
         if (isLevel3) bassPattern = BASS_PATTERN_L3;
@@ -255,7 +257,6 @@ export class MusicSequencer {
                 filter.frequency.setValueAtTime(1400, time);
                 filter.frequency.exponentialRampToValueAtTime(250, time + stepDuration * 0.85);
             } else if (isLevel5) {
-                // Level 5: clipped fortepiano/harpsichord-like bass transient.
                 filter.Q.setValueAtTime(2.8, time);
                 filter.frequency.setValueAtTime(1350, time);
                 filter.frequency.exponentialRampToValueAtTime(260, time + stepDuration * 0.78);
@@ -278,7 +279,6 @@ export class MusicSequencer {
             osc.stop(time + stepDuration * 0.85);
         }
 
-        // 2. Lead Channel (L1: Square / L2: Detuned Saw / L3: Virtuoso Pulse+Sub / L4: Bright Ragtime Staccato Pulse)
         let melodyPattern = MELODY_PATTERN;
         if (isLevel2) melodyPattern = MELODY_PATTERN_L2;
         if (isLevel3) melodyPattern = MELODY_PATTERN_L3;
@@ -288,14 +288,12 @@ export class MusicSequencer {
         const leadFreq = melodyPattern[step];
         if (leadFreq) {
             if (isLevel5) {
-                // Level 5 Instrument: sharp Classical fortepiano / harpsichord hybrid.
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
                 const harmonicGain = this.ctx.createGain();
                 const filter = this.ctx.createBiquadFilter();
                 const gain = this.ctx.createGain();
 
-                // Rounded body plus a quiet octave harmonic for a plucked keyboard attack.
                 osc1.type = 'triangle';
                 osc1.frequency.setValueAtTime(leadFreq, time);
                 osc2.type = 'square';
@@ -307,7 +305,6 @@ export class MusicSequencer {
                 filter.frequency.setValueAtTime(3800, time);
                 filter.frequency.exponentialRampToValueAtTime(1050, time + stepDuration * 0.72);
 
-                // Fast hammer transient followed by a controlled Classical decay.
                 gain.gain.setValueAtTime(0.001, time);
                 gain.gain.linearRampToValueAtTime(0.155, time + 0.004);
                 gain.gain.exponentialRampToValueAtTime(0.004, time + stepDuration * 0.82);
@@ -323,27 +320,22 @@ export class MusicSequencer {
                 osc1.stop(time + stepDuration * 0.84);
                 osc2.stop(time + stepDuration * 0.84);
             } else if (isLevel4) {
-                // Level 4 Instrument: Warm Ragtime Synth Lead (Smooth & Non-blippy)
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
                 const filter = this.ctx.createBiquadFilter();
                 const gain = this.ctx.createGain();
 
-                // Osc 1: Warm Triangle fundamental for full melodic body
                 osc1.type = 'triangle';
                 osc1.frequency.setValueAtTime(leadFreq, time);
 
-                // Osc 2: Smooth Sawtooth reinforcement with mild detune for vintage texture
                 osc2.type = 'sawtooth';
                 osc2.frequency.setValueAtTime(leadFreq * 1.002, time);
 
-                // Warm Lowpass Filter: removes blippy high-frequency clicks while keeping melody vibrant
                 filter.type = 'lowpass';
                 filter.Q.setValueAtTime(2.2, time);
                 filter.frequency.setValueAtTime(2200, time);
                 filter.frequency.exponentialRampToValueAtTime(750, time + stepDuration * 0.85);
 
-                // Soft 8ms attack and smooth exponential decay to prevent blips on note onset
                 const attackTime = 0.008;
                 gain.gain.setValueAtTime(0.001, time);
                 gain.gain.linearRampToValueAtTime(0.14, time + attackTime);
@@ -359,7 +351,6 @@ export class MusicSequencer {
                 osc1.stop(time + stepDuration * 0.9);
                 osc2.stop(time + stepDuration * 0.9);
             } else if (isLevel3) {
-                // Level 3 Instrument: Biting 8-Bit Virtuoso Storm Pulse + Sub-Harmonic Octave
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
                 const filter = this.ctx.createBiquadFilter();
@@ -369,7 +360,7 @@ export class MusicSequencer {
                 osc1.frequency.setValueAtTime(leadFreq, time);
 
                 osc2.type = 'sawtooth';
-                osc2.frequency.setValueAtTime(leadFreq * 0.5, time); // Sub-octave reinforcement
+                osc2.frequency.setValueAtTime(leadFreq * 0.5, time);
 
                 filter.type = 'lowpass';
                 filter.Q.setValueAtTime(4.0, time);
@@ -389,7 +380,6 @@ export class MusicSequencer {
                 osc1.stop(time + stepDuration * 0.8);
                 osc2.stop(time + stepDuration * 0.8);
             } else if (isLevel2) {
-                // Level 2 Instrument: Dual-Oscillator Detuned Resonant Synth Lead
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
                 const filter = this.ctx.createBiquadFilter();
@@ -399,7 +389,7 @@ export class MusicSequencer {
                 osc1.frequency.setValueAtTime(leadFreq, time);
 
                 osc2.type = 'triangle';
-                osc2.frequency.setValueAtTime(leadFreq * 1.006, time); // 10-cent detune chorus effect
+                osc2.frequency.setValueAtTime(leadFreq * 1.006, time);
 
                 filter.type = 'lowpass';
                 filter.Q.setValueAtTime(5.5, time);
@@ -419,7 +409,6 @@ export class MusicSequencer {
                 osc1.stop(time + stepDuration * 0.85);
                 osc2.stop(time + stepDuration * 0.85);
             } else {
-                // Level 1 Instrument: Warm Chiptune Lead Wave with Anti-Click Envelope
                 const osc = this.ctx.createOscillator();
                 const filter = this.ctx.createBiquadFilter();
                 const gain = this.ctx.createGain();
@@ -444,8 +433,6 @@ export class MusicSequencer {
             }
         }
 
-        // 3. Retro Drums: Kick Drum
-        // L4 uses ragtime stride; L5 uses restrained timpani-like downbeats.
         const isKickStep = (isLevel4 || isLevel5) ? (step % 8 === 0) : (step % 4 === 0);
         if (isKickStep) {
             const osc = this.ctx.createOscillator();
@@ -466,8 +453,6 @@ export class MusicSequencer {
             osc.stop(time + kickLength);
         }
 
-        // 4. Retro Drums: Snare Drum / Rimshot
-        // Level 4 hits on beats 2 & 4 (steps 4 and 12), plus a syncopated ragtime rimshot tap on step 14
         const isSnareStep = isLevel4 ? (step % 8 === 4 || step % 16 === 14) : (step % 8 === 4);
         if (isSnareStep && this.noiseBuffer) {
             const noise = this.ctx.createBufferSource();
@@ -475,7 +460,6 @@ export class MusicSequencer {
             const filter = this.ctx.createBiquadFilter();
 
             if (isLevel4) {
-                // Crisp Ragtime Rimshot / Woodblock Tap
                 const isSyncopatedTap = (step % 16 === 14);
                 filter.type = 'bandpass';
                 filter.frequency.setValueAtTime(isSyncopatedTap ? 2600 : 1700, time);
@@ -509,8 +493,6 @@ export class MusicSequencer {
             }
         }
 
-        // 5. Retro Drums: Hi-Hat & Woodblock Ticks
-        // Level 4 accents offbeats and offbeat 8ths for that authentic ragtime swing & stride feel
         const isHatStep = isLevel4
             ? (step % 2 === 0 || step % 4 === 1)
             : (step % 2 === 0 || ((isLevel2 || isLevel3) && step % 4 === 1));
@@ -521,7 +503,6 @@ export class MusicSequencer {
             const filter = this.ctx.createBiquadFilter();
 
             if (isLevel4) {
-                // Crisp Ragtime Woodblock / Choked Hi-Hat Ticks
                 const isOffbeat = (step % 4 === 2);
                 filter.type = 'highpass';
                 filter.frequency.setValueAtTime(isOffbeat ? 7500 : 5500, time);

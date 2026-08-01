@@ -3,26 +3,35 @@
    ========================================================================== */
 
 import { GAME_EVENTS, TILE_SIZE, TILES, NETWORK_SETTINGS, PLAYER_FLAGS } from '../js/shared/constants.js';
+import { RoomManager, ServerRoom } from './roomManager.js';
 
 export class GameLoop {
-    constructor(roomManager, io, tickRate = 60) {
+    roomManager: RoomManager;
+    io: any;
+    tickRate: number;
+    dt: number;
+    intervalMs: number;
+    timer: any;
+    isRunning: boolean;
+
+    constructor(roomManager: RoomManager, io: any, tickRate: number = 60) {
         this.roomManager = roomManager;
         this.io = io;
         this.tickRate = tickRate;
-        this.dt = 1 / tickRate; // ~0.016667 seconds per tick
+        this.dt = 1 / tickRate;
         this.intervalMs = 1000 / tickRate;
         this.timer = null;
         this.isRunning = false;
     }
 
-    start() {
+    start(): void {
         if (this.isRunning) return;
         this.isRunning = true;
         this.timer = setInterval(() => this.tick(), this.intervalMs);
         console.log(`⏱️ Server Game Loop running at ${this.tickRate} Hz (${Math.round(this.intervalMs)}ms interval)`);
     }
 
-    stop() {
+    stop(): void {
         if (!this.isRunning) return;
         this.isRunning = false;
         if (this.timer) {
@@ -32,16 +41,14 @@ export class GameLoop {
         console.log('🛑 Server Game Loop stopped.');
     }
 
-    tick() {
+    tick(): void {
         for (const room of this.roomManager.rooms.values()) {
             room.tickCount++;
 
-            // 1. Update TileMap state (handles phase brick regeneration timers)
             if (room.tileMap) {
                 room.tileMap.update(this.dt);
             }
 
-            // 1a. Advance player physics or sync client-authoritative position inside server tick
             if (room.status === 'playing') {
                 for (const [socketId, playerEntity] of room.players.entries()) {
                     const config = room.playerConfigs.get(socketId);
@@ -76,28 +83,23 @@ export class GameLoop {
                 }
             }
 
-            // 1b. Update server-authoritative enemies & check player collisions
             if (room.status === 'playing' && room.enemyManager) {
                 const livingPlayers = Array.from(room.players.values()).filter(p => !p.isDead && (p.respawnInvulnerability || 0) <= 0);
                 room.enemyManager.update(this.dt, livingPlayers);
             }
 
-            // 1c. Handle player death timers, respawn, & invulnerability
             for (const [socketId, playerEntity] of room.players.entries()) {
                 if (playerEntity.respawnInvulnerability > 0) {
                     playerEntity.respawnInvulnerability = Math.max(0, playerEntity.respawnInvulnerability - this.dt);
                 }
 
                 if (playerEntity.isDead) {
-                    // Initialize death timer if not present
-                    if (playerEntity._deathTimer === undefined) {
-                        playerEntity._deathTimer = 0;
+                    if ((playerEntity as any)._deathTimer === undefined) {
+                        (playerEntity as any)._deathTimer = 0;
                     }
-                    playerEntity._deathTimer += this.dt;
+                    (playerEntity as any)._deathTimer += this.dt;
 
-                    // After 2.0s death animation, respawn if player has lives left
-                    if (playerEntity._deathTimer >= 2.0 && playerEntity.lives > 0) {
-                        // Find SPAWN tile position
+                    if ((playerEntity as any)._deathTimer >= 2.0 && playerEntity.lives > 0) {
                         let spawnX = 128, spawnY = 100;
                         if (room.tileMap) {
                             for (let r = 0; r < room.tileMap.rows; r++) {
@@ -111,22 +113,20 @@ export class GameLoop {
                             }
                         }
                         playerEntity.spawn(spawnX, spawnY);
-                        playerEntity._deathTimer = 0;
+                        (playerEntity as any)._deathTimer = 0;
                     }
                 } else {
-                    // Reset timer when alive
-                    playerEntity._deathTimer = 0;
+                    (playerEntity as any)._deathTimer = 0;
                 }
             }
 
-            // 2. Check Level Clear Condition (Exit Portal reached with all emeralds)
             if (room.status === 'playing' && room.tileMap) {
                 const allEmeraldsCaught = (room.tileMap.totalEmeralds > 0 && room.tileMap.collectedEmeralds >= room.tileMap.totalEmeralds) ||
                     (room.tileMap.totalEmeralds === 0 && room.tileMap.collectedEmeralds >= 4);
 
                 if (allEmeraldsCaught) {
                     let levelCleared = false;
-                    let clearingPlayer = null;
+                    let clearingPlayer: any = null;
 
                     for (const playerEntity of room.players.values()) {
                         if (!playerEntity.isDead) {
@@ -142,7 +142,7 @@ export class GameLoop {
 
                     if (levelCleared) {
                         room.status = 'finished';
-                        const winnerList = [];
+                        const winnerList: any[] = [];
                         for (const [sId, p] of room.players.entries()) {
                             winnerList.push({ socketId: sId, name: p.name, score: p.score, fuel: p.fuel });
                         }
@@ -159,7 +159,6 @@ export class GameLoop {
                 }
             }
 
-            // 2b. Check Game Over Condition (All players eliminated)
             if (room.status === 'playing' && room.players.size > 0) {
                 let allDead = true;
                 for (const playerEntity of room.players.values()) {
@@ -171,7 +170,7 @@ export class GameLoop {
 
                 if (allDead) {
                     room.status = 'finished';
-                    const playersList = [];
+                    const playersList: any[] = [];
                     for (const [sId, p] of room.players.entries()) {
                         playersList.push({ socketId: sId, name: p.name, score: p.score, lives: p.lives });
                     }
@@ -186,10 +185,9 @@ export class GameLoop {
                 }
             }
 
-            // 3. Build world snapshot (20 Hz snapshot emission)
             const snapshotInterval = NETWORK_SETTINGS?.SNAPSHOT_INTERVAL_TICKS || 3;
             if (room.tickCount % snapshotInterval === 0 && this.io) {
-                const snapshot = {
+                const snapshot: any = {
                     roomId: room.id,
                     tick: room.tickCount,
                     timestamp: Date.now(),
@@ -228,10 +226,8 @@ export class GameLoop {
                     ]);
                 }
 
-                // Broadcast volatile 20 Hz snapshot (drops stale queued snapshots during congestion)
                 this.io.to(room.id).volatile.emit(GAME_EVENTS.WORLD_SNAPSHOT || 'world_snapshot', snapshot);
             }
         }
     }
 }
-

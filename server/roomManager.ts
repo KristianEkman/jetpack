@@ -9,18 +9,48 @@ import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
 
 const PLAYER_COLORS = ['#ff4444', '#44ff44', '#4488ff', '#ffff44', '#ff44ff', '#00ffff'];
 
+export interface PlayerConfig {
+    socketId: string;
+    id: string;
+    name: string;
+    color: string;
+    isReady: boolean;
+    isHost: boolean;
+    pendingInputs: any[];
+    lastInput: any;
+    lastSequenceId: number;
+    lastReceivedSequenceId: number;
+}
+
+export interface ServerRoom {
+    id: string;
+    hostSocketId: string;
+    maxPlayers: number;
+    levelIndex: number;
+    customMapData: any | null;
+    mapName: string;
+    tileMap: TileMap;
+    enemyManager: EnemyManager;
+    players: Map<string, Player>;
+    playerConfigs: Map<string, PlayerConfig>;
+    status: 'lobby' | 'playing' | 'finished';
+    tickCount: number;
+    destroyedEnemyIds: Set<string>;
+    createdAt: number;
+}
+
 export class RoomManager {
+    rooms: Map<string, ServerRoom>;
+    socketToRoom: Map<string, string>;
+
     constructor() {
         this.rooms = new Map();
         this.socketToRoom = new Map();
     }
 
-    /**
-     * Generate a unique 4-character uppercase alphanumeric code.
-     */
-    generateRoomId() {
+    generateRoomId(): string {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let roomId;
+        let roomId: string;
         do {
             roomId = '';
             for (let i = 0; i < 4; i++) {
@@ -30,10 +60,7 @@ export class RoomManager {
         return roomId;
     }
 
-    /**
-     * Create a new room with a host player.
-     */
-    createRoom(hostSocketId, options = {}) {
+    createRoom(hostSocketId: string, options: any = {}): ServerRoom {
         const roomId = options.customCode ? options.customCode.toUpperCase() : this.generateRoomId();
         const levelIndex = options.levelIndex !== undefined ? options.levelIndex : 0;
         const maxPlayers = options.maxPlayers || 4;
@@ -53,7 +80,7 @@ export class RoomManager {
 
         const enemyManager = new EnemyManager(tileMap);
 
-        const room = {
+        const room: ServerRoom = {
             id: roomId,
             hostSocketId: hostSocketId,
             maxPlayers: maxPlayers,
@@ -62,9 +89,9 @@ export class RoomManager {
             mapName: mapName,
             tileMap: tileMap,
             enemyManager: enemyManager,
-            players: new Map(),        // socketId -> Player instance
-            playerConfigs: new Map(),  // socketId -> metadata ({ id, name, color, isReady, isHost })
-            status: 'lobby',          // 'lobby' | 'playing' | 'finished'
+            players: new Map(),
+            playerConfigs: new Map(),
+            status: 'lobby',
             tickCount: 0,
             destroyedEnemyIds: new Set(),
             createdAt: Date.now()
@@ -72,7 +99,6 @@ export class RoomManager {
 
         this.rooms.set(roomId, room);
 
-        // Add host player
         this.addPlayerToRoom(room, hostSocketId, {
             name: options.playerName || 'Player 1 (Host)',
             color: options.playerColor || PLAYER_COLORS[0],
@@ -82,10 +108,7 @@ export class RoomManager {
         return room;
     }
 
-    /**
-     * Add a player to a room.
-     */
-    addPlayerToRoom(room, socketId, playerOptions = {}) {
+    addPlayerToRoom(room: ServerRoom, socketId: string, playerOptions: any = {}): PlayerConfig {
         const playerIndex = room.players.size;
         const color = playerOptions.color || playerOptions.playerColor || PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
         const playerId = `player_${playerIndex + 1}_${socketId.substr(0, 4)}`;
@@ -98,12 +121,11 @@ export class RoomManager {
             isLocal: false
         });
 
-        // Spawn at map spawn coordinates or default
         const spawns = room.tileMap.spawnPoints || [{ x: 128, y: 100 }];
         const spawn = spawns[playerIndex % spawns.length] || spawns[0] || { x: 128, y: 100 };
         playerEntity.spawn(spawn.x, spawn.y);
 
-        const playerConfig = {
+        const playerConfig: PlayerConfig = {
             socketId: socketId,
             id: playerId,
             name: name,
@@ -123,10 +145,7 @@ export class RoomManager {
         return playerConfig;
     }
 
-    /**
-     * Join an existing room by room ID.
-     */
-    joinRoom(roomId, socketId, playerOptions = {}) {
+    joinRoom(roomId: string, socketId: string, playerOptions: any = {}): { success: boolean; error?: string; room?: any; player?: PlayerConfig } {
         const code = roomId.toUpperCase();
         const room = this.rooms.get(code);
 
@@ -155,10 +174,7 @@ export class RoomManager {
         };
     }
 
-    /**
-     * Remove a player from their room.
-     */
-    leaveRoom(socketId) {
+    leaveRoom(socketId: string): any {
         const roomId = this.socketToRoom.get(socketId);
         if (!roomId) return null;
 
@@ -174,16 +190,15 @@ export class RoomManager {
         this.socketToRoom.delete(socketId);
 
         let roomDestroyed = false;
-        let newHostSocketId = null;
+        let newHostSocketId: string | null = null;
 
         if (room.players.size === 0) {
             this.rooms.delete(roomId);
             roomDestroyed = true;
         } else if (room.hostSocketId === socketId) {
-            // Transfer host to first remaining player
-            newHostSocketId = room.players.keys().next().value;
-            room.hostSocketId = newHostSocketId;
-            const newHostConfig = room.playerConfigs.get(newHostSocketId);
+            newHostSocketId = room.players.keys().next().value || null;
+            room.hostSocketId = newHostSocketId!;
+            const newHostConfig = room.playerConfigs.get(newHostSocketId!);
             if (newHostConfig) {
                 newHostConfig.isHost = true;
                 newHostConfig.isReady = true;
@@ -199,28 +214,19 @@ export class RoomManager {
         };
     }
 
-    /**
-     * Get room instance.
-     */
-    getRoom(roomId) {
+    getRoom(roomId: string): ServerRoom | undefined {
         return this.rooms.get(roomId.toUpperCase());
     }
 
-    /**
-     * Get room instance by socket ID.
-     */
-    getRoomBySocketId(socketId) {
+    getRoomBySocketId(socketId: string): ServerRoom | null {
         const roomId = this.socketToRoom.get(socketId);
-        return roomId ? this.rooms.get(roomId) : null;
+        return roomId ? (this.rooms.get(roomId) || null) : null;
     }
 
-    /**
-     * Serialize room state for network payload transmission.
-     */
-    serializeRoom(room) {
+    serializeRoom(room: ServerRoom | null): any {
         if (!room) return null;
 
-        const playersList = [];
+        const playersList: any[] = [];
         for (const [sId, config] of room.playerConfigs.entries()) {
             const playerEntity = room.players.get(sId);
             playersList.push({
@@ -255,11 +261,8 @@ export class RoomManager {
         };
     }
 
-    /**
-     * List all active public rooms.
-     */
-    listRooms() {
-        const list = [];
+    listRooms(): any[] {
+        const list: any[] = [];
         for (const room of this.rooms.values()) {
             if (room.status !== 'lobby') continue;
             list.push({

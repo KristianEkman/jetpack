@@ -1,7 +1,29 @@
 import { Player } from './player.js';
 import { PLAYER_FLAGS } from '../shared/constants.js';
 
-export function unpackPlayerSnapshot(p) {
+export interface UnpackedPlayerSnapshot {
+    socketId: string;
+    id: string;
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    fuel: number;
+    lives: number;
+    score: number;
+    facingRight: boolean;
+    isGrounded: boolean;
+    isThrusting: boolean;
+    isClimbing: boolean;
+    isPhasing: boolean;
+    isDead: boolean;
+    respawnInvulnerability: number;
+    lastSequenceId: number;
+    name?: string;
+    color?: string;
+}
+
+export function unpackPlayerSnapshot(p: any): UnpackedPlayerSnapshot {
     if (!Array.isArray(p)) return p;
     const flags = p[9] || 0;
     return {
@@ -25,28 +47,41 @@ export function unpackPlayerSnapshot(p) {
     };
 }
 
-function lerp(a, b, t) {
+function lerp(a: number, b: number, t: number): number {
     return a + (b - a) * t;
 }
 
+export interface SnapshotBufferItem {
+    tick: number;
+    timestamp: number;
+    players: UnpackedPlayerSnapshot[];
+}
+
 export class PlayerManager {
-    constructor(audio = null, tileMap = null) {
+    audio: any;
+    tileMap: any;
+    localSocketId: string | null;
+    players: Map<string, Player>;
+    snapshotBuffer: SnapshotBufferItem[];
+    interpolationDelay: number;
+
+    constructor(audio: any = null, tileMap: any = null) {
         this.audio = audio;
         this.tileMap = tileMap;
         this.localSocketId = null;
-        this.players = new Map(); // socketId -> Player instance
+        this.players = new Map();
         this.snapshotBuffer = [];
-        this.interpolationDelay = 100; // ms render delay for remote entities
+        this.interpolationDelay = 100;
     }
 
-    setLocalSocketId(socketId) {
+    setLocalSocketId(socketId: string): void {
         this.localSocketId = socketId;
         for (const [sId, player] of this.players.entries()) {
             player.isLocal = (sId === socketId);
         }
     }
 
-    addPlayer(socketId, options = {}) {
+    addPlayer(socketId: string, options: any = {}): Player {
         const isLocal = options.isLocal !== undefined ? options.isLocal : (socketId === this.localSocketId);
         const player = new Player(this.audio, this.tileMap, {
             id: options.id || socketId,
@@ -61,22 +96,22 @@ export class PlayerManager {
         return player;
     }
 
-    removePlayer(socketId) {
+    removePlayer(socketId: string): void {
         this.players.delete(socketId);
     }
 
-    getPlayer(socketId) {
+    getPlayer(socketId: string): Player | undefined {
         return this.players.get(socketId);
     }
 
-    getLocalPlayer() {
+    getLocalPlayer(): Player | null {
         if (this.localSocketId && this.players.has(this.localSocketId)) {
-            return this.players.get(this.localSocketId);
+            return this.players.get(this.localSocketId) || null;
         }
         return this.players.values().next().value || null;
     }
 
-    updateFromSnapshot(snapshotPayload) {
+    updateFromSnapshot(snapshotPayload: any): void {
         if (!snapshotPayload) return;
 
         const rawList = Array.isArray(snapshotPayload) ? snapshotPayload : (snapshotPayload.players || []);
@@ -84,19 +119,17 @@ export class PlayerManager {
         const timestamp = snapshotPayload.timestamp || Date.now();
         const tick = snapshotPayload.tick || 0;
 
-        // Save to snapshot buffer for remote player interpolation
         this.snapshotBuffer.push({
             tick,
             timestamp,
             players: playersList
         });
 
-        // Maintain buffer size (~1.5s of snapshots)
         if (this.snapshotBuffer.length > 30) {
             this.snapshotBuffer.shift();
         }
 
-        const activeSocketIds = new Set();
+        const activeSocketIds = new Set<string>();
 
         for (const pData of playersList) {
             const socketId = pData.socketId || pData.id;
@@ -116,7 +149,6 @@ export class PlayerManager {
                 });
             }
 
-            // Local player prediction reconciliation & death/respawn tracking
             if (socketId === this.localSocketId) {
                 if (player.isDead) {
                     if (pData.isDead) {
@@ -132,10 +164,8 @@ export class PlayerManager {
                     if (pData.lives !== undefined) player.lives = pData.lives;
                 } else {
                     player.serverAcknowledgedDeath = false;
-                    // Position is driven strictly by local inputs; ignore WebSocket position snapshot updates
                 }
             } else {
-                // Ensure metadata updates and initial position for remote players
                 if (pData.name) player.name = pData.name;
                 if (pData.color) player.color = pData.color;
                 if (this.snapshotBuffer.length <= 1) {
@@ -144,7 +174,6 @@ export class PlayerManager {
             }
         }
 
-        // Clean up disconnected players not in latest snapshot
         for (const sId of this.players.keys()) {
             if (!activeSocketIds.has(sId)) {
                 this.players.delete(sId);
@@ -152,12 +181,11 @@ export class PlayerManager {
         }
     }
 
-    update(dt) {
+    update(dt: number): void {
         const renderTime = Date.now() - this.interpolationDelay;
 
-        // Find surrounding snapshots in buffer for remote player interpolation
-        let older = null;
-        let newer = null;
+        let older: SnapshotBufferItem | null = null;
+        let newer: SnapshotBufferItem | null = null;
 
         for (let i = this.snapshotBuffer.length - 1; i >= 0; i--) {
             const snap = this.snapshotBuffer[i];
@@ -183,7 +211,6 @@ export class PlayerManager {
             player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
 
             if (older && newer && newer.timestamp > older.timestamp) {
-                // Smooth Snapshot Interpolation between older and newer snapshots
                 const t = Math.max(0, Math.min(1, (renderTime - older.timestamp) / (newer.timestamp - older.timestamp)));
 
                 const pOld = older.players.find(p => (p.socketId || p.id) === sId);
@@ -215,7 +242,6 @@ export class PlayerManager {
                     player.applySnapshot(pNew);
                 }
             } else if (latestSnap) {
-                // Extrapolation mode when snapshots are delayed
                 const pLatest = latestSnap.players.find(p => (p.socketId || p.id) === sId);
                 if (pLatest) {
                     const extrapTime = Math.min(0.10, Math.max(0, (renderTime - latestSnap.timestamp) / 1000));
@@ -238,13 +264,13 @@ export class PlayerManager {
         }
     }
 
-    render(ctx) {
+    render(ctx: CanvasRenderingContext2D): void {
         for (const player of this.players.values()) {
             player.render(ctx);
         }
     }
 
-    clear() {
+    clear(): void {
         this.players.clear();
         this.snapshotBuffer = [];
     }
