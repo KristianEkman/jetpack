@@ -96,7 +96,7 @@ export class PlayerManager {
                     if (pData.isDead) {
                         player.serverAcknowledgedDeath = true;
                         if (pData.lives !== undefined) player.lives = pData.lives;
-                    } else if (player.serverAcknowledgedDeath && pData.isDead === false) {
+                    } else if (pData.isDead === false && (player.serverAcknowledgedDeath || (Date.now() - (player._localDeathTimestamp || 0) > 500))) {
                         player.applySnapshot(pData);
                         player.serverAcknowledgedDeath = false;
                     }
@@ -183,6 +183,7 @@ export class PlayerManager {
                         player.isClimbing = pNew.isClimbing;
                         player.isPhasing = pNew.isPhasing;
                         player.isDead = pNew.isDead;
+                        player.respawnInvulnerability = pNew.respawnInvulnerability;
                     }
                 } else if (pNew) {
                     player.applySnapshot(pNew);
@@ -205,6 +206,7 @@ export class PlayerManager {
                     player.isClimbing = pLatest.isClimbing;
                     player.isPhasing = pLatest.isPhasing;
                     player.isDead = pLatest.isDead;
+                    player.respawnInvulnerability = pLatest.respawnInvulnerability;
                 }
             }
         }

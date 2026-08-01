@@ -71,12 +71,16 @@ export class GameLoop {
 
             // 1b. Update server-authoritative enemies & check player collisions
             if (room.status === 'playing' && room.enemyManager) {
-                const livingPlayers = Array.from(room.players.values()).filter(p => !p.isDead);
+                const livingPlayers = Array.from(room.players.values()).filter(p => !p.isDead && (p.respawnInvulnerability || 0) <= 0);
                 room.enemyManager.update(this.dt, livingPlayers);
             }
 
-            // 1c. Handle player death timers & respawn
+            // 1c. Handle player death timers, respawn, & invulnerability
             for (const [socketId, playerEntity] of room.players.entries()) {
+                if (playerEntity.respawnInvulnerability > 0) {
+                    playerEntity.respawnInvulnerability = Math.max(0, playerEntity.respawnInvulnerability - this.dt);
+                }
+
                 if (playerEntity.isDead) {
                     // Initialize death timer if not present
                     if (playerEntity._deathTimer === undefined) {
@@ -184,6 +188,7 @@ export class GameLoop {
                         isClimbing: playerEntity.isClimbing,
                         isPhasing: playerEntity.isPhasing,
                         isDead: playerEntity.isDead,
+                        respawnInvulnerability: Math.round((playerEntity.respawnInvulnerability || 0) * 10) / 10,
                         lastSequenceId: config ? config.lastSequenceId : 0
                     });
                 }

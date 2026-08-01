@@ -48,6 +48,8 @@ export class Player {
         this.lives = PLAYER_PHYSICS.INITIAL_LIVES;
         this.isDead = false;
         this.serverAcknowledgedDeath = false;
+        this._localDeathTimestamp = 0;
+        this.respawnInvulnerability = 0;
 
         // Phase Shifter / Laser Beam properties
         this.phaseCooldown = 0;
@@ -74,6 +76,8 @@ export class Player {
         this.isClimbing = false;
         this.isDead = false;
         this.serverAcknowledgedDeath = false;
+        this._localDeathTimestamp = 0;
+        this.respawnInvulnerability = 2.5; // 2.5s invulnerability grace period on spawn
         this.isPhasing = false;
         this.phaseBeamTimer = 0;
         this.phaseCooldown = 0;
@@ -312,6 +316,9 @@ export class Player {
     }
 
     update(dt, input, enemyManager) {
+        if (this.respawnInvulnerability > 0) {
+            this.respawnInvulnerability = Math.max(0, this.respawnInvulnerability - dt);
+        }
         if (this.isDead) return;
 
         this.animTimer += dt;
@@ -663,9 +670,10 @@ export class Player {
     }
 
     takeDamage() {
-        if (this.isDead) return;
+        if (this.isDead || (this.respawnInvulnerability || 0) > 0) return;
         this.isDead = true;
         this.serverAcknowledgedDeath = false;
+        this._localDeathTimestamp = Date.now();
         this.lives--;
         this.stuckTimer = 0;
         this.audio?.stopThrust?.();
@@ -832,6 +840,7 @@ export class Player {
         if (data.isClimbing !== undefined) this.isClimbing = data.isClimbing;
         if (data.isPhasing !== undefined) this.isPhasing = data.isPhasing;
         if (data.isDead !== undefined) this.isDead = data.isDead;
+        if (data.respawnInvulnerability !== undefined) this.respawnInvulnerability = data.respawnInvulnerability;
         if (data.color) this.color = data.color;
         if (data.name) this.name = data.name;
     }
@@ -840,6 +849,12 @@ export class Player {
         if (this.isDead) return;
 
         ctx.save();
+
+        if (this.respawnInvulnerability > 0) {
+            if (Math.floor(this.animTimer * 20) % 2 === 0) {
+                ctx.globalAlpha = 0.45;
+            }
+        }
 
         // Ensure animTimer advances for remote players during render frames
         if (!this.isLocal) {
@@ -1006,6 +1021,20 @@ export class Player {
             ctx.beginPath();
             ctx.arc(beamEndX, beamStartY, 4, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // Spawn Invulnerability Shield Aura
+        if (this.respawnInvulnerability > 0) {
+            ctx.save();
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(px + this.width / 2, py + this.height / 2, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
         }
 
         // Overhead Name Tag & Color Badge

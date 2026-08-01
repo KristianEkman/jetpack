@@ -114,10 +114,10 @@ export class EnemyManager {
     getLivingPlayers(playerInput) {
         if (!playerInput) return [];
         if (Array.isArray(playerInput)) {
-            return playerInput.filter(p => p && !p.isDead);
+            return playerInput.filter(p => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0);
         } else if (playerInput instanceof Map) {
-            return Array.from(playerInput.values()).filter(p => p && !p.isDead);
-        } else if (playerInput && playerInput.x !== undefined && !playerInput.isDead) {
+            return Array.from(playerInput.values()).filter(p => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0);
+        } else if (playerInput && playerInput.x !== undefined && !playerInput.isDead && (playerInput.respawnInvulnerability || 0) <= 0) {
             return [playerInput];
         }
         return [];

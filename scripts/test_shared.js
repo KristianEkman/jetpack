@@ -181,6 +181,23 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(pLocal.x, 128);
     assert.equal(pLocal.y, 100);
 
+    // 4.5 Test fallback respawn if server's isDead: true snapshot was dropped by network
+    pLocal.takeDamage();
+    assert.equal(pLocal.isDead, true);
+    pLocal._localDeathTimestamp = Date.now() - 600; // Simulate 600ms passed
+    manager.updateFromSnapshot([
+        { socketId: 'socket_1', id: pLocal.id, x: 128, y: 100, isDead: false, lives: 1 }
+    ]);
+    assert.equal(pLocal.isDead, false, 'Player should recover from dropped death snapshot after 500ms');
+    assert.equal(pLocal.lives, 1);
+
+    // 4.6 Test Spawn Invulnerability
+    pLocal.spawn(128, 100);
+    assert.ok(pLocal.respawnInvulnerability > 0, 'Spawn should set respawnInvulnerability');
+    const livesBefore = pLocal.lives;
+    pLocal.takeDamage();
+    assert.equal(pLocal.lives, livesBefore, 'takeDamage must be ignored during respawnInvulnerability');
+
     // 5. Test EnemyManager interpolation and animTimer advancement
     const enemyMgr = new EnemyManager(tileMap);
     enemyMgr.addFlitzer(100, 100, 50, 50, 'flitzer_test');
