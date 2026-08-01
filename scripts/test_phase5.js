@@ -107,4 +107,38 @@ assert.strictEqual(levelCompleteEmitted, true);
 assert.strictEqual(room.status, 'finished');
 console.log('   ✅ Authoritative Level Completion verified.');
 
+// 4. Test Player Input Phase Beam Sync in GameLoop
+console.log('\n4️⃣  Testing Player Input Phase Beam Sync in Game Loop...');
+
+let gameLoopPhasedEventEmitted = false;
+
+room.tileMap.on(GAME_EVENTS.TILE_PHASED, (payload) => {
+    gameLoopPhasedEventEmitted = true;
+    assert.strictEqual(payload.col, 3);
+});
+
+// Restore phase brick at (3, 0)
+room.tileMap.grid[3] = TILES.PHASE_BRICK;
+room.status = 'playing';
+
+// Configure player input facing phase brick
+player.x = 2 * 32;
+player.y = 0;
+player.facingRight = true;
+player.phaseCooldown = 0;
+
+const playerConfig = room.playerConfigs.get('socket_host_1');
+playerConfig.pendingInputs.push({
+    x: player.x,
+    y: player.y,
+    facingRight: true,
+    phase: true
+});
+
+gameLoop.tick();
+
+assert.strictEqual(gameLoopPhasedEventEmitted, true, 'Game loop should dissolve phase brick and emit TILE_PHASED when phase input is received');
+assert.strictEqual(room.tileMap.getTile(3, 0), TILES.AIR);
+console.log('   ✅ Player input phase beam sync in game loop verified.');
+
 console.log('\n🎉 ALL PHASE 5 TESTS PASSED SUCCESSFULLY!');

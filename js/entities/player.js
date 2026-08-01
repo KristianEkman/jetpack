@@ -156,70 +156,76 @@ export class Player {
 
         // 6. Phase Shifter Raycast Simulation
         if (input.phase && this.phaseCooldown <= 0) {
-            this.isPhasing = true;
-            this.phaseBeamTimer = 0.14;
-            this.phaseCooldown = 0.12;
-
-            const playerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
-            const playerRow = Math.floor((this.y + this.height / 2) / TILE_SIZE);
-            if (this.tileMap.getTile(playerCol, playerRow) === TILES.PHASE_BRICK) {
-                this.tileMap.phaseTile(playerCol, playerRow);
-            }
-
-            const dir = this.facingRight ? 1 : -1;
-            const startX = this.facingRight ? this.x + this.width : this.x;
-            const startY = this.y + 12;
-
-            this.phaseBeamLength = 160;
-            for (let dist = 0; dist <= 160; dist += 8) {
-                const targetX = startX + dir * dist;
-                const targetCol = Math.floor(targetX / TILE_SIZE);
-                const targetRow = Math.floor(startY / TILE_SIZE);
-
-                // Check Enemy Hits along laser beam path
-                if (enemyManager && enemyManager.enemies) {
-                    let hitEnemyIndex = -1;
-                    for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
-                        const enemy = enemyManager.enemies[i];
-                        if (
-                            targetX >= enemy.x && targetX <= enemy.x + enemy.width &&
-                            startY >= enemy.y && startY <= enemy.y + enemy.height
-                        ) {
-                            hitEnemyIndex = i;
-                            break;
-                        }
-                    }
-                    if (hitEnemyIndex >= 0) {
-                        const enemy = enemyManager.enemies[hitEnemyIndex];
-                        const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
-
-                        if (destroyedEnemy) {
-                            this.score += 200;
-                            enemyManager.onEnemyDestroyed?.({
-                                enemyId: destroyedEnemy.id,
-                                playerId: this.id
-                            });
-                        }
-
-                        this.phaseBeamLength = dist;
-                        break;
-                    }
-                }
-
-                const t = this.tileMap.getTile(targetCol, targetRow);
-                if (t === TILES.PHASE_BRICK) {
-                    this.tileMap.phaseTile(targetCol, targetRow);
-                    this.phaseBeamLength = dist;
-                    break;
-                } else if (this.tileMap.isSolid(targetCol, targetRow)) {
-                    this.phaseBeamLength = dist;
-                    break;
-                }
-            }
+            this.performPhaseBeam(enemyManager);
         }
 
         // 7. Apply Positions & Handle Collision
         this.moveAndCollide(dt);
+    }
+
+    performPhaseBeam(enemyManager = null) {
+        if (!this.tileMap) return;
+
+        this.isPhasing = true;
+        this.phaseBeamTimer = 0.14;
+        this.phaseCooldown = 0.12;
+
+        const playerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
+        const playerRow = Math.floor((this.y + this.height / 2) / TILE_SIZE);
+        if (this.tileMap.getTile(playerCol, playerRow) === TILES.PHASE_BRICK) {
+            this.tileMap.phaseTile(playerCol, playerRow);
+        }
+
+        const dir = this.facingRight ? 1 : -1;
+        const startX = this.facingRight ? this.x + this.width : this.x;
+        const startY = this.y + 12;
+
+        this.phaseBeamLength = 160;
+        for (let dist = 0; dist <= 160; dist += 8) {
+            const targetX = startX + dir * dist;
+            const targetCol = Math.floor(targetX / TILE_SIZE);
+            const targetRow = Math.floor(startY / TILE_SIZE);
+
+            // Check Enemy Hits along laser beam path
+            if (enemyManager && enemyManager.enemies) {
+                let hitEnemyIndex = -1;
+                for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemyManager.enemies[i];
+                    if (
+                        targetX >= enemy.x && targetX <= enemy.x + enemy.width &&
+                        startY >= enemy.y && startY <= enemy.y + enemy.height
+                    ) {
+                        hitEnemyIndex = i;
+                        break;
+                    }
+                }
+                if (hitEnemyIndex >= 0) {
+                    const enemy = enemyManager.enemies[hitEnemyIndex];
+                    const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
+
+                    if (destroyedEnemy) {
+                        this.score += 200;
+                        enemyManager.onEnemyDestroyed?.({
+                            enemyId: destroyedEnemy.id,
+                            playerId: this.id
+                        });
+                    }
+
+                    this.phaseBeamLength = dist;
+                    break;
+                }
+            }
+
+            const t = this.tileMap.getTile(targetCol, targetRow);
+            if (t === TILES.PHASE_BRICK) {
+                this.tileMap.phaseTile(targetCol, targetRow);
+                this.phaseBeamLength = dist;
+                break;
+            } else if (this.tileMap.isSolid(targetCol, targetRow)) {
+                this.phaseBeamLength = dist;
+                break;
+            }
+        }
     }
 
     processLocalEffects(dt, input, enemyManager) {

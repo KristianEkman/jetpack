@@ -58,6 +58,13 @@ export class GameLoop {
                                 if (input.isThrusting !== undefined) playerEntity.isThrusting = input.isThrusting;
                                 if (input.isClimbing !== undefined) playerEntity.isClimbing = input.isClimbing;
                                 if (input.isPhasing !== undefined) playerEntity.isPhasing = input.isPhasing;
+
+                                playerEntity.phaseCooldown = Math.max(0, (playerEntity.phaseCooldown || 0) - this.dt);
+                                playerEntity.phaseBeamTimer = Math.max(0, (playerEntity.phaseBeamTimer || 0) - this.dt);
+
+                                if (input.phase && playerEntity.phaseCooldown <= 0) {
+                                    playerEntity.performPhaseBeam(room.enemyManager);
+                                }
                             } else {
                                 playerEntity.simulateMovement(this.dt, input, room.enemyManager);
                             }
