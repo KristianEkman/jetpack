@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import assert from 'node:assert/strict';
-import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, PLAYER_PHYSICS, GAME_EVENTS } from '../js/shared/constants.js';
+import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, PLAYER_PHYSICS, GAME_EVENTS, PLAYER_FLAGS } from '../js/shared/constants.js';
 import { TileMap } from '../js/world/tilemap.js';
 import { Player } from '../js/entities/player.js';
 import { InputHandler } from '../js/engine/input.js';
@@ -128,9 +128,9 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
 
     // Apply snapshot update
     manager.updateFromSnapshot([
-        { socketId: 'socket_1', id: pLocal.id, x: 200, y: 150, fuel: 85, isThrusting: true },
-        { socketId: 'socket_2', id: pRemote.id, x: 300, y: 180, fuel: 90, isPhasing: true },
-        { socketId: 'socket_3', id: 'p3', name: 'Gamma', color: '#4488ff', x: 400, y: 200 }
+        [ 'socket_1', pLocal.id, 200, 150, 0, 0, 85, 3, 0, PLAYER_FLAGS.IS_THRUSTING, 0, 0 ],
+        [ 'socket_2', pRemote.id, 300, 180, 0, 0, 90, 3, 0, PLAYER_FLAGS.IS_PHASING, 0, 0 ],
+        [ 'socket_3', 'p3', 400, 200, 0, 0, 100, 3, 0, 0, 0, 0 ]
     ]);
 
     // Local player properties should NOT be overwritten by server snapshot
@@ -142,12 +142,11 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
 
     const p3 = manager.getPlayer('socket_3');
     assert.notEqual(p3, null);
-    assert.equal(p3.name, 'Gamma');
 
     // Snapshot omitting socket_2 should prune socket_2
     manager.updateFromSnapshot([
-        { socketId: 'socket_1', id: pLocal.id, x: 210, y: 150 },
-        { socketId: 'socket_3', id: 'p3', x: 410, y: 200 }
+        [ 'socket_1', pLocal.id, 210, 150, 0, 0, 85, 3, 0, 0, 0, 0 ],
+        [ 'socket_3', 'p3', 410, 200, 0, 0, 100, 3, 0, 0, 0, 0 ]
     ]);
 
     assert.equal(manager.getPlayer('socket_2'), undefined);
@@ -160,14 +159,14 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
 
     // 2. Incoming stale server snapshot (sent before server processed death, so isDead: false)
     manager.updateFromSnapshot([
-        { socketId: 'socket_1', id: pLocal.id, x: 210, y: 150, isDead: false }
+        [ 'socket_1', pLocal.id, 210, 150, 0, 0, 85, 3, 0, 0, 0, 0 ]
     ]);
     // Should NOT revive local player prematurely!
     assert.equal(pLocal.isDead, true);
 
     // 3. Server acknowledges death (isDead: true)
     manager.updateFromSnapshot([
-        { socketId: 'socket_1', id: pLocal.id, x: 210, y: 150, isDead: true, lives: 2 }
+        [ 'socket_1', pLocal.id, 210, 150, 0, 0, 85, 2, 0, PLAYER_FLAGS.IS_DEAD, 0, 0 ]
     ]);
     assert.equal(pLocal.isDead, true);
     assert.equal(pLocal.serverAcknowledgedDeath, true);
@@ -175,7 +174,7 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
 
     // 4. Server signals respawn (isDead: false with new spawn coordinates)
     manager.updateFromSnapshot([
-        { socketId: 'socket_1', id: pLocal.id, x: 128, y: 100, isDead: false, lives: 2 }
+        [ 'socket_1', pLocal.id, 128, 100, 0, 0, 100, 2, 0, 0, 0, 0 ]
     ]);
     assert.equal(pLocal.isDead, false);
     assert.equal(pLocal.x, 128);
@@ -186,7 +185,7 @@ import('../js/entities/playerManager.js').then(({ PlayerManager }) => {
     assert.equal(pLocal.isDead, true);
     pLocal._localDeathTimestamp = Date.now() - 600; // Simulate 600ms passed
     manager.updateFromSnapshot([
-        { socketId: 'socket_1', id: pLocal.id, x: 128, y: 100, isDead: false, lives: 1 }
+        [ 'socket_1', pLocal.id, 128, 100, 0, 0, 100, 1, 0, 0, 0, 0 ]
     ]);
     assert.equal(pLocal.isDead, false, 'Player should recover from dropped death snapshot after 500ms');
     assert.equal(pLocal.lives, 1);

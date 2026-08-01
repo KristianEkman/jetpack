@@ -2,7 +2,7 @@
    SERVER FIXED TICK GAME LOOP (60 Hz Engine)
    ========================================================================== */
 
-import { GAME_EVENTS, TILE_SIZE, TILES, NETWORK_SETTINGS } from '../js/shared/constants.js';
+import { GAME_EVENTS, TILE_SIZE, TILES, NETWORK_SETTINGS, PLAYER_FLAGS } from '../js/shared/constants.js';
 
 export class GameLoop {
     constructor(roomManager, io, tickRate = 60) {
@@ -197,27 +197,28 @@ export class GameLoop {
 
                 for (const [socketId, playerEntity] of room.players.entries()) {
                     const config = room.playerConfigs.get(socketId);
-                    snapshot.players.push({
-                        socketId: socketId,
-                        id: playerEntity.id,
-                        name: config ? config.name : playerEntity.name,
-                        color: config ? config.color : playerEntity.color,
-                        x: Math.round(playerEntity.x * 100) / 100,
-                        y: Math.round(playerEntity.y * 100) / 100,
-                        vx: Math.round(playerEntity.vx * 100) / 100,
-                        vy: Math.round(playerEntity.vy * 100) / 100,
-                        fuel: Math.round(playerEntity.fuel * 10) / 10,
-                        lives: playerEntity.lives,
-                        score: playerEntity.score,
-                        facingRight: playerEntity.facingRight,
-                        isGrounded: playerEntity.isGrounded,
-                        isThrusting: playerEntity.isThrusting,
-                        isClimbing: playerEntity.isClimbing,
-                        isPhasing: playerEntity.isPhasing,
-                        isDead: playerEntity.isDead,
-                        respawnInvulnerability: Math.round((playerEntity.respawnInvulnerability || 0) * 10) / 10,
-                        lastSequenceId: config ? config.lastSequenceId : 0
-                    });
+                    const flags =
+                        (playerEntity.facingRight ? PLAYER_FLAGS.FACING_RIGHT : 0) |
+                        (playerEntity.isGrounded  ? PLAYER_FLAGS.IS_GROUNDED  : 0) |
+                        (playerEntity.isThrusting ? PLAYER_FLAGS.IS_THRUSTING : 0) |
+                        (playerEntity.isClimbing  ? PLAYER_FLAGS.IS_CLIMBING  : 0) |
+                        (playerEntity.isPhasing   ? PLAYER_FLAGS.IS_PHASING   : 0) |
+                        (playerEntity.isDead      ? PLAYER_FLAGS.IS_DEAD      : 0);
+
+                    snapshot.players.push([
+                        socketId,
+                        playerEntity.id,
+                        Math.round(playerEntity.x * 100) / 100,
+                        Math.round(playerEntity.y * 100) / 100,
+                        Math.round(playerEntity.vx * 100) / 100,
+                        Math.round(playerEntity.vy * 100) / 100,
+                        Math.round(playerEntity.fuel * 10) / 10,
+                        playerEntity.lives,
+                        playerEntity.score,
+                        flags,
+                        Math.round((playerEntity.respawnInvulnerability || 0) * 10) / 10,
+                        config ? config.lastSequenceId : 0
+                    ]);
                 }
 
                 // Broadcast volatile 20 Hz snapshot (drops stale queued snapshots during congestion)

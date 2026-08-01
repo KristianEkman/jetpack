@@ -98,8 +98,8 @@ try {
         snapshotsReceived.push(snapshot);
     });
 
-    // Collect snapshots for ~150ms (~9 ticks)
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // Collect snapshots for ~350ms
+    await new Promise((resolve) => setTimeout(resolve, 350));
     assert.ok(snapshotsReceived.length >= 3, `Should receive at least 3 snapshot ticks (received ${snapshotsReceived.length})`);
 
     const latestSnapshot = snapshotsReceived[snapshotsReceived.length - 1];

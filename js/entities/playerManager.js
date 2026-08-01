@@ -1,4 +1,29 @@
 import { Player } from './player.js';
+import { PLAYER_FLAGS } from '../shared/constants.js';
+
+export function unpackPlayerSnapshot(p) {
+    if (!Array.isArray(p)) return p;
+    const flags = p[9] || 0;
+    return {
+        socketId: p[0],
+        id: p[1],
+        x: p[2],
+        y: p[3],
+        vx: p[4],
+        vy: p[5],
+        fuel: p[6],
+        lives: p[7],
+        score: p[8],
+        facingRight: (flags & PLAYER_FLAGS.FACING_RIGHT) !== 0,
+        isGrounded:  (flags & PLAYER_FLAGS.IS_GROUNDED) !== 0,
+        isThrusting: (flags & PLAYER_FLAGS.IS_THRUSTING) !== 0,
+        isClimbing:  (flags & PLAYER_FLAGS.IS_CLIMBING) !== 0,
+        isPhasing:   (flags & PLAYER_FLAGS.IS_PHASING) !== 0,
+        isDead:      (flags & PLAYER_FLAGS.IS_DEAD) !== 0,
+        respawnInvulnerability: p[10],
+        lastSequenceId: p[11]
+    };
+}
 
 function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -54,7 +79,8 @@ export class PlayerManager {
     updateFromSnapshot(snapshotPayload) {
         if (!snapshotPayload) return;
 
-        const playersList = Array.isArray(snapshotPayload) ? snapshotPayload : (snapshotPayload.players || []);
+        const rawList = Array.isArray(snapshotPayload) ? snapshotPayload : (snapshotPayload.players || []);
+        const playersList = rawList.map(unpackPlayerSnapshot);
         const timestamp = snapshotPayload.timestamp || Date.now();
         const tick = snapshotPayload.tick || 0;
 

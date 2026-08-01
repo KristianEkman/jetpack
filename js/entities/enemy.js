@@ -124,35 +124,39 @@ export class EnemyManager {
     }
 
     serializeEnemies() {
-        return this.enemies.map(e => ({
-            id: e.id,
-            type: e.type,
-            x: Math.round(e.x * 100) / 100,
-            y: Math.round(e.y * 100) / 100,
-            vx: Math.round((e.vx || 0) * 100) / 100,
-            vy: Math.round((e.vy || 0) * 100) / 100,
-            animTimer: Math.round((e.animTimer || 0) * 100) / 100,
-            timer: Math.round((e.timer || 0) * 100) / 100,
-            fireInterval: e.fireInterval
-        }));
+        return this.enemies.map(e => [
+            e.id,
+            e.type,
+            Math.round(e.x * 100) / 100,
+            Math.round(e.y * 100) / 100,
+            Math.round((e.vx || 0) * 100) / 100,
+            Math.round((e.vy || 0) * 100) / 100,
+            Math.round((e.animTimer || 0) * 100) / 100,
+            Math.round((e.timer || 0) * 100) / 100,
+            e.fireInterval
+        ]);
     }
 
     serializeProjectiles() {
-        return this.projectiles.map(p => ({
-            x: Math.round(p.x * 100) / 100,
-            y: Math.round(p.y * 100) / 100,
-            vx: Math.round(p.vx * 100) / 100,
-            vy: Math.round(p.vy * 100) / 100,
-            radius: p.radius,
-            life: p.life
-        }));
+        return this.projectiles.map(p => [
+            Math.round(p.x * 100) / 100,
+            Math.round(p.y * 100) / 100,
+            Math.round(p.vx * 100) / 100,
+            Math.round(p.vy * 100) / 100,
+            p.radius,
+            p.life
+        ]);
     }
 
     applyEnemySnapshot(snapshotEnemies, snapshotProjectiles) {
         if (!Array.isArray(snapshotEnemies)) return;
-        const serverIds = new Set(snapshotEnemies.map(e => e.id));
+        const parsedEnemies = snapshotEnemies.map(e => Array.isArray(e) ? {
+            id: e[0], type: e[1], x: e[2], y: e[3], vx: e[4], vy: e[5], animTimer: e[6], timer: e[7], fireInterval: e[8]
+        } : e);
 
-        for (const sEnemy of snapshotEnemies) {
+        const serverIds = new Set(parsedEnemies.map(e => e.id));
+
+        for (const sEnemy of parsedEnemies) {
             let localEnemy = this.enemies.find(e => e.id === sEnemy.id);
             if (!localEnemy) {
                 if (sEnemy.type === ENEMY_TYPES.FLITZER) {
@@ -182,7 +186,9 @@ export class EnemyManager {
         this.enemies = this.enemies.filter(e => serverIds.has(e.id));
 
         if (Array.isArray(snapshotProjectiles)) {
-            this.projectiles = snapshotProjectiles.map(p => ({ ...p }));
+            this.projectiles = snapshotProjectiles.map(p => Array.isArray(p) ? {
+                x: p[0], y: p[1], vx: p[2], vy: p[3], radius: p[4], life: p[5]
+            } : p);
         }
     }
 
