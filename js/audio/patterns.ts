@@ -8,38 +8,94 @@ export type PatternArray = Array<number | null>;
 
 // 192-step Retro Chiptune Adaptation: "In the Hall of the Mountain King" (Edvard Grieg)
 export const BASS_PATTERN: PatternArray = [
-    // --- Phase 1: Marching Staccato Bass (Steps 0 - 63) ---
-    NOTES.A2, null, NOTES.A2, null, NOTES.C3, null, NOTES.A2, null,
-    NOTES.E3, null, NOTES.C3, null, NOTES.E2, null, NOTES.G2, null,
-    NOTES.E2, null, NOTES.Gs2, null, NOTES.B2, null, NOTES.E2, null,
-    NOTES.G2, null, NOTES.C3, null, NOTES.G2, null, NOTES.E2, null,
+    // --- Phase 1: Clear Staccato Motifs (Steps 0–63) ---
+    // A minor
+    NOTES.A2, null, NOTES.E3, null, NOTES.A2, null, NOTES.C3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.C3, null, NOTES.E3, null,
 
-    NOTES.A2, null, NOTES.A2, null, NOTES.C3, null, NOTES.A2, null,
-    NOTES.E3, null, NOTES.C3, null, NOTES.E3, null, NOTES.A2, null,
-    NOTES.G2, null, NOTES.E2, null, NOTES.C2, null, NOTES.E2, null,
-    NOTES.G2, null, NOTES.B2, null, NOTES.E2, null, NOTES.G2, null,
+    // E major / dominant
+    NOTES.E2, null, NOTES.B2, null, NOTES.E3, null, NOTES.Gs2, null,
 
-    // --- Phase 2: Driving Octave Bass (Steps 64 - 127) ---
-    NOTES.A2, NOTES.A3, NOTES.A2, NOTES.A3, NOTES.C3, NOTES.C4, NOTES.A2, NOTES.A3,
-    NOTES.E3, NOTES.E4, NOTES.C3, NOTES.C4, NOTES.E2, NOTES.E3, NOTES.G2, NOTES.G3,
-    NOTES.E2, NOTES.E3, NOTES.Gs2, NOTES.Gs3, NOTES.B2, NOTES.B3, NOTES.E2, NOTES.E3,
-    NOTES.G2, NOTES.G3, NOTES.C3, NOTES.C4, NOTES.G2, NOTES.G3, NOTES.E2, NOTES.E3,
+    // C minor colour beneath G–Eb melody
+    NOTES.C2, null, NOTES.G2, null, NOTES.C3, null, NOTES.G2, null,
 
-    NOTES.A2, NOTES.A3, NOTES.A2, NOTES.A3, NOTES.C3, NOTES.C4, NOTES.A2, NOTES.A3,
-    NOTES.E3, NOTES.E4, NOTES.C3, NOTES.C4, NOTES.E3, NOTES.E4, NOTES.A2, NOTES.A3,
-    NOTES.G2, NOTES.G3, NOTES.E2, NOTES.E3, NOTES.C2, NOTES.C3, NOTES.E2, NOTES.E3,
-    NOTES.G2, NOTES.G3, NOTES.B2, NOTES.B3, NOTES.E2, NOTES.E3, NOTES.G2, NOTES.G3,
+    // A minor
+    NOTES.A2, null, NOTES.E3, null, NOTES.A2, null, NOTES.C3, null,
 
-    // --- Phase 3: Crescendo Pulse & Finale (Steps 128 - 191) ---
-    NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2,
-    NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2,
-    NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2, NOTES.A2,
-    NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2, NOTES.E2,
+    // Rising A-minor arpeggio
+    NOTES.A2, null, NOTES.C3, null, NOTES.E3, null, NOTES.A3, null,
 
-    NOTES.E2, null, NOTES.E2, null, NOTES.E2, null, NOTES.E2, null,
-    NOTES.D2, null, NOTES.D2, null, NOTES.C2, null, NOTES.B2, null,
-    NOTES.A2, NOTES.C3, NOTES.E3, NOTES.A3, NOTES.E3, NOTES.C3, NOTES.G2, NOTES.E2,
-    NOTES.A2, null, NOTES.A2, null, NOTES.A2, null, null, null
+    // C major
+    NOTES.C2, null, NOTES.G2, null, NOTES.C3, null, NOTES.E3, null,
+
+    // E dominant turnaround
+    NOTES.E2, null, NOTES.B2, null, NOTES.E3, null, NOTES.Gs2, null,
+
+
+    // --- Phase 2: Driving Ostinato (Steps 64–127) ---
+    // A minor
+    NOTES.A2, NOTES.A2, NOTES.E3, NOTES.A2,
+    NOTES.C3, NOTES.A2, NOTES.E3, NOTES.A2,
+
+    NOTES.A2, NOTES.E3, NOTES.A3, NOTES.E3,
+    NOTES.C3, NOTES.E3, NOTES.A2, NOTES.E3,
+
+    // E major / dominant
+    NOTES.E2, NOTES.E2, NOTES.B2, NOTES.E3,
+    NOTES.Gs2, NOTES.B2, NOTES.E3, NOTES.B2,
+
+    // C minor colour
+    NOTES.C2, NOTES.C2, NOTES.G2, NOTES.C3,
+    NOTES.G2, NOTES.C3, NOTES.G2, NOTES.C3,
+
+    // A minor
+    NOTES.A2, NOTES.A2, NOTES.E3, NOTES.A2,
+    NOTES.C3, NOTES.A2, NOTES.E3, NOTES.A2,
+
+    // Ascending A-minor variation
+    NOTES.A2, NOTES.C3, NOTES.E3, NOTES.A3,
+    NOTES.E3, NOTES.C3, NOTES.E3, NOTES.C3,
+
+    // C major
+    NOTES.C2, NOTES.C2, NOTES.G2, NOTES.C3,
+    NOTES.E3, NOTES.C3, NOTES.G2, NOTES.C3,
+
+    // E dominant turnaround
+    NOTES.E2, NOTES.E2, NOTES.B2, NOTES.E3,
+    NOTES.Gs2, NOTES.B2, NOTES.E3, NOTES.B2,
+
+
+    // --- Phase 3: Structured Crescendo & Finale (Steps 128–191) ---
+    // A minor pulse
+    NOTES.A2, NOTES.A2, NOTES.E3, NOTES.A2,
+    NOTES.A3, NOTES.A2, NOTES.E3, NOTES.A2,
+
+    // C major pulse
+    NOTES.C2, NOTES.C2, NOTES.G2, NOTES.C3,
+    NOTES.E3, NOTES.C3, NOTES.G2, NOTES.C3,
+
+    // E dominant pulse
+    NOTES.E2, NOTES.E2, NOTES.B2, NOTES.E3,
+    NOTES.Gs2, NOTES.B2, NOTES.E3, NOTES.B2,
+
+    // A minor resolving toward E
+    NOTES.A2, NOTES.A2, NOTES.E3, NOTES.A3,
+    NOTES.C3, NOTES.A2, NOTES.E2, NOTES.E2,
+
+    // Descending breakdown
+    NOTES.E2, null, NOTES.B2, null,
+    NOTES.E3, null, NOTES.B2, null,
+
+    NOTES.D2, null, NOTES.A2, null,
+    NOTES.C2, null, NOTES.B2, null,
+
+    // Final A minor → E dominant exchange
+    NOTES.A2, NOTES.A2, NOTES.E3, NOTES.A3,
+    NOTES.E2, NOTES.B2, NOTES.E3, NOTES.B2,
+
+    // Final tonic
+    NOTES.A2, null, NOTES.E3, null,
+    NOTES.A2, null, null, null
 ];
 
 export const MELODY_PATTERN: PatternArray = [
