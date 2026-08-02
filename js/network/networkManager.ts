@@ -244,6 +244,7 @@ export class NetworkManager {
                 this.lastPing = Math.round(avgRtt);
                 this.jitter = Math.round(jitter);
                 this.interpolationDelay = Math.min(180, Math.max(80, Math.round(80 + jitter * 2)));
+                console.log(`⏱️ Ping: ${this.lastPing}ms, Jitter: ${this.jitter}ms, Interpolation Delay: ${this.interpolationDelay}ms`)  
             });
         }, 2500);
     }

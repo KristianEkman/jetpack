@@ -594,6 +594,7 @@ export class MultiplayerController {
           name: p.name,
           color: p.color,
           isLocal: p.socketId === game.network.socketId,
+          showNameTag: true,
           x: p.x ?? 128,
           y: p.y ?? 100,
         });
