@@ -2,20 +2,25 @@
    PLAYER ENTITY MODULE (Jetman Physics & Actions)
    ========================================================================== */
 
+import { AudioManager, SoundEffects } from '../audio/index.js';
 import { TILE_SIZE, TILES, PLAYER_PHYSICS, GAME_EVENTS } from '../shared/constants.js';
+import { SerializedInputState } from '../shared/types.js';
+import { TeleporterPad, TileMap } from '../world/tilemap.js';
+import { EnemyManager } from './enemy.js';
+import { UnpackedPlayerSnapshot } from './playerManager.js';
 
 export interface PlayerOptions {
     id?: string;
     color?: string;
     name?: string;
     isLocal?: boolean;
-    audio?: any;
-    tileMap?: any;
+    audio?: SoundEffects;
+    tileMap?: TileMap;
 }
 
 export class Player {
-    audio: any;
-    tileMap: any;
+    audio: AudioManager;
+    tileMap: TileMap;
     id: string;
     color: string;
     name: string;
@@ -53,23 +58,14 @@ export class Player {
     stuckTimer: number;
     teleportCooldown: number;
 
-    pendingInputs: any[];
+    pendingInputs: SerializedInputState[];
     visualCorrectionX: number;
     visualCorrectionY: number;
+    deathTimer: number;
 
-    constructor(audioManager: any = null, tileMap: any = null, options: PlayerOptions = {}) {
-        if (audioManager && typeof audioManager === 'object' && audioManager.cols !== undefined && !tileMap) {
-            options = options || {};
-            tileMap = audioManager;
-            audioManager = null;
-        } else if (audioManager && !tileMap && (audioManager.id || audioManager.color)) {
-            options = audioManager;
-            audioManager = options.audio || null;
-            tileMap = options.tileMap || null;
-        }
-
+    constructor(audioManager: AudioManager, tileMap: TileMap | null = null, options: PlayerOptions = {}) {
         this.audio = audioManager;
-        this.tileMap = tileMap;
+        this.tileMap = tileMap!;
 
         this.id = options.id || `player_${Math.random().toString(36).substr(2, 9)}`;
         this.color = options.color || '#00f0ff';
@@ -112,6 +108,7 @@ export class Player {
         this.pendingInputs = [];
         this.visualCorrectionX = 0;
         this.visualCorrectionY = 0;
+        this.deathTimer = 0;
     }
 
     spawn(x: number, y: number): void {
@@ -136,7 +133,7 @@ export class Player {
         this.visualCorrectionY = 0;
     }
 
-    simulateMovement(dt: number, input: any, enemyManager: any = null): void {
+    simulateMovement(dt: number, input: SerializedInputState, enemyManager: EnemyManager | null = null): void {
         if (this.isDead || !input) return;
 
         this.phaseCooldown = Math.max(0, this.phaseCooldown - dt);
@@ -203,7 +200,7 @@ export class Player {
         this.moveAndCollide(dt);
     }
 
-    performPhaseBeam(enemyManager: any = null): void {
+    performPhaseBeam(enemyManager: EnemyManager | null = null): void {
         if (!this.tileMap) return;
 
         this.isPhasing = true;
@@ -267,7 +264,7 @@ export class Player {
         }
     }
 
-    processLocalEffects(dt: number, input: any, enemyManager: any): void {
+    processLocalEffects(dt: number, input: SerializedInputState, enemyManager: EnemyManager | null): void {
         if (this.isDead || !input) return;
 
         if (input.suicide) {
@@ -355,7 +352,7 @@ export class Player {
         this.checkStuck(dt);
     }
 
-    update(dt: number, input: any, enemyManager: any): void {
+    update(dt: number, input: SerializedInputState, enemyManager: EnemyManager): void {
         if (this.respawnInvulnerability > 0) {
             this.respawnInvulnerability = Math.max(0, this.respawnInvulnerability - dt);
         }
@@ -366,7 +363,7 @@ export class Player {
         this.processLocalEffects(dt, input, enemyManager);
     }
 
-    reconcileServerSnapshot(serverPlayer: any): void {
+    reconcileServerSnapshot(serverPlayer: UnpackedPlayerSnapshot): void {
         if (!serverPlayer) return;
 
         const acknowledgedSeq = serverPlayer.lastSequenceId || 0;
@@ -651,7 +648,7 @@ export class Player {
                 const tile = this.tileMap.getTile(col, row);
                 if (tile === TILES.TELEPORTER) {
                     const tileIndex = row * this.tileMap.cols + col;
-                    const currentPadIdx = this.tileMap.teleporters.findIndex((pad: any) => pad.tiles.includes(tileIndex));
+                    const currentPadIdx = this.tileMap.teleporters.findIndex((pad: TeleporterPad) => pad.tiles.includes(tileIndex));
                     
                     if (currentPadIdx !== -1) {
                         const nextPadIdx = (currentPadIdx + 1) % this.tileMap.teleporters.length;
@@ -692,9 +689,7 @@ export class Player {
         this.stuckTimer = 0;
         this.audio?.stopThrust?.();
         this.audio?.stopEnergyDrain?.();
-
-        const isGameOver = this.lives <= 0;
-        this.audio?.playExplosion?.(isGameOver);
+        this.audio?.playExplosion?.();
 
         if (this.tileMap) {
             this.tileMap.addDeathExplosion(this.x, this.y, this.facingRight);
@@ -825,24 +820,24 @@ export class Player {
         }
     }
 
-    applySnapshot(data: any): void {
-        if (!data) return;
-        if (data.x !== undefined) this.x = data.x;
-        if (data.y !== undefined) this.y = data.y;
-        if (data.vx !== undefined) this.vx = data.vx;
-        if (data.vy !== undefined) this.vy = data.vy;
-        if (data.fuel !== undefined) this.fuel = data.fuel;
-        if (data.lives !== undefined) this.lives = data.lives;
-        if (data.score !== undefined) this.score = data.score;
-        if (data.facingRight !== undefined) this.facingRight = data.facingRight;
-        if (data.isGrounded !== undefined) this.isGrounded = data.isGrounded;
-        if (data.isThrusting !== undefined) this.isThrusting = data.isThrusting;
-        if (data.isClimbing !== undefined) this.isClimbing = data.isClimbing;
-        if (data.isPhasing !== undefined) this.isPhasing = data.isPhasing;
-        if (data.isDead !== undefined) this.isDead = data.isDead;
-        if (data.respawnInvulnerability !== undefined) this.respawnInvulnerability = data.respawnInvulnerability;
-        if (data.color) this.color = data.color;
-        if (data.name) this.name = data.name;
+    applySnapshot(player: Player): void {
+        if (!player) return;
+        if (player.x !== undefined) this.x = player.x;
+        if (player.y !== undefined) this.y = player.y;
+        if (player.vx !== undefined) this.vx = player.vx;
+        if (player.vy !== undefined) this.vy = player.vy;
+        if (player.fuel !== undefined) this.fuel = player.fuel;
+        if (player.lives !== undefined) this.lives = player.lives;
+        if (player.score !== undefined) this.score = player.score;
+        if (player.facingRight !== undefined) this.facingRight = player.facingRight;
+        if (player.isGrounded !== undefined) this.isGrounded = player.isGrounded;
+        if (player.isThrusting !== undefined) this.isThrusting = player.isThrusting;
+        if (player.isClimbing !== undefined) this.isClimbing = player.isClimbing;
+        if (player.isPhasing !== undefined) this.isPhasing = player.isPhasing;
+        if (player.isDead !== undefined) this.isDead = player.isDead;
+        if (player.respawnInvulnerability !== undefined) this.respawnInvulnerability = player.respawnInvulnerability;
+        if (player.color) this.color = player.color;
+        if (player.name) this.name = player.name;
     }
 
     render(ctx: CanvasRenderingContext2D): void {

@@ -6,6 +6,10 @@ import { TileMap } from '../js/world/tilemap.js';
 import { Player } from '../js/entities/player.js';
 import { EnemyManager } from '../js/entities/enemy.js';
 import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
+import * as types from '../js/shared/types.js';
+import { SoundEffects } from '../js/audio/sfx.js';
+import { AudioManager } from '../js/audio/audioManager.js';
+
 
 const PLAYER_COLORS = ['#ff4444', '#44ff44', '#4488ff', '#ffff44', '#ff44ff', '#00ffff'];
 
@@ -16,8 +20,8 @@ export interface PlayerConfig {
     color: string;
     isReady: boolean;
     isHost: boolean;
-    pendingInputs: any[];
-    lastInput: any;
+    pendingInputs: types.SerializedInputState[];
+    lastInput: types.SerializedInputState | null;
     lastSequenceId: number;
     lastReceivedSequenceId: number;
 }
@@ -114,7 +118,7 @@ export class RoomManager {
         const playerId = `player_${playerIndex + 1}_${socketId.substr(0, 4)}`;
         const name = playerOptions.name || playerOptions.playerName || `Player ${playerIndex + 1}`;
 
-        const playerEntity = new Player(null, room.tileMap, {
+        const playerEntity = new Player(new AudioManager(), room.tileMap, {
             id: playerId,
             color: color,
             name: name,

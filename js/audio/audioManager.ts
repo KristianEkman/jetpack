@@ -36,8 +36,13 @@ export class AudioManager {
     get musicTimer(): any { return this.sequencer.musicTimer; }
 
     init(): void {
+
+        // Node/headless tests do not have the browser Web Audio API.
+        if (typeof window === "undefined") {
+            return;
+        }
         if (!this.ctx) {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            const AudioCtx = window?.AudioContext || (window as any).webkitAudioContext;
             this.ctx = new AudioCtx();
         }
         if (this.ctx && this.ctx.state === 'suspended') {

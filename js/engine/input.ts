@@ -16,6 +16,10 @@ export interface KeyState {
     [key: string]: boolean;
 }
 
+export interface PlacerInput{
+    
+}
+
 export class InputHandler {
     keys: KeyState;
     sequenceCounter: number;

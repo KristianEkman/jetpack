@@ -2,7 +2,7 @@
    ENEMY AI MODULE (Flitzers, Homing Missiles, Turrets)
    ========================================================================== */
 
-import { TILE_SIZE } from '../world/tilemap.js';
+import { TILE_SIZE, TileMap } from '../world/tilemap.js';
 
 export const ENEMY_TYPES = {
     FLITZER: 'flitzer',
@@ -38,7 +38,7 @@ export interface Projectile {
 }
 
 export class EnemyManager {
-    tileMap: any;
+    tileMap: TileMap;
     enemies: Enemy[];
     projectiles: Projectile[];
     nextEnemyId: number;

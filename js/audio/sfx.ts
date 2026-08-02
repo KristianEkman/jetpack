@@ -2,8 +2,10 @@
    SOUND EFFECTS SYNTHESIZER
    ========================================================================== */
 
+import { AudioManager } from "./audioManager";
+
 export class SoundEffects {
-    audio: any;
+    audio: AudioManager;
     thrustGain: GainNode | null;
     thrustNode: AudioBufferSourceNode | null;
     isThrusting: boolean;
@@ -11,7 +13,7 @@ export class SoundEffects {
     drainNodes: any[] | null;
     isEnergyDraining: boolean;
 
-    constructor(audioManager: any) {
+    constructor(audioManager: AudioManager) {
         this.audio = audioManager;
         this.thrustGain = null;
         this.thrustNode = null;

@@ -140,6 +140,13 @@ playerConfig!.pendingInputs.push({
   y: player!.y,
   facingRight: true,
   phase: true,
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  thrust: false,
+  suicide: false,
+  sequenceId: 0
 });
 
 gameLoop.tick();

@@ -289,7 +289,7 @@ io.on('connection', (socket: any) => {
 
         playerEntity.isDead = true;
         playerEntity.lives--;
-        (playerEntity as any)._deathTimer = 0;
+        playerEntity.deathTimer = 0;
         console.log(`💀 Player ${socket.id} died (reason: ${data.reason || 'enemy'}, lives: ${playerEntity.lives})`);
     });
 

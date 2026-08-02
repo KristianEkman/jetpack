@@ -3,7 +3,7 @@
    Handles HUD rendering, modal dialogs, banner notifications, and UI event listeners.
    ========================================================================== */
 
-import { GAME_STATES } from '../game.js';
+import { Game, GAME_STATES } from '../game.js';
 import { CAMPAIGN_LEVELS } from '../levels/campaign.js';
 import { TILES } from '../world/tilemap.js';
 
@@ -16,7 +16,7 @@ export interface HUDState {
 }
 
 export class UIManager {
-    game: any;
+    game: Game;
 
     hudLevelEl: HTMLElement | null;
     hudScoreEl: HTMLElement | null;
@@ -27,7 +27,7 @@ export class UIManager {
 
     hudState: HUDState;
 
-    constructor(game: any) {
+    constructor(game: Game) {
         this.game = game;
 
         this.hudLevelEl = document.getElementById('hudLevel');

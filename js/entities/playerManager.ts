@@ -1,5 +1,6 @@
 import { Player } from './player.js';
 import { PLAYER_FLAGS } from '../shared/constants.js';
+import { TileMap } from '../world/tilemap.js';
 
 export interface UnpackedPlayerSnapshot {
     socketId: string;
@@ -59,13 +60,13 @@ export interface SnapshotBufferItem {
 
 export class PlayerManager {
     audio: any;
-    tileMap: any;
+    tileMap: TileMap;
     localSocketId: string | null;
     players: Map<string, Player>;
     snapshotBuffer: SnapshotBufferItem[];
     interpolationDelay: number;
 
-    constructor(audio: any = null, tileMap: any = null) {
+    constructor(audio: any = null, tileMap: TileMap) {
         this.audio = audio;
         this.tileMap = tileMap;
         this.localSocketId = null;
@@ -221,7 +222,7 @@ export class PlayerManager {
                     const dy = pNew.y - pOld.y;
 
                     if (dx * dx + dy * dy > 4096 || pOld.isDead !== pNew.isDead) {
-                        player.applySnapshot(pNew);
+                        player.applySnapshot(pNew as unknown as Player);
                     } else {
                         player.x = lerp(pOld.x, pNew.x, t);
                         player.y = lerp(pOld.y, pNew.y, t);
@@ -239,7 +240,7 @@ export class PlayerManager {
                         player.respawnInvulnerability = pNew.respawnInvulnerability;
                     }
                 } else if (pNew) {
-                    player.applySnapshot(pNew);
+                    player.applySnapshot(pNew as unknown as Player);
                 }
             } else if (latestSnap) {
                 const pLatest = latestSnap.players.find(p => (p.socketId || p.id) === sId);

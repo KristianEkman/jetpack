@@ -9,6 +9,8 @@ import { Player } from '../js/entities/player.js';
 import { InputHandler } from '../js/engine/input.js';
 import { EnemyManager } from '../js/entities/enemy.js';
 import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
+import { SoundEffects } from '../js/audio/sfx.js';
+import { AudioManager } from '../js/audio/audioManager.js';
 
 console.log('🧪 Starting Node.js Shared Core Modules Test Suite...\n');
 
@@ -73,8 +75,8 @@ console.log('   ✅ Tile Restore event dispatched successfully.\n');
 
 // 3. Verify Headless Multi-Player Physics Simulation
 console.log('3️⃣  Testing Headless Multi-Player Physics & Collision...');
-const p1 = new Player(null, tileMap, { id: 'p1', color: '#ff0000', name: 'Player 1' });
-const p2 = new Player(null, tileMap, { id: 'p2', color: '#00ff00', name: 'Player 2' });
+const p1 = new Player(new AudioManager(), tileMap, { id: 'p1', color: '#ff0000', name: 'Player 1' });
+const p2 = new Player(new AudioManager(), tileMap, { id: 'p2', color: '#00ff00', name: 'Player 2' });
 
 assert.equal(p1.id, 'p1');
 assert.equal(p2.id, 'p2');
@@ -86,12 +88,12 @@ p1.spawn(spawnX, spawnY);
 const initialY = p1.y;
 
 const thrustInput = InputHandler.deserializeInputState({ thrust: true, sequenceId: 1 });
-p1.update(0.1, thrustInput, null);
+p1.update(0.1, thrustInput, new EnemyManager(tileMap));
 assert.ok(p1.vy < 0, `Player velocity (${p1.vy}) should be negative (upward) under thrust`);
 assert.ok(p1.y < initialY, 'Player Y coordinate should decrease (rise)');
 
 const idleInput = InputHandler.deserializeInputState({ sequenceId: 2 });
-p1.update(0.1, idleInput, null);
+p1.update(0.1, idleInput, new EnemyManager(tileMap));
 console.log('   ✅ Multi-Player headless physics simulation passed.\n');
 
 // 4. Verify Input State Serialization

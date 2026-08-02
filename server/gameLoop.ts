@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { GAME_EVENTS, TILE_SIZE, TILES, NETWORK_SETTINGS, PLAYER_FLAGS } from '../js/shared/constants.js';
-import { RoomManager, ServerRoom } from './roomManager.js';
+import { RoomManager } from './roomManager.js';
 
 export class GameLoop {
     roomManager: RoomManager;
@@ -94,12 +94,12 @@ export class GameLoop {
                 }
 
                 if (playerEntity.isDead) {
-                    if ((playerEntity as any)._deathTimer === undefined) {
-                        (playerEntity as any)._deathTimer = 0;
+                    if (playerEntity.deathTimer === undefined) {
+                        playerEntity.deathTimer = 0;
                     }
-                    (playerEntity as any)._deathTimer += this.dt;
+                    playerEntity.deathTimer += this.dt;
 
-                    if ((playerEntity as any)._deathTimer >= 2.0 && playerEntity.lives > 0) {
+                    if (playerEntity.deathTimer >= 2.0 && playerEntity.lives > 0) {
                         let spawnX = 128, spawnY = 100;
                         if (room.tileMap) {
                             for (let r = 0; r < room.tileMap.rows; r++) {
@@ -113,10 +113,10 @@ export class GameLoop {
                             }
                         }
                         playerEntity.spawn(spawnX, spawnY);
-                        (playerEntity as any)._deathTimer = 0;
+                        playerEntity.deathTimer = 0;
                     }
                 } else {
-                    (playerEntity as any)._deathTimer = 0;
+                    playerEntity.deathTimer = 0;
                 }
             }
 

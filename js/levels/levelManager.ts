@@ -3,14 +3,14 @@
    Handles campaign level loading, custom level editing/testing, level completion, and level JSON import/export.
    ========================================================================== */
 
-import { GAME_STATES } from '../game.js';
+import { Game, GAME_STATES } from '../game.js';
 import { CAMPAIGN_LEVELS } from './campaign.js';
 import { TILE_SIZE, TILES } from '../world/tilemap.js';
 
 export class LevelManager {
-    game: any;
+    game: Game;
 
-    constructor(game: any) {
+    constructor(game: Game) {
         this.game = game;
     }
 

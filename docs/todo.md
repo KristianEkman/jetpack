@@ -19,6 +19,7 @@
  Native support for Xbox/PlayStation/Switch controllers with customizable stick sensitivity.
  - [ ] community level hub / workshop
  Upload custom levels to the server, browse/search by rating, and play community maps.
+ - [ ] Do not display name in campain mode.
 
  shots to rappid
  mobile controls more transparent and bigger.

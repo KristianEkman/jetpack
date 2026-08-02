@@ -2,6 +2,8 @@
    TILEMAP & WORLD ENGINE
    ========================================================================== */
 
+import { EnemyManager } from '../entities/enemy.js';
+import { Player } from '../entities/player.js';
 import { TILE_SIZE, GRID_COLS, GRID_ROWS, TILES, GAME_EVENTS, TileTypeValue } from '../shared/constants.js';
 import { ParticleSpec, LevelData } from '../shared/types.js';
 
@@ -237,7 +239,7 @@ export class TileMap {
         return true;
     }
 
-    update(dt: number, player: any = null, enemyManager: any = null): void {
+    update(dt: number, player: Player | null = null, enemyManager: EnemyManager | null = null): void {
         // Update portal animation rotation
         this.portalAngle += dt * 3;
 
