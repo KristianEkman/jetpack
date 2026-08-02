@@ -2,7 +2,8 @@
    LEVEL EDITOR ENGINE
    ========================================================================== */
 
-import { TILES, TILE_SIZE, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
+import { TileMap, TILES, TILE_SIZE, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
+import { LevelData } from '../shared/types.js';
 
 export interface PaletteItem {
     type: number;
@@ -35,15 +36,15 @@ export const PALETTE: PaletteItem[] = [
 
 export class LevelEditor {
     canvas: HTMLCanvasElement;
-    tileMap: any;
-    onPlaytest: any;
+    tileMap: TileMap;
+    onPlaytest: () => void;
     isEditorActive: () => boolean;
     selectedTile: number;
     isPainting: boolean;
     hoverCol: number;
     hoverRow: number;
 
-    constructor(canvas: HTMLCanvasElement, tileMap: any, onPlaytest: any, isEditorActive: () => boolean = () => true) {
+    constructor(canvas: HTMLCanvasElement, tileMap: TileMap, onPlaytest: () => void, isEditorActive: () => boolean = () => true) {
         this.canvas = canvas;
         this.tileMap = tileMap;
         this.onPlaytest = onPlaytest;
@@ -84,26 +85,27 @@ export class LevelEditor {
     }
 
     bindCanvasEvents(): void {
-        const getCanvasCoords = (e: any) => {
+        const getCanvasCoords = (e: MouseEvent | TouchEvent) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
             const scaleY = this.canvas.height / rect.height;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const touchPoint = 'touches' in e && e.touches.length > 0 ? e.touches[0] : (e as MouseEvent);
+            const clientX = touchPoint.clientX;
+            const clientY = touchPoint.clientY;
 
             const col = Math.floor(((clientX - rect.left) * scaleX) / TILE_SIZE);
             const row = Math.floor(((clientY - rect.top) * scaleY) / TILE_SIZE);
             return { col, row };
         };
 
-        const handleStart = (e: any) => {
+        const handleStart = (e: MouseEvent | TouchEvent) => {
             if (this.isEditorActive && !this.isEditorActive()) return;
             this.isPainting = true;
             const { col, row } = getCanvasCoords(e);
             this.paintTile(col, row);
         };
 
-        const handleMove = (e: any) => {
+        const handleMove = (e: MouseEvent | TouchEvent) => {
             if (this.isEditorActive && !this.isEditorActive()) {
                 this.hoverCol = -1;
                 this.hoverRow = -1;
@@ -181,7 +183,7 @@ export class LevelEditor {
         return { valid: true };
     }
 
-    getExportData(): any {
+    getExportData(): { name: string; author: string; cols: number; rows: number; grid: number[] } {
         return {
             name: "Custom Jetpack Level",
             author: "User",
@@ -213,7 +215,7 @@ export class LevelEditor {
         return false;
     }
 
-    loadFromJSON(jsonData: any): boolean {
+    loadFromJSON(jsonData: LevelData | null): boolean {
         if (!jsonData || !Array.isArray(jsonData.grid)) return false;
         this.tileMap.loadLevelData(jsonData);
         this.autoSaveLocal();

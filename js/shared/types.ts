@@ -105,4 +105,5 @@ export interface ParticleSpec {
   size: number;
   life: number;
   maxLife: number;
+  isSmoke?: boolean;
 }

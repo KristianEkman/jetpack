@@ -16,8 +16,20 @@ export interface KeyState {
     [key: string]: boolean;
 }
 
-export interface PlacerInput{
+export interface PlacerInput {
     
+}
+
+interface PlayerStateLike {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    facingRight: boolean;
+    isGrounded: boolean;
+    isThrusting: boolean;
+    isClimbing: boolean;
+    isPhasing: boolean;
 }
 
 export class InputHandler {
@@ -173,7 +185,7 @@ export class InputHandler {
         }
     }
 
-    serializeInputState(sequenceId: number | null = null, player: any = null): SerializedInputState {
+    serializeInputState(sequenceId: number | null = null, player: PlayerStateLike | null = null): SerializedInputState {
         const state: SerializedInputState = {
             left: !!this.keys.left,
             right: !!this.keys.right,
@@ -200,7 +212,7 @@ export class InputHandler {
         return state;
     }
 
-    static deserializeInputState(payload: any): SerializedInputState {
+    static deserializeInputState(payload: Partial<SerializedInputState> | null): SerializedInputState {
         if (!payload) return { left: false, right: false, up: false, down: false, thrust: false, phase: false, suicide: false, sequenceId: 0 };
         return {
             left: !!payload.left,

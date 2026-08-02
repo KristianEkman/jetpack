@@ -5,7 +5,7 @@
  - [x] display git commit hash version and deployd date time in the game. Bottom right corner.
  - [x] Prevent starting multiplayer with less than 2 players
  - [x] Better base melody of level 1.
- - [ ] replace types with any
+ - [x] replace types with any
  - [ ] optimize performance hot spots
  - [ ] refactor and remove duplicate or unused code
  - [ ] customizable controls

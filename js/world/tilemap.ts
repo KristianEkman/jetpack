@@ -41,6 +41,8 @@ export interface DebrisObject {
     speed?: number;
 }
 
+type TileMapListener = (payload?: any) => void;
+
 export class TileMap {
     cols: number;
     rows: number;
@@ -52,7 +54,7 @@ export class TileMap {
     teleporters: TeleporterPad[];
     particles: ParticleSpec[];
     debris: DebrisObject[];
-    listeners: Record<string, Function[]>;
+    listeners: Record<string, TileMapListener[]>;
     spawnPoints: { x: number; y: number; }[];
 
     constructor() {
@@ -81,17 +83,17 @@ export class TileMap {
         this.spawnPoints = [];
     }
 
-    on(event: string, callback: Function): void {
+    on(event: string, callback: TileMapListener): void {
         if (!this.listeners[event]) this.listeners[event] = [];
         this.listeners[event].push(callback);
     }
 
-    off(event: string, callback: Function): void {
+    off(event: string, callback: TileMapListener): void {
         if (!this.listeners[event]) return;
         this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
     }
 
-    emit(event: string, payload?: any): void {
+    emit(event: string, payload?: unknown): void {
         if (this.listeners[event]) {
             for (const cb of this.listeners[event]) {
                 cb(payload);
@@ -244,7 +246,7 @@ export class TileMap {
         this.portalAngle += dt * 3;
 
         // Collect entities to check for tile occupancy
-        const entities: any[] = [];
+        const entities: Array<{ x: number; y: number; width: number; height: number }> = [];
         if (player && !player.isDead) entities.push(player);
         if (enemyManager && enemyManager.enemies) {
             for (const enemy of enemyManager.enemies) {
@@ -291,7 +293,7 @@ export class TileMap {
         // Update particles
         if (this.particles) {
             for (let i = this.particles.length - 1; i >= 0; i--) {
-                const p = this.particles[i] as any;
+                const p = this.particles[i];
                 p.x += p.vx;
                 p.y += p.vy;
                 p.life -= dt;
