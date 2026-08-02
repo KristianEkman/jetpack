@@ -6,6 +6,7 @@
  - [x] Prevent starting multiplayer with less than 2 players
  - [x] Better base melody of level 1.
  - [x] replace types with any
+ - [ ] Has there been a lag after last updates?
  - [ ] optimize performance hot spots
  - [ ] refactor and remove duplicate or unused code
  - [ ] customizable controls
@@ -20,6 +21,7 @@
  - [ ] community level hub / workshop
  Upload custom levels to the server, browse/search by rating, and play community maps.
  - [ ] Do not display name in campain mode.
+ - [ ] Place in game buttons better.
 
  shots to rappid
  mobile controls more transparent and bigger.
