@@ -4,7 +4,7 @@
 
 import express from 'express';
 import { createServer } from 'node:http';
-import { Server } from 'socket.io';
+import { DefaultEventsMap, Server } from 'socket.io';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 

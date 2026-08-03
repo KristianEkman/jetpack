@@ -2,6 +2,7 @@
    SERVER FIXED TICK GAME LOOP (60 Hz Engine)
    ========================================================================== */
 
+import { Player } from '../js/entities/player.js';
 import { GAME_EVENTS, TILE_SIZE, TILES, NETWORK_SETTINGS, PLAYER_FLAGS } from '../js/shared/constants.js';
 import { RoomManager } from './roomManager.js';
 
@@ -11,7 +12,7 @@ export class GameLoop {
     tickRate: number;
     dt: number;
     intervalMs: number;
-    timer: any;
+    timer: NodeJS.Timeout | null;
     isRunning: boolean;
 
     constructor(roomManager: RoomManager, io: any, tickRate: number = 60) {
@@ -126,7 +127,7 @@ export class GameLoop {
 
                 if (allEmeraldsCaught) {
                     let levelCleared = false;
-                    let clearingPlayer: any = null;
+                    let clearingPlayer: Player | null = null;
 
                     for (const playerEntity of room.players.values()) {
                         if (!playerEntity.isDead) {
@@ -172,7 +173,7 @@ export class GameLoop {
                     room.status = 'finished';
                     const playersList: any[] = [];
                     for (const [sId, p] of room.players.entries()) {
-                        playersList.push({ socketId: sId, name: p.name, score: p.score, lives: p.lives });
+                        playersList.push({ socketId: sId, name: p.name, score: p.score, lives: p.lives});
                     }
                     if (this.io) {
                         this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || 'game_over', {
