@@ -255,9 +255,10 @@ export class Player {
         }
         if (hitEnemyIndex >= 0) {
           const enemy = enemyManager.enemies[hitEnemyIndex];
-          const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
+          const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);          
 
           if (destroyedEnemy) {
+            this.audio?.playExplosion?.();
             this.score += 200;
             enemyManager.onEnemyDestroyed?.({
               enemyId: destroyedEnemy.id,
@@ -272,6 +273,7 @@ export class Player {
 
       const t = this.tileMap.getTile(targetCol, targetRow);
       if (t === TILES.PHASE_BRICK) {
+        this.audio.playExplosion?.();
         this.tileMap.phaseTile(targetCol, targetRow);
         this.phaseBeamLength = dist;
         break;

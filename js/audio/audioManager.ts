@@ -148,6 +148,10 @@ export class AudioManager {
         this.sfx.playPhaseSound();
     }
 
+    playPhaseImpact(): void {
+        this.sfx.playPhaseImpact();
+    }
+
     playEmeraldPickup(): void {
         this.sfx.playEmeraldPickup();
     }

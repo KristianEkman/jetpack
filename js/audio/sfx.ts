@@ -110,6 +110,44 @@ export class SoundEffects {
         osc.stop(this.ctx.currentTime + 0.15);
     }
 
+    // Phase brick dissolve / impact sound
+    playPhaseImpact(): void {        
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const lowOsc = this.ctx.createOscillator();
+        const highOsc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        lowOsc.type = 'square';
+        lowOsc.frequency.setValueAtTime(520, now);
+        lowOsc.frequency.exponentialRampToValueAtTime(90, now + 0.14);
+
+        highOsc.type = 'sawtooth';
+        highOsc.frequency.setValueAtTime(1200, now);
+        highOsc.frequency.exponentialRampToValueAtTime(260, now + 0.09);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2200, now);
+        filter.frequency.exponentialRampToValueAtTime(300, now + 0.14);
+
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+        lowOsc.connect(filter);
+        highOsc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        lowOsc.start(now);
+        highOsc.start(now);
+        lowOsc.stop(now + 0.15);
+        highOsc.stop(now + 0.1);
+    }
+
     // Emerald Chime
     playEmeraldPickup(): void {
         if (this.isMuted) return;

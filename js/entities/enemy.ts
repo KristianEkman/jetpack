@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { TILE_SIZE, TileMap } from "../world/tilemap.js";
+import { Player } from "./player.js";
 
 export const ENEMY_TYPES = {
   FLITZER: "flitzer",
@@ -60,7 +61,7 @@ export class EnemyManager {
     | ((data: { enemyId: string; playerId: string }) => void)
     | null;
 
-  constructor(tileMap: any) {
+  constructor(tileMap: TileMap) {
     this.tileMap = tileMap;
     this.enemies = [];
     this.projectiles = [];
@@ -138,15 +139,11 @@ export class EnemyManager {
     return this.enemies.splice(index, 1)[0];
   }
 
-  getClosestPlayer(enemy: Enemy, playerInput: any): any {
+  getClosestPlayer(enemy: Enemy, playerInput: Player[]): any {
     if (!playerInput) return null;
     let playersList: any[] = [];
     if (Array.isArray(playerInput)) {
       playersList = playerInput;
-    } else if (playerInput instanceof Map) {
-      playersList = Array.from(playerInput.values());
-    } else if (playerInput.x !== undefined) {
-      playersList = [playerInput];
     }
 
     let closest: any = null;
@@ -167,23 +164,12 @@ export class EnemyManager {
     return closest;
   }
 
-  getLivingPlayers(playerInput: any): any[] {
-    if (!playerInput) return [];
-    if (Array.isArray(playerInput)) {
-      return playerInput.filter(
+  getLivingPlayers(players: Player[]): Player[] {
+    if (!players) return [];
+    if (Array.isArray(players)) {
+      return players.filter(
         (p) => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0,
-      );
-    } else if (playerInput instanceof Map) {
-      return Array.from(playerInput.values()).filter(
-        (p: any) => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0,
-      );
-    } else if (
-      playerInput &&
-      playerInput.x !== undefined &&
-      !playerInput.isDead &&
-      (playerInput.respawnInvulnerability || 0) <= 0
-    ) {
-      return [playerInput];
+      );    
     }
     return [];
   }
@@ -473,8 +459,8 @@ export class EnemyManager {
     }
   }
 
-  update(dt: number, player: any): void {
-    const livingPlayers = this.getLivingPlayers(player);
+  update(dt: number, players: Player[]): void {
+    const livingPlayers = this.getLivingPlayers(players);
 
     for (let enemy of this.enemies) {
       enemy.animTimer = (enemy.animTimer || 0) + dt;
@@ -605,7 +591,7 @@ export class EnemyManager {
     );
   }
 
-  render(ctx: CanvasRenderingContext2D, player: any = null): void {
+  render(ctx: CanvasRenderingContext2D, player: Player | null = null): void {
     for (let enemy of this.enemies) {
       ctx.save();
       if (enemy.type === ENEMY_TYPES.FLITZER) {

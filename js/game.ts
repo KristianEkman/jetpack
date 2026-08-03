@@ -261,7 +261,7 @@ export class Game {
     this.player.update(effectiveDt, currentInput, this.enemyManager);
 
     if (!this.isMultiplayer) {
-      this.enemyManager.update(effectiveDt, this.player);
+      this.enemyManager.update(effectiveDt, [this.player]);
     }
 
     if (this.isMultiplayer && wasAlive && this.player.isDead) {
