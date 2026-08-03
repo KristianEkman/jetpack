@@ -10,10 +10,10 @@
 - [ ] optimize performance hot spots
 - [x] refactor and remove duplicate or unused code
 - [ ] customizable controls
-- [ ] movement of enemies like in the retro game.
+- [x] movement of enemies like in the retro game.
 - [ ] game modes, coop (current). Death match.
 - [ ] bosses
-- [ ] enemies moving in patterns, not just left and right
+- [x] enemies moving in patterns, not just left and right
 - [ ] more maps
 - [ ] more power ups, special abilities, jetpacks, armors
 - [ ] better physics
@@ -25,5 +25,4 @@
 - [ ] Do not display name in campain mode.
 - [ ] Place in game buttons better.
 
-shots to rappid
-mobile controls more transparent and bigger.
+- [ ] mobile controls more transparent and bigger.
