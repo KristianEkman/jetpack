@@ -250,6 +250,7 @@ export class Game {
     }
 
     if (this.gameState === GAME_STATES.SPECTATING) {
+      this.tileMap.update(effectiveDt, this.player, this.enemyManager);
       this.uiManager.updateHUD();
       return;
     }
