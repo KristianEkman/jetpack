@@ -121,7 +121,16 @@ assert.ok(p1.y < initialY, "Player Y coordinate should decrease (rise)");
 
 const idleInput = InputHandler.deserializeInputState({ sequenceId: 2 });
 p1.update(0.1, idleInput, new EnemyManager(tileMap));
-console.log("   ✅ Multi-Player headless physics simulation passed.\n");
+
+const phaseInput = InputHandler.deserializeInputState({ phase: true, sequenceId: 3 });
+p1.spawn(128, 100);
+p1.update(0.1, phaseInput, new EnemyManager(tileMap));
+assert.equal(
+  p1.phaseCooldown,
+  PLAYER_PHYSICS.PHASE_COOLDOWN_TIME,
+  "Phase beam should enter a one-second cooldown after firing",
+);
+console.log("   ✅ Phase beam cooldown is enforced.\n");
 
 // 4. Verify Input State Serialization
 console.log("4️⃣  Testing Input Handler Payload Serialization...");

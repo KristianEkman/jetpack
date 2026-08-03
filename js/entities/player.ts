@@ -221,7 +221,7 @@ export class Player {
 
     this.isPhasing = true;
     this.phaseBeamTimer = 0.14;
-    this.phaseCooldown = 0.12;
+    this.phaseCooldown = PLAYER_PHYSICS.PHASE_COOLDOWN_TIME;
 
     const playerCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
     const playerRow = Math.floor((this.y + this.height / 2) / TILE_SIZE);
@@ -327,7 +327,7 @@ export class Player {
       this.audio?.stopThrust?.();
     }
 
-    if (input.phase && this.phaseCooldown >= 0.11) {
+    if (input.phase && this.phaseCooldown >= PLAYER_PHYSICS.PHASE_COOLDOWN_TIME - 0.01) {
       this.audio?.playPhaseSound?.();
       const startX = this.facingRight ? this.x + this.width : this.x;
       const startY = this.y + 12;
