@@ -169,9 +169,6 @@ export class Game {
   exportLevelJSON(): void {
     this.levelManager.exportLevelJSON();
   }
-  importLevelJSON(e: any): void {
-    this.levelManager.importLevelJSON(e);
-  }
 
   initNetwork(): void {
     this.multiplayerController.initNetwork();

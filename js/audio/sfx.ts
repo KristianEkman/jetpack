@@ -281,35 +281,61 @@ export class SoundEffects {
         const now = this.ctx.currentTime;
 
         try {
+            const impactOsc = this.ctx.createOscillator();
+            const impactGain = this.ctx.createGain();
+            const impactFilter = this.ctx.createBiquadFilter();
+
+            impactOsc.type = 'square';
+            impactOsc.frequency.setValueAtTime(220, now);
+            impactOsc.frequency.exponentialRampToValueAtTime(40, now + 0.16);
+
+            impactFilter.type = 'bandpass';
+            impactFilter.frequency.setValueAtTime(1800, now);
+            impactFilter.frequency.exponentialRampToValueAtTime(260, now + 0.16);
+            impactFilter.Q.setValueAtTime(1.6, now);
+
+            impactGain.gain.setValueAtTime(0.0001, now);
+            impactGain.gain.linearRampToValueAtTime(0.75, now + 0.005);
+            impactGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+
+            impactOsc.connect(impactFilter);
+            impactFilter.connect(impactGain);
+            impactGain.connect(this.ctx.destination);
+
+            impactOsc.start(now);
+            impactOsc.stop(now + 0.16);
+        } catch (e) {}
+
+        try {
             const crunchOsc = this.ctx.createOscillator();
             const crunchGain = this.ctx.createGain();
             crunchOsc.type = 'sawtooth';
-            crunchOsc.frequency.setValueAtTime(1400, now);
-            crunchOsc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+            crunchOsc.frequency.setValueAtTime(1600, now);
+            crunchOsc.frequency.exponentialRampToValueAtTime(90, now + 0.11);
 
-            crunchGain.gain.setValueAtTime(0.35, now);
-            crunchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            crunchGain.gain.setValueAtTime(0.6, now);
+            crunchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
 
             crunchOsc.connect(crunchGain);
             crunchGain.connect(this.ctx.destination);
             crunchOsc.start(now);
-            crunchOsc.stop(now + 0.08);
+            crunchOsc.stop(now + 0.11);
         } catch (e) {}
 
         try {
             const subOsc = this.ctx.createOscillator();
             const subGain = this.ctx.createGain();
             subOsc.type = 'sine';
-            subOsc.frequency.setValueAtTime(85, now + 0.01);
-            subOsc.frequency.exponentialRampToValueAtTime(18, now + 0.8);
+            subOsc.frequency.setValueAtTime(90, now + 0.01);
+            subOsc.frequency.exponentialRampToValueAtTime(20, now + 0.95);
 
-            subGain.gain.setValueAtTime(0.5, now + 0.01);
-            subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            subGain.gain.setValueAtTime(0.7, now + 0.01);
+            subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
 
             subOsc.connect(subGain);
             subGain.connect(this.ctx.destination);
             subOsc.start(now + 0.01);
-            subOsc.stop(now + 0.8);
+            subOsc.stop(now + 0.95);
         } catch (e) {}
 
         try {
@@ -320,38 +346,38 @@ export class SoundEffects {
             sirenOsc1.type = 'sawtooth';
             sirenOsc2.type = 'square';
 
-            sirenOsc1.frequency.setValueAtTime(1200, now + 0.05);
-            sirenOsc1.frequency.exponentialRampToValueAtTime(80, now + 0.9);
+            sirenOsc1.frequency.setValueAtTime(1400, now + 0.04);
+            sirenOsc1.frequency.exponentialRampToValueAtTime(70, now + 1.0);
 
-            sirenOsc2.frequency.setValueAtTime(1210, now + 0.05);
-            sirenOsc2.frequency.exponentialRampToValueAtTime(75, now + 0.9);
+            sirenOsc2.frequency.setValueAtTime(1420, now + 0.04);
+            sirenOsc2.frequency.exponentialRampToValueAtTime(65, now + 1.0);
 
             const sirenFilter = this.ctx.createBiquadFilter();
             sirenFilter.type = 'lowpass';
-            sirenFilter.frequency.setValueAtTime(2500, now);
-            sirenFilter.frequency.exponentialRampToValueAtTime(200, now + 0.9);
+            sirenFilter.frequency.setValueAtTime(3200, now);
+            sirenFilter.frequency.exponentialRampToValueAtTime(180, now + 1.0);
 
-            sirenGain.gain.setValueAtTime(0.22, now + 0.05);
-            sirenGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+            sirenGain.gain.setValueAtTime(0.3, now + 0.04);
+            sirenGain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
 
             sirenOsc1.connect(sirenFilter);
             sirenOsc2.connect(sirenFilter);
             sirenFilter.connect(sirenGain);
             sirenGain.connect(this.ctx.destination);
 
-            sirenOsc1.start(now + 0.05);
-            sirenOsc2.start(now + 0.05);
-            sirenOsc1.stop(now + 0.9);
-            sirenOsc2.stop(now + 0.9);
+            sirenOsc1.start(now + 0.04);
+            sirenOsc2.start(now + 0.04);
+            sirenOsc1.stop(now + 1.0);
+            sirenOsc2.stop(now + 1.0);
         } catch (e) {}
 
         try {
-            const bufferSize = Math.floor(this.ctx.sampleRate * 1.4);
+            const bufferSize = Math.floor(this.ctx.sampleRate * 1.6);
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
-                const decay = Math.pow(1 - i / bufferSize, 1.8);
-                const pop = (Math.random() > 0.97 ? (Math.random() * 2 - 1) * 1.5 : 0);
+                const decay = Math.pow(1 - i / bufferSize, 1.3);
+                const pop = (Math.random() > 0.95 ? (Math.random() * 2 - 1) * 2.0 : 0);
                 data[i] = ((Math.random() * 2 - 1) + pop) * decay;
             }
 
@@ -360,12 +386,12 @@ export class SoundEffects {
 
             const noiseFilter = this.ctx.createBiquadFilter();
             noiseFilter.type = 'lowpass';
-            noiseFilter.frequency.setValueAtTime(900, now);
-            noiseFilter.frequency.exponentialRampToValueAtTime(40, now + 1.4);
+            noiseFilter.frequency.setValueAtTime(1400, now);
+            noiseFilter.frequency.exponentialRampToValueAtTime(60, now + 1.6);
 
             const noiseGain = this.ctx.createGain();
-            noiseGain.gain.setValueAtTime(0.38, now);
-            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+            noiseGain.gain.setValueAtTime(0.5, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
 
             noise.connect(noiseFilter);
             noiseFilter.connect(noiseGain);
@@ -377,7 +403,7 @@ export class SoundEffects {
         try {
             if (isGameOver) {
                 const chordTime = now + 0.45;
-                const notes = [261.63, 311.13, 392.00, 523.25];
+                const notes = [261.63, 311.13, 392.00, 523.25, 587.33];
                 notes.forEach((freq) => {
                     if (!this.ctx) return;
                     const chordOsc = this.ctx.createOscillator();
@@ -385,39 +411,39 @@ export class SoundEffects {
 
                     chordOsc.type = 'sawtooth';
                     chordOsc.frequency.setValueAtTime(freq, chordTime);
-                    chordOsc.frequency.exponentialRampToValueAtTime(freq * 0.98, chordTime + 1.2);
+                    chordOsc.frequency.exponentialRampToValueAtTime(freq * 0.97, chordTime + 1.4);
 
                     const chordFilter = this.ctx.createBiquadFilter();
                     chordFilter.type = 'lowpass';
-                    chordFilter.frequency.setValueAtTime(1200, chordTime);
-                    chordFilter.frequency.exponentialRampToValueAtTime(150, chordTime + 1.2);
+                    chordFilter.frequency.setValueAtTime(1600, chordTime);
+                    chordFilter.frequency.exponentialRampToValueAtTime(180, chordTime + 1.4);
 
                     chordGain.gain.setValueAtTime(0, chordTime);
-                    chordGain.gain.linearRampToValueAtTime(0.12, chordTime + 0.08);
-                    chordGain.gain.exponentialRampToValueAtTime(0.001, chordTime + 1.2);
+                    chordGain.gain.linearRampToValueAtTime(0.16, chordTime + 0.08);
+                    chordGain.gain.exponentialRampToValueAtTime(0.001, chordTime + 1.4);
 
                     chordOsc.connect(chordFilter);
                     chordFilter.connect(chordGain);
                     chordGain.connect(this.ctx.destination);
 
                     chordOsc.start(chordTime);
-                    chordOsc.stop(chordTime + 1.2);
+                    chordOsc.stop(chordTime + 1.4);
                 });
             } else {
                 const dropTime = now + 0.4;
                 const dropOsc = this.ctx.createOscillator();
                 const dropGain = this.ctx.createGain();
                 dropOsc.type = 'triangle';
-                dropOsc.frequency.setValueAtTime(329.63, dropTime);
-                dropOsc.frequency.setValueAtTime(261.63, dropTime + 0.15);
+                dropOsc.frequency.setValueAtTime(392.0, dropTime);
+                dropOsc.frequency.exponentialRampToValueAtTime(261.63, dropTime + 0.18);
 
-                dropGain.gain.setValueAtTime(0.2, dropTime);
-                dropGain.gain.exponentialRampToValueAtTime(0.001, dropTime + 0.5);
+                dropGain.gain.setValueAtTime(0.28, dropTime);
+                dropGain.gain.exponentialRampToValueAtTime(0.001, dropTime + 0.6);
 
                 dropOsc.connect(dropGain);
                 dropGain.connect(this.ctx.destination);
                 dropOsc.start(dropTime);
-                dropOsc.stop(dropTime + 0.5);
+                dropOsc.stop(dropTime + 0.6);
             }
         } catch (e) {}
     }
