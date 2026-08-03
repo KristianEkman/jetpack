@@ -217,8 +217,8 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
         name: "Stage 5: The Emerald Core",
         grid: parseLevelString(LEVEL_5_STR),
         flitzers: [
-            { x: 200, y: 100, vx: 160, vy: 120 },
-            { x: 600, y: 400, vx: -160, vy: -120 }
+            { x: 0, y: 400, vx: 160, vy: 120 },
+            { x: 646, y: 518, vx: -160, vy: -120 }
         ],
         missiles: [{ x: 850, y: 80 }],
         turrets: [{ x: 480, y: 440, fireInterval: 1.8 }]
