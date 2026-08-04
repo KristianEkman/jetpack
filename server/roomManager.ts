@@ -7,7 +7,6 @@ import { Player } from "../js/entities/player.js";
 import { EnemyManager } from "../js/entities/enemy.js";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
 import * as types from "../js/shared/types.js";
-import { SoundEffects } from "../js/audio/sfx.js";
 import { AudioManager } from "../js/audio/audioManager.js";
 import { MULTIPLAYER_MODES } from "../js/shared/constants.js";
 

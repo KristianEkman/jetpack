@@ -7,11 +7,11 @@
 - [x] Better base melody of level 1.
 - [x] replace types with any
 - [x] Has there been a lag after last updates?
-- [ ] optimize performance hot spots
+- [ ] optimize performance hot spots, check server
 - [x] refactor and remove duplicate or unused code
 - [ ] customizable controls
 - [x] movement of enemies like in the retro game.
-- [ ] game modes, coop (current). Compete match.
+- [x] game modes, coop (current). Compete match.
 - [ ] bosses
 - [x] enemies moving in patterns, not just left and right
 - [ ] more maps
@@ -22,7 +22,7 @@
       Native support for Xbox/PlayStation/Switch controllers with customizable stick sensitivity.
 - [ ] community level hub / workshop
       Upload custom levels to the server, browse/search by rating, and play community maps.
-- [ ] Do not display name in campain mode.
+- [x] Do not display name in campain mode.
 - [ ] Place in game buttons better.
 
 - [ ] mobile controls more transparent and bigger.
