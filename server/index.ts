@@ -4,7 +4,7 @@
 
 import express from 'express';
 import { createServer } from 'node:http';
-import { DefaultEventsMap, Server } from 'socket.io';
+import { Server } from 'socket.io';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -86,6 +86,11 @@ app.get('/health', (req, res) => {
 
 export const roomManager = new RoomManager();
 export const gameLoop = new GameLoop(roomManager, io, 60);
+const ROOM_LIST_CHANNEL = '__room_list_watchers__';
+
+function broadcastRoomList(): void {
+    io.to(ROOM_LIST_CHANNEL).emit('room_list_updated', roomManager.listRooms());
+}
 
 function initRoomEnemies(room: ServerRoom, levelData: any): void {
     if (!room.enemyManager) return;
@@ -126,7 +131,20 @@ io.on('connection', (socket: any) => {
     });
 
     socket.on('create_room', (data: any = {}, callback: any) => {
-        const room = roomManager.createRoom(socket.id, data);
+        let room: ServerRoom;
+        try {
+            room = roomManager.createRoom(socket.id, data);
+        } catch (error) {
+            const response = {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unable to create room'
+            };
+            if (typeof callback === 'function') callback(response);
+            socket.emit('room_create_error', response);
+            return;
+        }
+
+        socket.leave(ROOM_LIST_CHANNEL);
         socket.join(room.id);
 
         room.tileMap.on(GAME_EVENTS.TILE_PHASED, (payload: any) => {
@@ -148,7 +166,7 @@ io.on('connection', (socket: any) => {
 
         if (typeof callback === 'function') callback(response);
         socket.emit('room_created', response);
-        io.emit('room_list_updated', roomManager.listRooms());
+        broadcastRoomList();
         console.log(`🏠 Room created: ${room.id} by Host ${socket.id}`);
     });
 
@@ -168,6 +186,7 @@ io.on('connection', (socket: any) => {
             return;
         }
 
+        socket.leave(ROOM_LIST_CHANNEL);
         socket.join(result.room.id);
 
         if (typeof callback === 'function') callback(result);
@@ -178,7 +197,7 @@ io.on('connection', (socket: any) => {
             room: result.room
         });
 
-        io.emit('room_list_updated', roomManager.listRooms());
+        broadcastRoomList();
         console.log(`👥 Client ${socket.id} joined Room ${result.room.id}`);
     });
 
@@ -198,12 +217,13 @@ io.on('connection', (socket: any) => {
                     room: result.room
                 });
             }
-            io.emit('room_list_updated', roomManager.listRooms());
+            broadcastRoomList();
             console.log(`🚪 Client ${socket.id} left Room ${result.roomId}`);
         }
     });
 
     socket.on('list_rooms', (callback: any) => {
+        socket.join(ROOM_LIST_CHANNEL);
         const list = roomManager.listRooms();
         if (typeof callback === 'function') callback(list);
         socket.emit('room_list', list);
@@ -258,7 +278,7 @@ io.on('connection', (socket: any) => {
 
         if (typeof callback === 'function') callback(payload);
         io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || 'game_started', payload);
-        io.emit('room_list_updated', roomManager.listRooms());
+        broadcastRoomList();
         console.log(`🚀 Match started in Room ${room.id} by Host ${socket.id}`);
     });
 
@@ -413,21 +433,23 @@ io.on('connection', (socket: any) => {
 
         if (typeof callback === 'function') callback(payload);
         io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || 'game_started', payload);
-        io.emit('room_list_updated', roomManager.listRooms());
+        broadcastRoomList();
         console.log(`🚀 Next level (${room.levelIndex}) started in Room ${room.id} by Host ${socket.id}`);
     });
 
     socket.on('disconnect', () => {
         console.log(`❌ Client disconnected: ${socket.id}`);
         const result = roomManager.leaveRoom(socket.id);
-        if (result && !result.roomDestroyed && result.room) {
-            io.to(result.roomId).emit('player_left', {
-                socketId: socket.id,
-                leavingPlayer: result.leavingPlayer,
-                newHostSocketId: result.newHostSocketId,
-                room: result.room
-            });
-            io.emit('room_list_updated', roomManager.listRooms());
+        if (result) {
+            if (!result.roomDestroyed && result.room) {
+                io.to(result.roomId).emit('player_left', {
+                    socketId: socket.id,
+                    leavingPlayer: result.leavingPlayer,
+                    newHostSocketId: result.newHostSocketId,
+                    room: result.room
+                });
+            }
+            broadcastRoomList();
         }
     });
 });

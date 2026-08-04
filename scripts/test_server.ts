@@ -112,7 +112,16 @@ try {
   assert.equal(client1PlayerJoinedEvent.player.name, "Wingman");
   console.log("   ✅ player_joined broadcast event received by host.\n");
 
-  console.log("6️⃣  Testing 60 Hz World Snapshot Ticks...");
+  console.log("6️⃣  Starting Match Before Real-Time Simulation Tests...");
+  const room = roomManager.getRoom(roomId)!;
+  const startMatchResult: any = await new Promise((resolve) => {
+    client1.emit(GAME_EVENTS.START_MATCH || "start_match", {}, resolve);
+  });
+  assert.equal(startMatchResult.success, true);
+  assert.equal(room.status, "playing");
+  console.log("   ✅ Match started successfully.\n");
+
+  console.log("7️⃣  Testing World Snapshot Ticks...");
   const snapshotsReceived: any[] = [];
   client1.on(
     GAME_EVENTS.WORLD_SNAPSHOT || "world_snapshot",
@@ -135,24 +144,17 @@ try {
     `   ✅ Received ${snapshotsReceived.length} ticks. Latest tick: #${latestSnapshot.tick} with ${latestSnapshot.players.length} players.\n`,
   );
 
-  console.log("7️⃣  Testing Player Input Processing...");
+  console.log("8️⃣  Testing Player Input Processing...");
   client2.emit(GAME_EVENTS.PLAYER_INPUT || "player_input", {
     thrust: true,
     sequenceId: 101,
   });
   await new Promise((resolve) => setTimeout(resolve, 30));
-  const room = roomManager.getRoom(roomId)!;
   const client2Config = room.playerConfigs.get(client2.id)!;
   assert.equal(client2Config.lastSequenceId, 101);
   console.log("   ✅ Client 2 input sequenceId updated on server.\n");
 
-  console.log("8️⃣  Testing Multiplayer Level Complete & Next Level Flow...");
-  const startMatchResult: any = await new Promise((resolve) => {
-    client1.emit(GAME_EVENTS.START_MATCH || "start_match", {}, resolve);
-  });
-  assert.equal(startMatchResult.success, true);
-  assert.equal(room.status, "playing");
-  console.log("   ✅ Match started successfully.");
+  console.log("9️⃣  Testing Multiplayer Level Complete & Next Level Flow...");
 
   const client3 = ioClient(SERVER_URL, { forceNew: true });
   await new Promise((resolve: any) => client3.on("connect", resolve));
@@ -384,5 +386,4 @@ try {
   if (client2) client2.close();
   await new Promise((resolve) => io.close(resolve));
   await new Promise((resolve) => httpServer.close(resolve));
-  process.exit(0);
 }

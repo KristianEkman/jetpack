@@ -72,18 +72,35 @@ export class RoomManager {
   }
 
   createRoom(hostSocketId: string, options: any = {}): ServerRoom {
-    const roomId = options.customCode
-      ? options.customCode.toUpperCase()
-      : this.generateRoomId();
+    if (this.socketToRoom.has(hostSocketId)) {
+      throw new Error("You must leave your current room before creating another one");
+    }
+
+    const customCode =
+      typeof options.customCode === "string"
+        ? options.customCode.trim().toUpperCase()
+        : "";
+    if (customCode && !/^[A-HJ-NP-Z2-9]{4}$/.test(customCode)) {
+      throw new Error("Custom room codes must contain four valid characters");
+    }
+
+    const roomId = customCode || this.generateRoomId();
+    if (this.rooms.has(roomId)) {
+      throw new Error("Room code already exists");
+    }
+
     const levelIndex =
       options.levelIndex !== undefined ? options.levelIndex : 0;
-    const maxPlayers = options.maxPlayers || 4;
+    const requestedMaxPlayers = Number(options.maxPlayers);
+    const maxPlayers = Number.isFinite(requestedMaxPlayers)
+      ? Math.min(4, Math.max(1, Math.floor(requestedMaxPlayers)))
+      : 4;
     const gameMode: types.MultiplayerGameMode =
       options.gameMode === MULTIPLAYER_MODES.COMPETE
         ? MULTIPLAYER_MODES.COMPETE
         : MULTIPLAYER_MODES.COOP;
 
-    const tileMap = new TileMap();
+    const tileMap = new TileMap({ effectsEnabled: false });
     let levelData = CAMPAIGN_LEVELS[levelIndex] || CAMPAIGN_LEVELS[0];
     let customMapData = null;
     let mapName = levelData

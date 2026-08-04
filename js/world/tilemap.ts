@@ -56,8 +56,9 @@ export class TileMap {
     debris: DebrisObject[];
     listeners: Record<string, TileMapListener[]>;
     spawnPoints: { x: number; y: number; }[];
+    effectsEnabled: boolean;
 
-    constructor() {
+    constructor(options: { effectsEnabled?: boolean } = {}) {
         this.cols = GRID_COLS;
         this.rows = GRID_ROWS;
         this.grid = new Array(this.rows * this.cols).fill(TILES.AIR);
@@ -81,6 +82,7 @@ export class TileMap {
         this.listeners = {};
 
         this.spawnPoints = [];
+        this.effectsEnabled = options.effectsEnabled ?? true;
     }
 
     on(event: string, callback: TileMapListener): void {
@@ -355,6 +357,8 @@ export class TileMap {
     }
 
     addDeathExplosion(x: number, y: number, facingRight: boolean = true): void {
+        if (!this.effectsEnabled) return;
+
         const packX = facingRight ? x - 4 : x + 18;
         const packY = y + 6;
 
@@ -473,7 +477,7 @@ export class TileMap {
     }
 
     addSparkles(x: number, y: number, color: string = '#00ffcc', count: number = 8): void {
-        if (!this.particles) return;
+        if (!this.effectsEnabled || !this.particles) return;
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = Math.random() * 60 + 20;

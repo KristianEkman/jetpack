@@ -21,6 +21,9 @@ export class GameLoop {
   intervalMs: number;
   timer: NodeJS.Timeout | null;
   isRunning: boolean;
+  accumulator: number;
+  lastTime: number;
+  maxCatchUpTicks: number;
 
   constructor(roomManager: RoomManager, io: any, tickRate: number = 60) {
     this.roomManager = roomManager;
@@ -30,12 +33,17 @@ export class GameLoop {
     this.intervalMs = 1000 / tickRate;
     this.timer = null;
     this.isRunning = false;
+    this.accumulator = 0;
+    this.lastTime = 0;
+    this.maxCatchUpTicks = 5;
   }
 
   start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
-    this.timer = setInterval(() => this.tick(), this.intervalMs);
+    this.accumulator = 0;
+    this.lastTime = performance.now();
+    this.timer = setTimeout(() => this.runScheduledLoop(), this.intervalMs);
     console.log(
       `⏱️ Server Game Loop running at ${this.tickRate} Hz (${Math.round(this.intervalMs)}ms interval)`,
     );
@@ -45,14 +53,40 @@ export class GameLoop {
     if (!this.isRunning) return;
     this.isRunning = false;
     if (this.timer) {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = null;
     }
     console.log("🛑 Server Game Loop stopped.");
   }
 
+  runScheduledLoop(): void {
+    if (!this.isRunning) return;
+
+    const now = performance.now();
+    const elapsed = Math.min((now - this.lastTime) / 1000, 0.25);
+    this.lastTime = now;
+    this.accumulator += elapsed;
+
+    let updates = 0;
+    while (this.accumulator >= this.dt && updates < this.maxCatchUpTicks) {
+      this.tick();
+      this.accumulator -= this.dt;
+      updates++;
+    }
+
+    if (updates === this.maxCatchUpTicks && this.accumulator >= this.dt) {
+      this.accumulator = 0;
+    }
+
+    const delay = Math.max(1, (this.dt - this.accumulator) * 1000);
+    this.timer = setTimeout(() => this.runScheduledLoop(), delay);
+  }
+
   tick(): void {
+    const snapshotTimestamp = Date.now();
     for (const room of this.roomManager.rooms.values()) {
+      if (room.status !== "playing") continue;
+
       room.tickCount++;
 
       if (room.tileMap) {
@@ -82,24 +116,16 @@ export class GameLoop {
                   playerEntity.isPhasing = input.isPhasing;
               }
 
-              playerEntity.phaseCooldown = Math.max(
-                0,
-                (playerEntity.phaseCooldown || 0) - this.dt,
+              const playerTargets =
+                room.gameMode === MULTIPLAYER_MODES.COMPETE
+                  ? room.players.values()
+                  : null;
+              playerEntity.simulateMovement(
+                this.dt,
+                input,
+                room.enemyManager,
+                playerTargets,
               );
-              playerEntity.phaseBeamTimer = Math.max(
-                0,
-                (playerEntity.phaseBeamTimer || 0) - this.dt,
-              );
-
-              if (input.phase && playerEntity.phaseCooldown <= 0) {
-                const playerTargets =
-                  room.gameMode === MULTIPLAYER_MODES.COMPETE
-                    ? room.players.values()
-                    : null;
-                playerEntity.performPhaseBeam(room.enemyManager, playerTargets);
-              }
-
-              playerEntity.simulateMovement(this.dt, input, room.enemyManager);
               config.lastInput = input;
               config.lastSequenceId = input.sequenceId || 0;
             }
@@ -109,10 +135,7 @@ export class GameLoop {
       }
 
       if (room.status === "playing" && room.enemyManager) {
-        const livingPlayers = Array.from(room.players.values()).filter(
-          (p) => !p.isDead && (p.respawnInvulnerability || 0) <= 0,
-        );
-        room.enemyManager.update(this.dt, livingPlayers);
+        room.enemyManager.update(this.dt, Array.from(room.players.values()));
       }
 
       for (const [socketId, playerEntity] of room.players.entries()) {
@@ -254,11 +277,15 @@ export class GameLoop {
       }
 
       const snapshotInterval = NETWORK_SETTINGS?.SNAPSHOT_INTERVAL_TICKS || 3;
-      if (room.tickCount % snapshotInterval === 0 && this.io) {
+      if (
+        room.status === "playing" &&
+        room.tickCount % snapshotInterval === 0 &&
+        this.io
+      ) {
         const snapshot: any = {
           roomId: room.id,
           tick: room.tickCount,
-          timestamp: Date.now(),
+          timestamp: snapshotTimestamp,
           worldState: room.tileMap
             ? {
                 collectedEmeralds: room.tileMap.collectedEmeralds,

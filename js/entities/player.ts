@@ -150,6 +150,7 @@ export class Player {
     dt: number,
     input: SerializedInputState,
     enemyManager: EnemyManager | null = null,
+    playerTargets: Iterable<Player> | null = null,
   ): void {
     if (this.isDead || !input) return;
 
@@ -211,7 +212,7 @@ export class Player {
     this.vy = Math.min(450, this.vy);
 
     if (input.phase && this.phaseCooldown <= 0) {
-      this.performPhaseBeam(enemyManager);
+      this.performPhaseBeam(enemyManager, playerTargets);
     }
 
     this.moveAndCollide(dt);
