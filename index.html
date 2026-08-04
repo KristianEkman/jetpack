@@ -16,6 +16,7 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="index.css">
+    <link rel="icon" href="./favicon.ico" sizes="any">
 </head>
 
 <body>
@@ -211,7 +212,8 @@
     <!-- GAME OVER DIALOG -->
     <dialog id="dlgGameOver" class="retro-dialog">
         <div class="dialog-content">
-            <h2 class="danger-title">GAME OVER</h2>
+            <h2 id="gameOverTitle" class="danger-title">GAME OVER</h2>
+            <p id="gameOverMessage" class="game-over-message hidden"></p>
             <p id="gameOverStats">Final Score: 000000</p>
             <div id="multiplayerGameOverResults" class="multiplayer-results hidden">
                 <h3>MATCH RESULTS</h3>
@@ -302,6 +304,23 @@
 
             <!-- Create Room View -->
             <div id="viewCreateRoom" class="mp-view-section">
+                <fieldset class="game-mode-selector">
+                    <legend>Game Mode</legend>
+                    <label class="game-mode-option">
+                        <input type="radio" name="mpGameMode" value="coop" checked>
+                        <span>
+                            <strong>🤝 CO-OP</strong>
+                            <small>Work together to clear the level.</small>
+                        </span>
+                    </label>
+                    <label class="game-mode-option compete-option">
+                        <input type="radio" name="mpGameMode" value="compete">
+                        <span>
+                            <strong>⚔️ Compete</strong>
+                            <small>Phase-beam opponents. Last pilot standing wins.</small>
+                        </span>
+                    </label>
+                </fieldset>
                 <div class="form-group">
                     <label for="selectRoomLevel">Select Level / Map:</label>
                     <select id="selectRoomLevel" class="retro-input">
@@ -341,6 +360,11 @@
                     <div class="room-info-item">
                         <span class="info-label">MAP:</span>
                         <span id="displayRoomMapName">Campaign Level</span>
+                    </div>
+                    <div class="room-info-divider"></div>
+                    <div class="room-info-item">
+                        <span class="info-label">MODE:</span>
+                        <strong id="displayRoomGameMode">CO-OP</strong>
                     </div>
                 </div>
 

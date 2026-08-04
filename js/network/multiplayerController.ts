@@ -8,6 +8,7 @@ import {
   CAMPAIGN_LEVELS,
   type CampaignLevelConfig,
 } from "../levels/campaign.js";
+import { MULTIPLAYER_MODES } from "../shared/constants.js";
 import { TILE_SIZE, TILES } from "../world/tilemap.js";
 import type {
   GameOverPayload,
@@ -341,9 +342,16 @@ export class MultiplayerController {
               "selectRoomLevel",
             ) as HTMLSelectElement | null
           )?.value || "0";
+        const selectedGameMode = document.querySelector<HTMLInputElement>(
+          'input[name="mpGameMode"]:checked',
+        )?.value;
         const createOptions = {
           playerName: hostName,
           playerColor: game.selectedColor,
+          gameMode:
+            selectedGameMode === MULTIPLAYER_MODES.COMPETE
+              ? MULTIPLAYER_MODES.COMPETE
+              : MULTIPLAYER_MODES.COOP,
           levelIndex: undefined as number | undefined,
           customMapData: undefined as MultiplayerLevelData | undefined,
         };
@@ -427,6 +435,14 @@ export class MultiplayerController {
       mapNameElement.textContent =
         room.mapName || `Level ${room.levelIndex + 1}`;
     }
+    const gameModeElement = document.getElementById("displayRoomGameMode");
+    if (gameModeElement) {
+      const isCompeteMatch = room.gameMode === MULTIPLAYER_MODES.COMPETE;
+      gameModeElement.textContent = isCompeteMatch
+        ? "⚔️ COMPETE"
+        : "🤝 CO-OP";
+      gameModeElement.style.color = isCompeteMatch ? "#ff2a5f" : "#00ffcc";
+    }
 
     const listElement = document.getElementById("lobbyPlayerList");
     if (!listElement) return;
@@ -492,12 +508,17 @@ export class MultiplayerController {
           room.status === "playing"
             ? '<span style="font-size: 0.75rem; color: #ffaa00; background: rgba(255,170,0,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">[PLAYING]</span>'
             : '<span style="font-size: 0.75rem; color: #00ffcc; background: rgba(0,255,204,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">[LOBBY]</span>';
+        const modeBadge =
+          room.gameMode === MULTIPLAYER_MODES.COMPETE
+            ? '<span style="font-size: 0.75rem; color: #ff6b8a;">[COMPETE]</span>'
+            : '<span style="font-size: 0.75rem; color: #00ffcc;">[CO-OP]</span>';
 
         row.innerHTML = `
           <div class="player-info-group">
             <strong style="color: #00f0ff; letter-spacing: 2px;">${room.id}</strong>
             <span style="font-size: 0.85rem; color: #aaa;">(${room.playerCount}/${room.maxPlayers} Pilots)</span>
             <span style="font-size: 0.8rem; color: #ffee55;">[${room.mapName || "Map"}]</span>
+            ${modeBadge}
             ${statusBadge}
           </div>
           <button class="btn-editor primary">JOIN</button>
@@ -593,7 +614,11 @@ export class MultiplayerController {
     game.gameState = GAME_STATES.PLAYING;
     game.audio.startGameMusic(game.currentLevelIndex || 0);
     game.uiManager.closeAllDialogs();
-    game.uiManager.showBanner("MULTIPLAYER MATCH STARTED!");
+    game.uiManager.showBanner(
+      room?.gameMode === MULTIPLAYER_MODES.COMPETE
+        ? "COMPETE MATCH STARTED - LAST PILOT STANDING!"
+        : "CO-OP MATCH STARTED!",
+    );
   }
 
   updateLevelCompleteHostState(
@@ -738,6 +763,23 @@ export class MultiplayerController {
     game.audio?.stopThrust?.();
     if (game.audio?.stopEnergyDrain) game.audio.stopEnergyDrain();
 
+    const isCompeteMatch = data.reason === "compete_match_complete";
+    const title = document.getElementById("gameOverTitle");
+    if (title)
+      title.textContent = isCompeteMatch ? "MATCH OVER" : "GAME OVER";
+    const message = document.getElementById("gameOverMessage");
+    if (message) {
+      if (isCompeteMatch) {
+        message.classList.remove("hidden");
+        message.textContent = data.winnerName
+          ? `🏆 ${data.winnerName.toUpperCase()} WINS!`
+          : "DRAW - NO PILOTS REMAIN";
+      } else {
+        message.classList.add("hidden");
+        message.textContent = "";
+      }
+    }
+
     const stats = document.getElementById("gameOverStats");
     if (stats) {
       stats.classList.add("hidden");
@@ -755,7 +797,13 @@ export class MultiplayerController {
     );
 
     this.updateGameOverHostState(data.room || game.network.currentRoom);
-    game.uiManager.showBanner("ALL PLAYERS ELIMINATED - GAME OVER");
+    game.uiManager.showBanner(
+      isCompeteMatch
+        ? data.winnerName
+          ? `${data.winnerName.toUpperCase()} WINS THE MATCH!`
+          : "MATCH ENDED IN A DRAW"
+        : "ALL PLAYERS ELIMINATED - GAME OVER",
+    );
     game.uiManager.showDialog("dlgGameOver");
   }
 }

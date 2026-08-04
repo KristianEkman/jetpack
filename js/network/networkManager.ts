@@ -6,6 +6,7 @@ import type { ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import { GAME_EVENTS, NETWORK_SETTINGS } from "../shared/constants.js";
 import type {
   LevelData,
+  MultiplayerGameMode,
   SerializedInputState,
   WorldSnapshotPayload,
 } from "../shared/types.js";
@@ -39,6 +40,7 @@ export interface MultiplayerRoomInfo {
   hostSocketId: string;
   maxPlayers: number;
   levelIndex: number;
+  gameMode: MultiplayerGameMode;
   customMapData?: MultiplayerLevelData | null;
   mapName?: string;
   status: "lobby" | "playing" | "ended" | "finished";
@@ -53,6 +55,7 @@ export interface PublicRoomInfo {
   maxPlayers: number;
   status: MultiplayerRoomInfo["status"];
   levelIndex: number;
+  gameMode: MultiplayerGameMode;
   mapName?: string;
 }
 
@@ -63,6 +66,7 @@ export interface CreateRoomOptions {
   playerName?: string;
   playerColor?: string;
   customMapData?: MultiplayerLevelData;
+  gameMode?: MultiplayerGameMode;
 }
 
 export interface JoinRoomOptions {
@@ -138,6 +142,8 @@ export interface GameOverPayload extends Pick<RoomActionResponse, "room"> {
   roomId?: string;
   reason?: string;
   players?: MultiplayerPlayer[];
+  winnerName?: string;
+  winnerSocketId?: string;
 }
 
 export interface NetworkWorldSnapshotPayload extends WorldSnapshotPayload {
@@ -479,9 +485,6 @@ export class NetworkManager {
         this.interpolationDelay = Math.min(
           180,
           Math.max(80, Math.round(80 + jitter * 2)),
-        );
-        console.log(
-          `⏱️ Ping: ${this.lastPing}ms, Jitter: ${this.jitter}ms, Interpolation Delay: ${this.interpolationDelay}ms`,
         );
       });
     }, 2500);

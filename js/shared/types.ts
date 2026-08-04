@@ -19,12 +19,15 @@ export interface PlayerConfig {
   color?: string;
 }
 
+export type MultiplayerGameMode = 'coop' | 'compete';
+
 export interface RoomInfo {
   id: string;
   name: string;
   hostId: string;
   levelIndex: number | string;
   customMapData?: LevelData | null;
+  gameMode: MultiplayerGameMode;
   players: Array<{
     id: string;
     socketId: string;
@@ -32,7 +35,7 @@ export interface RoomInfo {
     color: string;
     isHost: boolean;
   }>;
-  status: 'lobby' | 'playing' | 'ended';
+  status: 'lobby' | 'playing' | 'ended' | 'finished';
   maxPlayers: number;
 }
 

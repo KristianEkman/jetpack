@@ -8,6 +8,7 @@ import {
   TILES,
   PLAYER_PHYSICS,
   GAME_EVENTS,
+  COMPETE_SCORE_PER_HIT,
 } from "../shared/constants.js";
 import { SerializedInputState } from "../shared/types.js";
 import { TeleporterPad, TileMap } from "../world/tilemap.js";
@@ -216,8 +217,11 @@ export class Player {
     this.moveAndCollide(dt);
   }
 
-  performPhaseBeam(enemyManager: EnemyManager | null = null): void {
-    if (!this.tileMap) return;
+  performPhaseBeam(
+    enemyManager: EnemyManager | null = null,
+    playerTargets: Iterable<Player> | null = null,
+  ): Player | null {
+    if (!this.tileMap) return null;
 
     this.isPhasing = true;
     this.phaseBeamTimer = 0.14;
@@ -232,12 +236,39 @@ export class Player {
     const dir = this.facingRight ? 1 : -1;
     const startX = this.facingRight ? this.x + this.width : this.x;
     const startY = this.y + 12;
+    const targets = playerTargets ? Array.from(playerTargets) : [];
 
     this.phaseBeamLength = 160;
     for (let dist = 0; dist <= 160; dist += 8) {
       const targetX = startX + dir * dist;
       const targetCol = Math.floor(targetX / TILE_SIZE);
       const targetRow = Math.floor(startY / TILE_SIZE);
+
+      if (targets.length > 0) {
+        for (const target of targets) {
+          if (
+            target === this ||
+            target.isDead ||
+            target.respawnInvulnerability > 0
+          ) {
+            continue;
+          }
+          if (
+            targetX >= target.x &&
+            targetX <= target.x + target.width &&
+            startY >= target.y &&
+            startY <= target.y + target.height
+          ) {
+            const livesBeforeHit = target.lives;
+            target.takeDamage();
+            if (target.lives < livesBeforeHit) {
+              this.score += COMPETE_SCORE_PER_HIT;
+              this.phaseBeamLength = dist;
+              return target;
+            }
+          }
+        }
+      }
 
       if (enemyManager && enemyManager.enemies) {
         let hitEnemyIndex = -1;
@@ -255,7 +286,7 @@ export class Player {
         }
         if (hitEnemyIndex >= 0) {
           const enemy = enemyManager.enemies[hitEnemyIndex];
-          const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);          
+          const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
 
           if (destroyedEnemy) {
             this.audio?.playExplosion?.();
@@ -267,7 +298,7 @@ export class Player {
           }
 
           this.phaseBeamLength = dist;
-          break;
+          return null;
         }
       }
 
@@ -276,12 +307,13 @@ export class Player {
         this.audio.playExplosion?.();
         this.tileMap.phaseTile(targetCol, targetRow);
         this.phaseBeamLength = dist;
-        break;
+        return null;
       } else if (this.tileMap.isSolid(targetCol, targetRow)) {
         this.phaseBeamLength = dist;
-        break;
+        return null;
       }
     }
+    return null;
   }
 
   processLocalEffects(
@@ -329,7 +361,10 @@ export class Player {
       this.audio?.stopThrust?.();
     }
 
-    if (input.phase && this.phaseCooldown >= PLAYER_PHYSICS.PHASE_COOLDOWN_TIME - 0.01) {
+    if (
+      input.phase &&
+      this.phaseCooldown >= PLAYER_PHYSICS.PHASE_COOLDOWN_TIME - 0.01
+    ) {
       this.audio?.playPhaseSound?.();
       const startX = this.facingRight ? this.x + this.width : this.x;
       const startY = this.y + 12;

@@ -230,6 +230,13 @@ export class Game {
             this.uiManager.showBanner("OUT OF LIVES - SPECTATING");
           } else {
             this.gameState = GAME_STATES.GAME_OVER;
+            const title = document.getElementById("gameOverTitle");
+            if (title) title.textContent = "GAME OVER";
+            const message = document.getElementById("gameOverMessage");
+            if (message) {
+              message.classList.add("hidden");
+              message.textContent = "";
+            }
             const stats = document.getElementById("gameOverStats");
             if (stats) {
               stats.classList.remove("hidden");

@@ -13,7 +13,7 @@ import { execSync } from 'node:child_process';
 
 import { RoomManager, ServerRoom } from './roomManager.js';
 import { GameLoop } from './gameLoop.js';
-import { GAME_EVENTS, TILES } from '../js/shared/constants.js';
+import { GAME_EVENTS, MULTIPLAYER_MODES, TILES } from '../js/shared/constants.js';
 import { CAMPAIGN_LEVELS } from '../js/levels/campaign.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -332,6 +332,12 @@ io.on('connection', (socket: any) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room || room.status !== 'playing') {
             const errRes = { success: false, error: 'Room not in playing state' };
+            if (typeof callback === 'function') callback(errRes);
+            return;
+        }
+
+        if (room.gameMode !== MULTIPLAYER_MODES.COOP) {
+            const errRes = { success: false, error: 'Level completion is only available in co-op mode' };
             if (typeof callback === 'function') callback(errRes);
             return;
         }

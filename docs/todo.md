@@ -11,7 +11,7 @@
 - [x] refactor and remove duplicate or unused code
 - [ ] customizable controls
 - [x] movement of enemies like in the retro game.
-- [ ] game modes, coop (current). Death match.
+- [ ] game modes, coop (current). Compete match.
 - [ ] bosses
 - [x] enemies moving in patterns, not just left and right
 - [ ] more maps
@@ -26,3 +26,4 @@
 - [ ] Place in game buttons better.
 
 - [ ] mobile controls more transparent and bigger.
+- [ ] when compete match ends add a delay so you cann see who died
