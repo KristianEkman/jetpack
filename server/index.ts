@@ -340,11 +340,13 @@ io.on('connection', (socket: any) => {
         const playerConfig = room.playerConfigs.get(socket.id);
         const playerName = playerConfig ? playerConfig.name : 'Player';
 
+        const serializedRoom = roomManager.serializeRoom(room);
         const payload = {
             success: true,
             clearedBy: playerName,
             socketId: socket.id,
-            room: roomManager.serializeRoom(room)
+            room: serializedRoom,
+            players: serializedRoom.players
         };
 
         if (typeof callback === 'function') callback(payload);

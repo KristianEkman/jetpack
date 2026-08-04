@@ -231,8 +231,13 @@ export class Game {
           } else {
             this.gameState = GAME_STATES.GAME_OVER;
             const stats = document.getElementById("gameOverStats");
-            if (stats)
+            if (stats) {
+              stats.classList.remove("hidden");
               stats.textContent = `Final Score: ${String(this.player.score).padStart(6, "0")}`;
+            }
+            document
+              .getElementById("multiplayerGameOverResults")
+              ?.classList.add("hidden");
             this.uiManager.showDialog("dlgGameOver");
           }
         } else if (this.isMultiplayer) {

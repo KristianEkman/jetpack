@@ -213,6 +213,23 @@
         <div class="dialog-content">
             <h2 class="danger-title">GAME OVER</h2>
             <p id="gameOverStats">Final Score: 000000</p>
+            <div id="multiplayerGameOverResults" class="multiplayer-results hidden">
+                <h3>MATCH RESULTS</h3>
+                <div class="results-table-wrapper">
+                    <table class="results-table" aria-label="Multiplayer game over results">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Pilot</th>
+                                <th scope="col">Score</th>
+                                <th scope="col">Fuel</th>
+                                <th scope="col">Lives</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gameOverResultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
             <div class="menu-buttons">
                 <button id="btnRetryLevel" class="btn-menu primary">🔄 RETRY LEVEL</button>
                 <button id="btnGameOverMenu" class="btn-menu">🚪 MAIN MENU</button>
@@ -229,6 +246,23 @@
                 <p>Level Score: <span id="statLevelScore">0</span></p>
                 <p>Fuel Bonus: <span id="statFuelBonus">0</span></p>
                 <p>Total Score: <span id="statTotalScore">0</span></p>
+            </div>
+            <div id="multiplayerLevelResults" class="multiplayer-results hidden">
+                <h3>MATCH RESULTS</h3>
+                <div class="results-table-wrapper">
+                    <table class="results-table" aria-label="Multiplayer level results">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Pilot</th>
+                                <th scope="col">Score</th>
+                                <th scope="col">Fuel</th>
+                                <th scope="col">Lives</th>
+                            </tr>
+                        </thead>
+                        <tbody id="levelResultsBody"></tbody>
+                    </table>
+                </div>
             </div>
             <div class="menu-buttons">
                 <button id="btnNextLevel" class="btn-menu primary">🚀 NEXT LEVEL</button>

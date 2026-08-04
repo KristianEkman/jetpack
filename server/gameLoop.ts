@@ -143,16 +143,15 @@ export class GameLoop {
 
                     if (levelCleared) {
                         room.status = 'finished';
-                        const winnerList: any[] = [];
-                        for (const [sId, p] of room.players.entries()) {
-                            winnerList.push({ socketId: sId, name: p.name, score: p.score, fuel: p.fuel });
-                        }
+                        const serializedRoom = this.roomManager.serializeRoom(room);
                         if (this.io) {
                             this.io.to(room.id).emit(GAME_EVENTS.LEVEL_COMPLETE || 'level_complete', {
+                                success: true,
                                 roomId: room.id,
                                 clearedBy: clearingPlayer ? clearingPlayer.name : 'Team',
-                                players: winnerList,
-                                levelIndex: room.levelIndex
+                                players: serializedRoom.players,
+                                levelIndex: room.levelIndex,
+                                room: serializedRoom
                             });
                         }
                         console.log(`🏆 Level completed in Room ${room.id}!`);
@@ -171,15 +170,13 @@ export class GameLoop {
 
                 if (allDead) {
                     room.status = 'finished';
-                    const playersList: any[] = [];
-                    for (const [sId, p] of room.players.entries()) {
-                        playersList.push({ socketId: sId, name: p.name, score: p.score, lives: p.lives});
-                    }
+                    const serializedRoom = this.roomManager.serializeRoom(room);
                     if (this.io) {
                         this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || 'game_over', {
                             roomId: room.id,
                             reason: 'all_players_eliminated',
-                            players: playersList
+                            players: serializedRoom.players,
+                            room: serializedRoom
                         });
                     }
                     console.log(`💀 All players eliminated in Room ${room.id}! Game Over emitted.`);

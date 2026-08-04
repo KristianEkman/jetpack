@@ -616,6 +616,57 @@ export class MultiplayerController {
     }
   }
 
+  renderMultiplayerResults(
+    containerId: string,
+    tableBodyId: string,
+    players: MultiplayerPlayer[],
+  ): void {
+    const container = document.getElementById(containerId);
+    const tableBody = document.getElementById(tableBodyId);
+    if (!container || !tableBody) return;
+
+    container.classList.remove("hidden");
+    tableBody.replaceChildren();
+
+    const rankedPlayers = [...players].sort((left, right) => {
+      const scoreDifference = (right.score ?? 0) - (left.score ?? 0);
+      return scoreDifference || left.name.localeCompare(right.name);
+    });
+
+    if (rankedPlayers.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 5;
+      cell.className = "empty-results";
+      cell.textContent = "No player results available";
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+      return;
+    }
+
+    rankedPlayers.forEach((player, index) => {
+      const row = document.createElement("tr");
+      if (player.socketId === this.game.network.socketId) {
+        row.classList.add("local-player");
+      }
+
+      const values = [
+        `${index + 1}`,
+        player.name || "Player",
+        `${Math.round(player.score ?? 0)}`,
+        `${Math.round(player.fuel ?? 0)}%`,
+        `${Math.max(0, player.lives ?? 0)}`,
+      ];
+
+      for (const value of values) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+      }
+      tableBody.appendChild(row);
+    });
+  }
+
   triggerMultiplayerLevelComplete(data: LevelCompletePayload): void {
     const game = this.game;
     game.gameState = GAME_STATES.LEVEL_COMPLETE;
@@ -634,6 +685,18 @@ export class MultiplayerController {
     if (statTotalScore) {
       statTotalScore.textContent = `${(game.player ? game.player.score : 0) + levelScore}`;
     }
+
+    document.getElementById("levelCompleteStats")?.classList.add("hidden");
+    const players =
+      data.players ??
+      data.room?.players ??
+      game.network.currentRoom?.players ??
+      [];
+    this.renderMultiplayerResults(
+      "multiplayerLevelResults",
+      "levelResultsBody",
+      players,
+    );
 
     const subtitle = document.getElementById("dialogLevelCompleteSub");
     if (subtitle) {
@@ -677,8 +740,19 @@ export class MultiplayerController {
 
     const stats = document.getElementById("gameOverStats");
     if (stats) {
-      stats.textContent = `ALL PLAYERS ELIMINATED | Final Score: ${String(game.player?.score || 0).padStart(6, "0")}`;
+      stats.classList.add("hidden");
     }
+
+    const players =
+      data.players ??
+      data.room?.players ??
+      game.network.currentRoom?.players ??
+      [];
+    this.renderMultiplayerResults(
+      "multiplayerGameOverResults",
+      "gameOverResultsBody",
+      players,
+    );
 
     this.updateGameOverHostState(data.room || game.network.currentRoom);
     game.uiManager.showBanner("ALL PLAYERS ELIMINATED - GAME OVER");

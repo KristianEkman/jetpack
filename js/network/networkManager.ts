@@ -130,9 +130,15 @@ export interface EnemyDestroyedPayload {
 
 export interface LevelCompletePayload extends RoomActionResponse {
   clearedBy?: string;
+  players?: MultiplayerPlayer[];
+  levelIndex?: number;
 }
 
-export type GameOverPayload = Pick<RoomActionResponse, "room">;
+export interface GameOverPayload extends Pick<RoomActionResponse, "room"> {
+  roomId?: string;
+  reason?: string;
+  players?: MultiplayerPlayer[];
+}
 
 export interface NetworkWorldSnapshotPayload extends WorldSnapshotPayload {
   projectiles?: unknown;
@@ -351,11 +357,17 @@ export class NetworkManager {
     socket.on(
       GAME_EVENTS.LEVEL_COMPLETE || "level_complete",
       (data: LevelCompletePayload) => {
+        if (data.room) {
+          this.currentRoom = data.room;
+        }
         this.onLevelCompleteCb?.(data);
       },
     );
 
     socket.on(GAME_EVENTS.GAME_OVER || "game_over", (data: GameOverPayload) => {
+      if (data.room) {
+        this.currentRoom = data.room;
+      }
       this.onGameOverCb?.(data);
     });
 

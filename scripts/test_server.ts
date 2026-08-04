@@ -203,6 +203,14 @@ try {
     "Client 1 should receive level_complete event",
   );
   assert.equal(client1LevelCompleteEvent.clearedBy, "Wingman");
+  assert.equal(client1LevelCompleteEvent.room.status, "finished");
+  assert.equal(client1LevelCompleteEvent.players.length, 2);
+  assert.equal(
+    client1LevelCompleteEvent.players.some(
+      (player: any) => player.name === "Wingman",
+    ),
+    true,
+  );
   assert.equal(room.status, "finished");
   console.log("   ✅ level_complete broadcast and room state verified.");
 
@@ -320,6 +328,12 @@ try {
     gameOverData,
     null,
     "Client 1 should receive game_over event when all players are eliminated",
+  );
+  assert.equal(gameOverData.room.status, "finished");
+  assert.equal(gameOverData.players.length, 2);
+  assert.equal(
+    gameOverData.players.every((player: any) => player.lives === 0),
+    true,
   );
   assert.equal(targetRoom.status, "finished");
   console.log(

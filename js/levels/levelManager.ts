@@ -163,6 +163,9 @@ export class LevelManager {
         if (statFuelBonus) statFuelBonus.textContent = `${fuelBonus}`;
         if (statTotalScore) statTotalScore.textContent = `${game.player.score}`;
 
+        document.getElementById('levelCompleteStats')?.classList.remove('hidden');
+        document.getElementById('multiplayerLevelResults')?.classList.add('hidden');
+
         const btnNextLevel = document.getElementById('btnNextLevel') as HTMLButtonElement | null;
         if (btnNextLevel) {
             btnNextLevel.disabled = false;
