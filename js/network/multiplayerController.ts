@@ -9,8 +9,7 @@ import {
   type CampaignLevelConfig,
 } from "../levels/campaign.js";
 import { MULTIPLAYER_MODES } from "../shared/constants.js";
-import { TILE_SIZE, TILES } from "../world/tilemap.js";
-import type {
+import {
   GameOverPayload,
   GameStartedPayload,
   LevelCompletePayload,
@@ -18,7 +17,8 @@ import type {
   MultiplayerPlayer,
   MultiplayerRoomInfo,
   PublicRoomInfo,
-} from "./networkManager.js";
+} from "../shared/payloads.js";
+import { TILE_SIZE, TILES } from "../world/tilemap.js";
 
 type PlayableLevelData = CampaignLevelConfig | MultiplayerLevelData;
 

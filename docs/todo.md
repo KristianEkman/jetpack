@@ -11,6 +11,7 @@
 - [x] movement of enemies like in the retro game.
 - [x] game modes, coop (current). Compete match.
 - [x] enemies moving in patterns, not just left and right
+- [x] Do not display name in campain mode.
 - [ ] lower volume of hits, different hits sounds
 - [ ] optimize performance hot spots, check server
 - [ ] customizable controls
@@ -25,8 +26,8 @@
       Native support for Xbox/PlayStation/Switch controllers with customizable stick sensitivity.
 - [ ] community level hub / workshop
       Upload custom levels to the server, browse/search by rating, and play community maps.
-- [x] Do not display name in campain mode.
 - [ ] Place in game buttons better.
 
 - [ ] mobile controls more transparent and bigger.
 - [ ] when compete match ends add a delay so you cann see who died
+- [ ] extralife

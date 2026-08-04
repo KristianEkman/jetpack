@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { RoomManager } from "../server/roomManager.js";
 import { GameLoop } from "../server/gameLoop.js";
 import { GAME_EVENTS, TILES } from "../js/shared/constants.js";
-import type { LevelData } from "../js/shared/types.js";
+import type { LevelData } from "../js/shared/payloads.js";
 
 console.log("🧪 Starting Phase 5 Test Suite...\n");
 
@@ -146,7 +146,7 @@ playerConfig!.pendingInputs.push({
   down: false,
   thrust: false,
   suicide: false,
-  sequenceId: 0
+  sequenceId: 0,
 });
 
 gameLoop.tick();

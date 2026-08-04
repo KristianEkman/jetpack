@@ -2,6 +2,8 @@
    SHARED TYPE DEFINITIONS
    ========================================================================== */
 
+import { LevelData } from "./payloads";
+
 export interface InputState {
   left?: boolean;
   right?: boolean;
@@ -19,7 +21,7 @@ export interface PlayerConfig {
   color?: string;
 }
 
-export type MultiplayerGameMode = 'coop' | 'compete';
+export type MultiplayerGameMode = "coop" | "compete";
 
 export interface RoomInfo {
   id: string;
@@ -35,16 +37,8 @@ export interface RoomInfo {
     color: string;
     isHost: boolean;
   }>;
-  status: 'lobby' | 'playing' | 'ended' | 'finished';
+  status: "lobby" | "playing" | "ended" | "finished";
   maxPlayers: number;
-}
-
-export interface LevelData {
-  name: string;
-  author?: string;
-  grid: number[];
-  spawnX?: number;
-  spawnY?: number;
 }
 
 export type PlayerSnapshotTuple = [
@@ -59,7 +53,7 @@ export type PlayerSnapshotTuple = [
   score: number,
   flags: number,
   animFrame: number,
-  sequenceId: number
+  sequenceId: number,
 ];
 
 export type EnemySnapshotTuple = [
@@ -69,7 +63,7 @@ export type EnemySnapshotTuple = [
   y: number,
   vx: number,
   vy: number,
-  state: number
+  state: number,
 ];
 
 export interface WorldSnapshotPayload {

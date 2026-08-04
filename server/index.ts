@@ -20,6 +20,13 @@ import {
   TILES,
 } from "../js/shared/constants.js";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
+import {
+  ItemCollectedPayload,
+  MultiplayerLevelData,
+  RoomActionResponse,
+  TilePositionPayload,
+} from "../js/shared/payloads.js";
+import { SerializedInputState } from "../js/shared/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,7 +107,10 @@ function broadcastRoomList(): void {
   io.to(ROOM_LIST_CHANNEL).emit("room_list_updated", roomManager.listRooms());
 }
 
-function initRoomEnemies(room: ServerRoom, levelData: any): void {
+function initRoomEnemies(
+  room: ServerRoom,
+  levelData: MultiplayerLevelData,
+): void {
   if (!room.enemyManager) return;
   room.enemyManager.clear();
   if (levelData.flitzers) {
@@ -144,76 +154,92 @@ io.on("connection", (socket: any) => {
     }
   });
 
-  socket.on(ROOM_EVENTS.CREATE_ROOM, (data: any = {}, callback: any) => {
-    let room: ServerRoom;
-    try {
-      room = roomManager.createRoom(socket.id, data);
-    } catch (error) {
+  socket.on(
+    ROOM_EVENTS.CREATE_ROOM,
+    (data: RoomActionResponse, callback: any) => {
+      let room: ServerRoom;
+      try {
+        room = roomManager.createRoom(socket.id, data);
+      } catch (error) {
+        const response = {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Unable to create room",
+        };
+        if (typeof callback === "function") callback(response);
+        socket.emit(ROOM_EVENTS.ROOM_CREATE_ERROR, response);
+        return;
+      }
+
+      socket.leave(ROOM_LIST_CHANNEL);
+      socket.join(room.id);
+
+      room.tileMap.on(
+        GAME_EVENTS.TILE_PHASED,
+        (payload: TilePositionPayload) => {
+          io.to(room.id).emit(GAME_EVENTS.TILE_PHASED, payload);
+        },
+      );
+      room.tileMap.on(
+        GAME_EVENTS.TILE_RESTORED,
+        (payload: TilePositionPayload) => {
+          io.to(room.id).emit(GAME_EVENTS.TILE_RESTORED, payload);
+        },
+      );
+      room.tileMap.on(
+        GAME_EVENTS.ITEM_COLLECTED,
+        (payload: ItemCollectedPayload) => {
+          io.to(room.id).emit(GAME_EVENTS.ITEM_COLLECTED, payload);
+        },
+      );
+
       const response = {
-        success: false,
-        error: error instanceof Error ? error.message : "Unable to create room",
+        success: true,
+        roomId: room.id,
+        room: roomManager.serializeRoom(room),
+        socketId: socket.id,
       };
+
       if (typeof callback === "function") callback(response);
-      socket.emit(ROOM_EVENTS.ROOM_CREATE_ERROR, response);
-      return;
-    }
+      socket.emit(ROOM_EVENTS.ROOM_CREATED, response);
+      broadcastRoomList();
+      console.log(`🏠 Room created: ${room.id} by Host ${socket.id}`);
+    },
+  );
 
-    socket.leave(ROOM_LIST_CHANNEL);
-    socket.join(room.id);
+  socket.on(
+    ROOM_EVENTS.JOIN_ROOM,
+    (data: RoomActionResponse, callback: any) => {
+      const roomId = data.roomId;
+      if (!roomId) {
+        const errResponse = { success: false, error: "Room ID required" };
+        if (typeof callback === "function") callback(errResponse);
+        socket.emit(ROOM_EVENTS.JOIN_ERROR, errResponse);
+        return;
+      }
 
-    room.tileMap.on(GAME_EVENTS.TILE_PHASED, (payload: any) => {
-      io.to(room.id).emit(GAME_EVENTS.TILE_PHASED, payload);
-    });
-    room.tileMap.on(GAME_EVENTS.TILE_RESTORED, (payload: any) => {
-      io.to(room.id).emit(GAME_EVENTS.TILE_RESTORED, payload);
-    });
-    room.tileMap.on(GAME_EVENTS.ITEM_COLLECTED, (payload: any) => {
-      io.to(room.id).emit(GAME_EVENTS.ITEM_COLLECTED, payload);
-    });
+      const result = roomManager.joinRoom(roomId, socket.id, data);
+      if (!result.success) {
+        if (typeof callback === "function") callback(result);
+        socket.emit(ROOM_EVENTS.JOIN_ERROR, result);
+        return;
+      }
 
-    const response = {
-      success: true,
-      roomId: room.id,
-      room: roomManager.serializeRoom(room),
-      socketId: socket.id,
-    };
+      socket.leave(ROOM_LIST_CHANNEL);
+      socket.join(result.room.id);
 
-    if (typeof callback === "function") callback(response);
-    socket.emit(ROOM_EVENTS.ROOM_CREATED, response);
-    broadcastRoomList();
-    console.log(`🏠 Room created: ${room.id} by Host ${socket.id}`);
-  });
-
-  socket.on(ROOM_EVENTS.JOIN_ROOM, (data: any = {}, callback: any) => {
-    const roomId = data.roomId;
-    if (!roomId) {
-      const errResponse = { success: false, error: "Room ID required" };
-      if (typeof callback === "function") callback(errResponse);
-      socket.emit(ROOM_EVENTS.JOIN_ERROR, errResponse);
-      return;
-    }
-
-    const result = roomManager.joinRoom(roomId, socket.id, data);
-    if (!result.success) {
       if (typeof callback === "function") callback(result);
-      socket.emit(ROOM_EVENTS.JOIN_ERROR, result);
-      return;
-    }
+      socket.emit(ROOM_EVENTS.ROOM_JOINED, result);
 
-    socket.leave(ROOM_LIST_CHANNEL);
-    socket.join(result.room.id);
+      io.to(result.room.id).emit(ROOM_EVENTS.PLAYER_JOINED, {
+        player: result.player,
+        room: result.room,
+      });
 
-    if (typeof callback === "function") callback(result);
-    socket.emit(ROOM_EVENTS.ROOM_JOINED, result);
-
-    io.to(result.room.id).emit(ROOM_EVENTS.PLAYER_JOINED, {
-      player: result.player,
-      room: result.room,
-    });
-
-    broadcastRoomList();
-    console.log(`👥 Client ${socket.id} joined Room ${result.room.id}`);
-  });
+      broadcastRoomList();
+      console.log(`👥 Client ${socket.id} joined Room ${result.room.id}`);
+    },
+  );
 
   socket.on(ROOM_EVENTS.LEAVE_ROOM, (callback: any) => {
     const result = roomManager.leaveRoom(socket.id);
@@ -297,12 +323,12 @@ io.on("connection", (socket: any) => {
     };
 
     if (typeof callback === "function") callback(payload);
-    io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || "game_started", payload);
+    io.to(room.id).emit(GAME_EVENTS.GAME_STARTED, payload);
     broadcastRoomList();
     console.log(`🚀 Match started in Room ${room.id} by Host ${socket.id}`);
   });
 
-  socket.on(GAME_EVENTS.PLAYER_INPUT || "player_input", (inputState: any) => {
+  socket.on(GAME_EVENTS.PLAYER_INPUT, (inputState: SerializedInputState) => {
     const room = roomManager.getRoomBySocketId(socket.id);
     if (!room || !inputState) return;
 
@@ -320,7 +346,7 @@ io.on("connection", (socket: any) => {
     }
   });
 
-  socket.on(GAME_EVENTS.PLAYER_DIED || "player_died", (data: any = {}) => {
+  socket.on(GAME_EVENTS.PLAYER_DIED, (data: { reason: string }) => {
     const room = roomManager.getRoomBySocketId(socket.id);
     if (!room || room.status !== "playing") return;
 

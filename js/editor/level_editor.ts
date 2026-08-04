@@ -2,8 +2,8 @@
    LEVEL EDITOR ENGINE
    ========================================================================== */
 
+import { LevelData } from '../shared/payloads.js';
 import { TileMap, TILES, TILE_SIZE, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
-import { LevelData } from '../shared/types.js';
 
 export interface PaletteItem {
     type: number;
