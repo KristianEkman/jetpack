@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { io as ioClient } from "socket.io-client";
 import { httpServer, gameLoop, roomManager, io } from "../server/index.js";
-import { GAME_EVENTS } from "../js/shared/constants.js";
+import { GAME_EVENTS, ROOM_EVENTS } from "../js/shared/constants.js";
 
 console.log("🧪 Starting Node.js Backend Server Integration Test Suite...\n");
 
@@ -47,7 +47,7 @@ try {
   console.log(`   ✅ Client 1 connected with socket ID: ${client1.id}`);
 
   const handshakeReply: any = await new Promise((resolve) => {
-    client1.emit("ping_handshake", (data: any) => resolve(data));
+    client1.emit(ROOM_EVENTS.PING_HANDSHAKE, (data: any) => resolve(data));
   });
   assert.equal(handshakeReply.pong, true);
   assert.equal(handshakeReply.socketId, client1.id);
@@ -80,7 +80,7 @@ try {
 
   let client1PlayerJoinedEvent: any = null;
   const playerJoinedPromise = new Promise((resolve) => {
-    client1.on("player_joined", (data: any) => {
+    client1.on(ROOM_EVENTS.PLAYER_JOINED, (data: any) => {
       client1PlayerJoinedEvent = data;
       resolve(data);
     });
@@ -88,7 +88,7 @@ try {
 
   const joinResult: any = await new Promise((resolve) => {
     client2.emit(
-      "join_room",
+      ROOM_EVENTS.JOIN_ROOM,
       { roomId: roomId, playerName: "Wingman", playerColor: "#00ff00" },
       resolve,
     );
@@ -160,7 +160,7 @@ try {
   await new Promise((resolve: any) => client3.on("connect", resolve));
   const lateJoinResult: any = await new Promise((resolve) => {
     client3.emit(
-      "join_room",
+      ROOM_EVENTS.JOIN_ROOM,
       { roomId: roomId, playerName: "LateComer" },
       resolve,
     );
@@ -170,7 +170,7 @@ try {
   console.log("   ✅ Late-join attempt rejected for in-progress game.");
 
   const roomList: any[] = await new Promise((resolve) => {
-    client3.emit("list_rooms", resolve);
+    client3.emit(ROOM_EVENTS.LIST_ROOMS, resolve);
   });
   assert.equal(
     roomList.some((r) => r.id === roomId),
@@ -345,7 +345,7 @@ try {
   console.log("9️⃣  Testing Client Disconnect & Room Cleanup...");
   let client1PlayerLeftEvent: any = null;
   const playerLeftPromise = new Promise((resolve) => {
-    client1.on("player_left", (data: any) => {
+    client1.on(ROOM_EVENTS.PLAYER_LEFT, (data: any) => {
       client1PlayerLeftEvent = data;
       resolve(data);
     });

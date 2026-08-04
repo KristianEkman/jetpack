@@ -76,6 +76,23 @@ export const GAME_EVENTS = {
   GAME_OVER: "game_over",
 } as const;
 
+export const ROOM_EVENTS = {
+  PING_HANDSHAKE: "ping_handshake",
+  PONG_HANDSHAKE: "pong_handshake",
+  CREATE_ROOM: "create_room",
+  ROOM_CREATE_ERROR: "room_create_error",
+  ROOM_CREATED: "room_created",
+  JOIN_ROOM: "join_room",
+  JOIN_ERROR: "join_error",
+  ROOM_JOINED: "room_joined",
+  PLAYER_JOINED : "player_joined",
+  LEAVE_ROOM: "leave_room",
+  ROOM_LEFT: "room_left",
+  PLAYER_LEFT: "player_left",
+  LIST_ROOMS: "list_rooms",
+  ROOM_LIST: "room_list"
+}
+
 export const PLAYER_FLAGS = {
   FACING_RIGHT: 1 << 0, // 1
   IS_GROUNDED: 1 << 1, // 2

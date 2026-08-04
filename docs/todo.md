@@ -7,13 +7,16 @@
 - [x] Better base melody of level 1.
 - [x] replace types with any
 - [x] Has there been a lag after last updates?
-- [ ] optimize performance hot spots, check server
 - [x] refactor and remove duplicate or unused code
-- [ ] customizable controls
 - [x] movement of enemies like in the retro game.
 - [x] game modes, coop (current). Compete match.
-- [ ] bosses
 - [x] enemies moving in patterns, not just left and right
+- [ ] lowe volume of hits, different hits sounds
+- [ ] optimize performance hot spots, check server
+- [ ] customizable controls
+- [ ] bosses
+- [ ] better error handling. no dialogs.
+- [ ] typed payloads over network
 - [ ] more maps
 - [ ] more power ups, special abilities, jetpacks, armors
 - [ ] better physics

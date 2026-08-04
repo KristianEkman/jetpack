@@ -3,7 +3,11 @@
    ========================================================================== */
 
 import type { ManagerOptions, Socket, SocketOptions } from "socket.io-client";
-import { GAME_EVENTS, NETWORK_SETTINGS } from "../shared/constants.js";
+import {
+  GAME_EVENTS,
+  NETWORK_SETTINGS,
+  ROOM_EVENTS,
+} from "../shared/constants.js";
 import type {
   LevelData,
   MultiplayerGameMode,
@@ -284,28 +288,28 @@ export class NetworkManager {
       this.onErrorCb?.(getSocketErrorMessage(error, "Socket error occurred"));
     });
 
-    socket.on("room_created", (data: RoomCreatedPayload) => {
+    socket.on(ROOM_EVENTS.ROOM_CREATED, (data: RoomCreatedPayload) => {
       if (data.success) {
         this.currentRoom = data.room;
         this.onRoomCreatedCb?.(data);
       }
     });
 
-    socket.on("room_joined", (data: RoomJoinedPayload) => {
+    socket.on(ROOM_EVENTS.ROOM_JOINED, (data: RoomJoinedPayload) => {
       if (data.success) {
         this.currentRoom = data.room;
         this.onRoomJoinedCb?.(data);
       }
     });
 
-    socket.on("player_joined", (data: PlayerJoinedPayload) => {
+    socket.on(ROOM_EVENTS.PLAYER_JOINED, (data: PlayerJoinedPayload) => {
       if (this.currentRoom && data.room) {
         this.currentRoom = data.room;
       }
       this.onPlayerJoinedCb?.(data);
     });
 
-    socket.on("player_left", (data: PlayerLeftPayload) => {
+    socket.on(ROOM_EVENTS.PLAYER_LEFT, (data: PlayerLeftPayload) => {
       if (this.currentRoom && data.room) {
         this.currentRoom = data.room;
       }
@@ -317,60 +321,42 @@ export class NetworkManager {
       this.onRoomListCb?.(list);
     });
 
-    socket.on("room_list", (list: PublicRoomInfo[]) => {
+    socket.on(ROOM_EVENTS.ROOM_LIST, (list: PublicRoomInfo[]) => {
       console.log("📋 Received public room list:", list);
       this.onRoomListCb?.(list);
     });
 
-    socket.on(
-      GAME_EVENTS.GAME_STARTED || "game_started",
-      (payload: GameStartedPayload) => {
-        if (payload.room) {
-          this.currentRoom = payload.room;
-        }
-        this.onGameStartedCb?.(payload);
-      },
-    );
+    socket.on(GAME_EVENTS.GAME_STARTED, (payload: GameStartedPayload) => {
+      if (payload.room) {
+        this.currentRoom = payload.room;
+      }
+      this.onGameStartedCb?.(payload);
+    });
 
-    socket.on(
-      GAME_EVENTS.TILE_PHASED || "tile_phased",
-      (data: TilePositionPayload) => {
-        this.onTilePhasedCb?.(data);
-      },
-    );
+    socket.on(GAME_EVENTS.TILE_PHASED, (data: TilePositionPayload) => {
+      this.onTilePhasedCb?.(data);
+    });
 
-    socket.on(
-      GAME_EVENTS.TILE_RESTORED || "tile_restored",
-      (data: TilePositionPayload) => {
-        this.onTileRestoredCb?.(data);
-      },
-    );
+    socket.on(GAME_EVENTS.TILE_RESTORED, (data: TilePositionPayload) => {
+      this.onTileRestoredCb?.(data);
+    });
 
-    socket.on(
-      GAME_EVENTS.ITEM_COLLECTED || "item_collected",
-      (data: ItemCollectedPayload) => {
-        this.onItemCollectedCb?.(data);
-      },
-    );
+    socket.on(GAME_EVENTS.ITEM_COLLECTED, (data: ItemCollectedPayload) => {
+      this.onItemCollectedCb?.(data);
+    });
 
-    socket.on(
-      GAME_EVENTS.ENEMY_DESTROYED || "enemy_destroyed",
-      (data: EnemyDestroyedPayload) => {
-        this.onEnemyDestroyedCb?.(data);
-      },
-    );
+    socket.on(GAME_EVENTS.ENEMY_DESTROYED, (data: EnemyDestroyedPayload) => {
+      this.onEnemyDestroyedCb?.(data);
+    });
 
-    socket.on(
-      GAME_EVENTS.LEVEL_COMPLETE || "level_complete",
-      (data: LevelCompletePayload) => {
-        if (data.room) {
-          this.currentRoom = data.room;
-        }
-        this.onLevelCompleteCb?.(data);
-      },
-    );
+    socket.on(GAME_EVENTS.LEVEL_COMPLETE, (data: LevelCompletePayload) => {
+      if (data.room) {
+        this.currentRoom = data.room;
+      }
+      this.onLevelCompleteCb?.(data);
+    });
 
-    socket.on(GAME_EVENTS.GAME_OVER || "game_over", (data: GameOverPayload) => {
+    socket.on(GAME_EVENTS.GAME_OVER, (data: GameOverPayload) => {
       if (data.room) {
         this.currentRoom = data.room;
       }
@@ -378,13 +364,13 @@ export class NetworkManager {
     });
 
     socket.on(
-      GAME_EVENTS.WORLD_SNAPSHOT || "world_snapshot",
+      GAME_EVENTS.WORLD_SNAPSHOT,
       (snapshot: NetworkWorldSnapshotPayload) => {
         this.onWorldSnapshotCb?.(snapshot);
       },
     );
 
-    socket.on("join_error", (error: { error?: string }) => {
+    socket.on(ROOM_EVENTS.JOIN_ERROR, (error: { error?: string }) => {
       this.onErrorCb?.(error.error || "Failed to join room");
     });
   }
@@ -401,12 +387,16 @@ export class NetworkManager {
     const socket = this.getConnectedSocket();
     if (!socket) return;
 
-    socket.emit("create_room", options, (response: RoomActionResponse) => {
-      if (response.success && response.room) {
-        this.currentRoom = response.room;
-      }
-      callback?.(response);
-    });
+    socket.emit(
+      ROOM_EVENTS.CREATE_ROOM,
+      options,
+      (response: RoomActionResponse) => {
+        if (response.success && response.room) {
+          this.currentRoom = response.room;
+        }
+        callback?.(response);
+      },
+    );
   }
 
   joinRoom(
@@ -418,18 +408,22 @@ export class NetworkManager {
     if (!socket) return;
 
     const payload = { roomId, ...options };
-    socket.emit("join_room", payload, (response: RoomActionResponse) => {
-      if (response.success && response.room) {
-        this.currentRoom = response.room;
-      }
-      callback?.(response);
-    });
+    socket.emit(
+      ROOM_EVENTS.JOIN_ROOM,
+      payload,
+      (response: RoomActionResponse) => {
+        if (response.success && response.room) {
+          this.currentRoom = response.room;
+        }
+        callback?.(response);
+      },
+    );
   }
 
   leaveRoom(callback: NetworkCallback<RoomActionResponse> | null = null): void {
     if (!this.socket) return;
 
-    this.socket.emit("leave_room", (response: RoomActionResponse) => {
+    this.socket.emit(ROOM_EVENTS.LEAVE_ROOM, (response: RoomActionResponse) => {
       this.currentRoom = null;
       callback?.(response);
     });
@@ -442,7 +436,7 @@ export class NetworkManager {
     if (!this.socket || !this.currentRoom) return;
 
     this.socket.emit(
-      GAME_EVENTS.START_MATCH || "start_match",
+      GAME_EVENTS.START_MATCH,
       options,
       (response: RoomActionResponse) => {
         if (response.success && response.room) {
@@ -457,7 +451,7 @@ export class NetworkManager {
     const socket = this.getConnectedSocket();
     if (!socket) return;
 
-    socket.emit("list_rooms", (list: PublicRoomInfo[]) => {
+    socket.emit(ROOM_EVENTS.LIST_ROOMS, (list: PublicRoomInfo[]) => {
       callback?.(list);
     });
   }
@@ -467,7 +461,7 @@ export class NetworkManager {
     this.pingTimer = setInterval(() => {
       if (!this.socket || !this.isConnected) return;
       const startTime = Date.now();
-      this.socket.emit("ping_handshake", () => {
+      this.socket.emit(ROOM_EVENTS.PING_HANDSHAKE, () => {
         const rtt = Date.now() - startTime;
         this.pingHistory.push(rtt);
         if (this.pingHistory.length > 10) this.pingHistory.shift();
@@ -515,13 +509,13 @@ export class NetworkManager {
     if (hasChanged || heartbeatExpired) {
       this.lastSentInput = { ...inputState };
       this.lastInputTime = now;
-      this.socket.emit(GAME_EVENTS.PLAYER_INPUT || "player_input", inputState);
+      this.socket.emit(GAME_EVENTS.PLAYER_INPUT, inputState);
     }
   }
 
   sendPlayerDied(reason: string = "enemy"): void {
     if (!this.socket || !this.isConnected || !this.currentRoom) return;
-    this.socket.emit(GAME_EVENTS.PLAYER_DIED || "player_died", { reason });
+    this.socket.emit(GAME_EVENTS.PLAYER_DIED, { reason });
   }
 
   sendEnemyDestroyed(
@@ -531,7 +525,7 @@ export class NetworkManager {
     if (!this.socket || !this.isConnected || !this.currentRoom) return;
 
     this.socket.emit(
-      GAME_EVENTS.ENEMY_DESTROYED || "enemy_destroyed",
+      GAME_EVENTS.ENEMY_DESTROYED,
       { enemyId },
       callback ?? undefined,
     );
@@ -543,7 +537,7 @@ export class NetworkManager {
     if (!this.socket || !this.isConnected || !this.currentRoom) return;
 
     this.socket.emit(
-      GAME_EVENTS.COMPLETE_LEVEL || "complete_level",
+      GAME_EVENTS.COMPLETE_LEVEL,
       {},
       (response: LevelCompletePayload) => {
         if (response.success && response.room) {
@@ -558,7 +552,7 @@ export class NetworkManager {
     if (!this.socket || !this.isConnected || !this.currentRoom) return;
 
     this.socket.emit(
-      GAME_EVENTS.NEXT_LEVEL || "next_level",
+      GAME_EVENTS.NEXT_LEVEL,
       {},
       (response: GameStartedPayload) => {
         if (response.success && response.room) {
