@@ -471,6 +471,7 @@ html {
 
 .editor-header {
   display: flex;
+  overflow: scroll;
   justify-content: space-between;
   font-family: var(--font-display);
   font-size: 0.85rem;
@@ -480,6 +481,7 @@ html {
 
 .tile-palette {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
@@ -979,7 +981,9 @@ kbd {
   background: rgba(0, 240, 255, 0.06);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .game-mode-option:has(input:checked) {
