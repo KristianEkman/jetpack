@@ -438,9 +438,7 @@ export class MultiplayerController {
     const gameModeElement = document.getElementById("displayRoomGameMode");
     if (gameModeElement) {
       const isCompeteMatch = room.gameMode === MULTIPLAYER_MODES.COMPETE;
-      gameModeElement.textContent = isCompeteMatch
-        ? "⚔️ COMPETE"
-        : "🤝 CO-OP";
+      gameModeElement.textContent = isCompeteMatch ? "⚔️ COMPETE" : "🤝 CO-OP";
       gameModeElement.style.color = isCompeteMatch ? "#ff2a5f" : "#00ffcc";
     }
 
@@ -765,8 +763,7 @@ export class MultiplayerController {
 
     const isCompeteMatch = data.reason === "compete_match_complete";
     const title = document.getElementById("gameOverTitle");
-    if (title)
-      title.textContent = isCompeteMatch ? "MATCH OVER" : "GAME OVER";
+    if (title) title.textContent = isCompeteMatch ? "MATCH OVER" : "GAME OVER";
     const message = document.getElementById("gameOverMessage");
     if (message) {
       if (isCompeteMatch) {

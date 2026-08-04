@@ -11,7 +11,7 @@
 - [x] movement of enemies like in the retro game.
 - [x] game modes, coop (current). Compete match.
 - [x] enemies moving in patterns, not just left and right
-- [ ] lowe volume of hits, different hits sounds
+- [ ] lower volume of hits, different hits sounds
 - [ ] optimize performance hot spots, check server
 - [ ] customizable controls
 - [ ] bosses
