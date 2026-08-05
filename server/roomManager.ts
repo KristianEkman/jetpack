@@ -48,6 +48,7 @@ export interface ServerRoom {
   tickCount: number;
   destroyedEnemyIds: Set<string>;
   createdAt: number;
+  competeEndTimer?: number;
 }
 
 export class RoomManager {

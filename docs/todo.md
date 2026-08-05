@@ -18,7 +18,7 @@
 - [ ] customizable controls
 - [ ] bosses
 - [ ] better error handling. no dialogs.
-- [ ] typed payloads over network
+- [x] typed payloads over network
 - [ ] more maps
 - [ ] more power ups, special abilities, jetpacks, armors
 - [ ] better physics
@@ -30,5 +30,5 @@
 - [ ] Place in game buttons better.
 
 - [ ] mobile controls more transparent and bigger.
-- [ ] when compete match ends add a delay so you cann see who died
+- [ ] when compete match ends add a delay so you can see who died
 - [ ] extralife

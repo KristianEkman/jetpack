@@ -13,12 +13,13 @@
     "build": "tsc --noEmit && vite build",
     "deploy": "npm run build && az webapp up --resource-group jetpack-rg",
     "typecheck": "tsc --noEmit",
-    "test": "tsx scripts/test_shared.ts && tsx scripts/test_server.ts && tsx scripts/test_phase5.ts && tsx scripts/test_list_rooms.ts && tsx scripts/test_server_regressions.ts",
+    "test": "tsx scripts/test_shared.ts && tsx scripts/test_server.ts && tsx scripts/test_phase5.ts && tsx scripts/test_list_rooms.ts && tsx scripts/test_server_regressions.ts && tsx scripts/test_compete_delay.ts",
     "test:shared": "tsx scripts/test_shared.ts",
     "test:server": "tsx scripts/test_server.ts",
     "test:phase5": "tsx scripts/test_phase5.ts",
     "test:list_rooms": "tsx scripts/test_list_rooms.ts",
-    "test:server-regressions": "tsx scripts/test_server_regressions.ts"
+    "test:server-regressions": "tsx scripts/test_server_regressions.ts",
+    "test:compete-delay": "tsx scripts/test_compete_delay.ts"
   },
   "keywords": [
     "jetpack",

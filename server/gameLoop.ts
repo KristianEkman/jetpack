@@ -232,22 +232,33 @@ export class GameLoop {
           );
 
           if (remainingPlayers.length <= 1) {
-            room.status = "finished";
-            const winnerEntry = remainingPlayers[0] || null;
-            const serializedRoom = this.roomManager.serializeRoom(room);
-            if (this.io) {
-              this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || "game_over", {
-                roomId: room.id,
-                reason: "compete_match_complete",
-                winnerSocketId: winnerEntry?.[0],
-                winnerName: winnerEntry?.[1].name,
-                players: serializedRoom.players,
-                room: serializedRoom,
-              });
+            if (room.competeEndTimer === undefined) {
+              room.competeEndTimer = 2.5;
+            } else {
+              room.competeEndTimer -= this.dt;
             }
-            console.log(
-              `⚔️ Match finished in Room ${room.id}. Winner: ${winnerEntry?.[1].name || "Draw"}`,
-            );
+
+            if (room.competeEndTimer <= 0) {
+              room.status = "finished";
+              room.competeEndTimer = undefined;
+              const winnerEntry = remainingPlayers[0] || null;
+              const serializedRoom = this.roomManager.serializeRoom(room);
+              if (this.io) {
+                this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || "game_over", {
+                  roomId: room.id,
+                  reason: "compete_match_complete",
+                  winnerSocketId: winnerEntry?.[0],
+                  winnerName: winnerEntry?.[1].name,
+                  players: serializedRoom.players,
+                  room: serializedRoom,
+                });
+              }
+              console.log(
+                `⚔️ Match finished in Room ${room.id}. Winner: ${winnerEntry?.[1].name || "Draw"}`,
+              );
+            }
+          } else {
+            room.competeEndTimer = undefined;
           }
         } else {
           let allDead = true;

@@ -287,6 +287,7 @@ io.on("connection", (socket: any) => {
     }
 
     room.status = "playing";
+    room.competeEndTimer = undefined;
     room.destroyedEnemyIds = new Set();
 
     const levelData =
@@ -459,6 +460,7 @@ io.on("connection", (socket: any) => {
     }
 
     room.status = "playing";
+    room.competeEndTimer = undefined;
     room.destroyedEnemyIds = new Set();
 
     const levelData =
