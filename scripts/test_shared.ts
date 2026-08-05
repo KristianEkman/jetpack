@@ -130,7 +130,40 @@ assert.equal(
   PLAYER_PHYSICS.PHASE_COOLDOWN_TIME,
   "Phase beam should enter a one-second cooldown after firing",
 );
-console.log("   ✅ Phase beam cooldown is enforced.\n");
+console.log("   ✅ Phase beam cooldown is enforced.");
+
+// Ladder movement speed test
+const ladderCol = 5;
+const ladderRow = 5;
+tileMap.setTile(ladderCol, ladderRow, TILES.LADDER);
+tileMap.setTile(ladderCol, ladderRow + 1, TILES.BRICK);
+tileMap.setTile(ladderCol + 1, ladderRow, TILES.AIR);
+tileMap.setTile(ladderCol + 1, ladderRow + 1, TILES.BRICK);
+
+const ladderX = ladderCol * TILE_SIZE + 5;
+const ladderY = ladderRow * TILE_SIZE + (TILE_SIZE - PLAYER_PHYSICS.HEIGHT);
+
+p1.spawn(ladderX, ladderY);
+p1.isGrounded = true;
+p1.isClimbing = true;
+const groundedRightInput = InputHandler.deserializeInputState({ right: true, sequenceId: 4 });
+p1.simulateMovement(0.1, groundedRightInput, new EnemyManager(tileMap));
+const groundedVx = p1.vx;
+
+p1.spawn(ladderX, ladderY - 10);
+p1.isGrounded = false;
+p1.isClimbing = true;
+const airRightInput = InputHandler.deserializeInputState({ right: true, up: true, sequenceId: 5 });
+p1.simulateMovement(0.1, airRightInput, new EnemyManager(tileMap));
+const airVx = p1.vx;
+
+assert.ok(
+  groundedVx > airVx,
+  `Grounded ladder speed (${groundedVx}) should be faster than air climbing ladder speed (${airVx})`,
+);
+assert.equal(groundedVx, 120, "Grounded ladder speed should be full speed (120)");
+assert.equal(airVx, 60, "Air climbing ladder speed should be half speed (60)");
+console.log("   ✅ Ladder speed when grounded vs in air verified.\n");
 
 // 4. Verify Input State Serialization
 console.log("4️⃣  Testing Input Handler Payload Serialization...");

@@ -12,8 +12,9 @@
 - [x] game modes, coop (current). Compete match.
 - [x] enemies moving in patterns, not just left and right
 - [x] Do not display name in campain mode.
+- [x] optimize performance hot spots, check server
 - [ ] lower volume of hits, different hits sounds
-- [ ] optimize performance hot spots, check server
+- [x] moving on ladders left right is slower -> good, but when also standing on normail tile dont move so slow.
 - [ ] customizable controls
 - [ ] bosses
 - [ ] better error handling. no dialogs.

@@ -194,7 +194,9 @@ export class Player {
       this.vy = 0;
       if (input.up) this.vy = -140;
       if (input.down) this.vy = 140;
-      this.vx *= 0.5;
+      if (!this.isGrounded) {
+        this.vx *= 0.5;
+      }
     }
 
     if (input.thrust && this.fuel > 0) {
