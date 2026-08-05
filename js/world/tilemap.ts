@@ -1308,6 +1308,63 @@ export class TileMap {
         ctx.restore();
         break;
       }
+
+      case TILES.EXTRA_LIFE: {
+        const now = Date.now();
+        const hoverY = Math.sin(now / 220) * 1.8;
+        const pulse = (Math.sin(now / 180) + 1) * 0.5;
+        const cx = x + 16;
+        const cy = y + 16 + hoverY;
+
+        ctx.save();
+
+        // Pulsing glow aura
+        const glowRadius = 16 + pulse * 2.5;
+        const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+        glow.addColorStop(0, `rgba(255, 45, 85, ${0.5 + pulse * 0.25})`);
+        glow.addColorStop(0.5, `rgba(255, 120, 160, ${0.25 + pulse * 0.15})`);
+        glow.addColorStop(1, "rgba(255, 45, 85, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ground shadow
+        const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(cx, y + 29, 7 * shadowScale, 2.2 * shadowScale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Heart shape bezier
+        const heartGrad = ctx.createLinearGradient(cx - 8, cy - 8, cx + 8, cy + 8);
+        heartGrad.addColorStop(0, "#ff5e83");
+        heartGrad.addColorStop(0.5, "#ff2d55");
+        heartGrad.addColorStop(1, "#c0002d");
+
+        ctx.fillStyle = heartGrad;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + 8);
+        ctx.bezierCurveTo(cx - 10, cy + 2, cx - 11, cy - 6, cx - 5, cy - 8);
+        ctx.bezierCurveTo(cx - 2, cy - 8, cx, cy - 5, cx, cy - 4);
+        ctx.bezierCurveTo(cx, cy - 5, cx + 2, cy - 8, cx + 5, cy - 8);
+        ctx.bezierCurveTo(cx + 11, cy - 6, cx + 10, cy + 2, cx, cy + 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Highlight sheen
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.beginPath();
+        ctx.arc(cx - 3.5, cy - 4.5, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+        break;
+      }
     }
   }
 }

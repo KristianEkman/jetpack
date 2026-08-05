@@ -127,6 +127,20 @@ export class MultiplayerController {
             "#f1c40f",
             10,
           );
+        } else if (data.tileType === TILES.EXTRA_LIFE) {
+          game.audio?.playExtraLifePickup?.();
+          game.tileMap.addSparkles(
+            data.col * TILE_SIZE + 16,
+            data.row * TILE_SIZE + 16,
+            "#ff2d55",
+            15,
+          );
+          game.tileMap.addSparkles(
+            data.col * TILE_SIZE + 16,
+            data.row * TILE_SIZE + 16,
+            "#ff88a5",
+            12,
+          );
         }
       }
     };

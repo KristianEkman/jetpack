@@ -26,6 +26,7 @@ export const TILES = {
   ENEMY_FLITZER: 16,
   ENEMY_MISSILE: 17,
   ENEMY_TURRET: 18,
+  EXTRA_LIFE: 19,
 } as const;
 
 export type TileTypeValue = (typeof TILES)[keyof typeof TILES];
@@ -36,6 +37,8 @@ export const PLAYER_PHYSICS = {
   MAX_FUEL: 100,
   FUEL_BURN_RATE: 18, // % per second
   INITIAL_LIVES: 3,
+  MAX_LIVES: 9,
+  SCORE_PER_EXTRA_LIFE: 10000,
   WALK_ACCEL: 1200,
   ICE_ACCEL: 400,
   WALK_FRICTION: 0.82,

@@ -156,6 +156,10 @@ export class AudioManager {
         this.sfx.playEmeraldPickup();
     }
 
+    playExtraLifePickup(): void {
+        this.sfx.playExtraLifePickup();
+    }
+
     playAllDiamondsCaught(): void {
         this.sfx.playAllDiamondsCaught();
     }

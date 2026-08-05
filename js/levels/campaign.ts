@@ -31,7 +31,8 @@ const CHAR_TO_TILE: Record<string, number> = {
     'T': TILES.TELEPORTER,
     '1': TILES.ENEMY_FLITZER,
     '2': TILES.ENEMY_MISSILE,
-    '3': TILES.ENEMY_TURRET
+    '3': TILES.ENEMY_TURRET,
+    'L': TILES.EXTRA_LIFE
 };
 
 function parseLevelString(str: string): number[] {
@@ -94,7 +95,7 @@ const LEVEL_2_STR = `
 // Level 3: Conveyor Factory
 const LEVEL_3_STR = `
 ##############################
-#S..........E..............E.#
+#S..........E...L..........E.#
 #####.>>>>>>>>>>>>.###########
 #..........H...........H.....#
 #.<<<<<<<<<H<<<<<<<<<<<H<<<<.#
@@ -126,7 +127,7 @@ const LEVEL_4_STR = `
 #.#.###.#.#.#.#.##########.#.#
 #.#...#.#...#.#.#..........#.#
 #.###.#.#####.#.#.########.#.#
-#.....#.......#.#...E......#.#
+#.....#.......#.#...E...L..#.#
 #.#############.##########.#.#
 #...X...X...X............#.O.#
 #.######################.#.###
@@ -138,7 +139,7 @@ const LEVEL_4_STR = `
 // Level 5: The Emerald Core
 const LEVEL_5_STR = `
 ##############################
-#S....PPP....E....PPP......E.#
+#S....PPP....E....PPP...L..E.#
 #####.PPP.########.PPP.#######
 #.....PPP..........PPP.......#
 #.PPPPPPPPPPPPPPPPPPPPPPPPPP.#
@@ -162,7 +163,7 @@ const LEVEL_5_STR = `
 // the vine and ladder routes trade speed for safer fuel and collectible paths.
 const LEVEL_6_STR = `
 ##############################
-#S....E...PPP....T....E......#
+#S....E...PPP....T....E...L..#
 #####.###.PPP.######.#######.#
 #....V#...PPP......#.........#
 #.###V#.##########.#.#######.#

@@ -265,7 +265,7 @@ export class Player {
             const livesBeforeHit = target.lives;
             target.takeDamage();
             if (target.lives < livesBeforeHit) {
-              this.score += COMPETE_SCORE_PER_HIT;
+              this.addScore(COMPETE_SCORE_PER_HIT);
               this.phaseBeamLength = dist;
               return target;
             }
@@ -293,7 +293,7 @@ export class Player {
 
           if (destroyedEnemy) {
             this.audio?.playExplosion?.();
-            this.score += 200;
+            this.addScore(200);
             enemyManager.onEnemyDestroyed?.({
               enemyId: destroyedEnemy.id,
               playerId: this.id,
@@ -404,7 +404,7 @@ export class Player {
             const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
 
             if (destroyedEnemy) {
-              this.score += 200;
+              this.addScore(200);
               enemyManager.onEnemyDestroyed?.({
                 enemyId: destroyedEnemy.id,
                 playerId: this.id,
@@ -699,7 +699,7 @@ export class Player {
         if (tile === TILES.EMERALD) {
           this.tileMap.setTile(col, row, TILES.AIR);
           this.tileMap.collectedEmeralds++;
-          this.score += 250;
+          this.addScore(250);
           const isAllCaught =
             this.tileMap.collectedEmeralds === 4 ||
             (this.tileMap.totalEmeralds > 0 &&
@@ -751,7 +751,7 @@ export class Player {
         } else if (tile === TILES.FUEL) {
           this.tileMap.setTile(col, row, TILES.AIR);
           this.fuel = Math.min(this.maxFuel, this.fuel + 50);
-          this.score += 50;
+          this.addScore(50);
           this.audio?.playFuelPickup?.();
           this.tileMap.addSparkles(
             col * TILE_SIZE + 16,
@@ -782,7 +782,7 @@ export class Player {
           });
         } else if (tile === TILES.GOLD) {
           this.tileMap.setTile(col, row, TILES.AIR);
-          this.score += 500;
+          this.addScore(500);
           this.audio?.playEmeraldPickup?.();
           this.tileMap.addSparkles(
             col * TILE_SIZE + 16,
@@ -799,6 +799,69 @@ export class Player {
             totalEmeralds: this.tileMap.totalEmeralds,
             score: this.score,
           });
+        } else if (tile === TILES.EXTRA_LIFE) {
+          this.tileMap.setTile(col, row, TILES.AIR);
+          this.lives = Math.min(PLAYER_PHYSICS.MAX_LIVES, this.lives + 1);
+          this.addScore(1000);
+          this.audio?.playExtraLifePickup?.();
+          this.tileMap.addSparkles(
+            col * TILE_SIZE + 16,
+            row * TILE_SIZE + 16,
+            "#ff2d55",
+            15,
+          );
+          this.tileMap.addSparkles(
+            col * TILE_SIZE + 16,
+            row * TILE_SIZE + 16,
+            "#ff88a5",
+            12,
+          );
+          this.tileMap.addSparkles(
+            col * TILE_SIZE + 16,
+            row * TILE_SIZE + 16,
+            "#ffffff",
+            8,
+          );
+          this.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+            col,
+            row,
+            tileType: tile,
+            playerId: this.id,
+            collectedEmeralds: this.tileMap.collectedEmeralds,
+            totalEmeralds: this.tileMap.totalEmeralds,
+            lives: this.lives,
+            score: this.score,
+          });
+        }
+      }
+    }
+  }
+
+  addScore(points: number): void {
+    const oldScore = this.score;
+    this.score += points;
+    const milestone = PLAYER_PHYSICS.SCORE_PER_EXTRA_LIFE;
+    if (milestone > 0) {
+      const oldMilestones = Math.floor(oldScore / milestone);
+      const newMilestones = Math.floor(this.score / milestone);
+      if (newMilestones > oldMilestones) {
+        const extraLivesToAdd = newMilestones - oldMilestones;
+        const prevLives = this.lives;
+        this.lives = Math.min(PLAYER_PHYSICS.MAX_LIVES, this.lives + extraLivesToAdd);
+        if (this.lives > prevLives) {
+          this.audio?.playExtraLifePickup?.();
+          this.tileMap?.addSparkles?.(
+            this.x + this.width / 2,
+            this.y + this.height / 2,
+            "#ff2d55",
+            20,
+          );
+          this.tileMap?.addSparkles?.(
+            this.x + this.width / 2,
+            this.y + this.height / 2,
+            "#ffffff",
+            15,
+          );
         }
       }
     }

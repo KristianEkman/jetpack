@@ -30,5 +30,5 @@
 - [ ] Place in game buttons better.
 
 - [ ] mobile controls more transparent and bigger.
-- [ ] when compete match ends add a delay so you can see who died
-- [ ] extralife
+- [x] when compete match ends add a delay so you can see who died
+- [x] extralife

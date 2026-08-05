@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { AudioManager } from "./audioManager";
+import { NOTES } from "./notes";
 
 export class SoundEffects {
     audio: AudioManager;
@@ -172,6 +173,33 @@ export class SoundEffects {
 
             osc.start(this.ctx.currentTime + idx * 0.04);
             osc.stop(this.ctx.currentTime + idx * 0.04 + 0.12);
+        });
+    }
+
+    // Extra Life 1UP Chime
+    playExtraLifePickup(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const notes = [NOTES.Fs5, NOTES.As5, NOTES.Cs6, NOTES.Fs6, NOTES.As6]; // Fs5, As5, Cs6, Fs6, As6 (F# Major arpeggio, 6 notes up from C5)
+        notes.forEach((freq, idx) => {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = idx === notes.length - 1 ? 'triangle' : 'sine';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.05);
+
+            gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.05);
+            gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + idx * 0.05 + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.05 + 0.18);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(this.ctx.currentTime + idx * 0.05);
+            osc.stop(this.ctx.currentTime + idx * 0.05 + 0.18);
         });
     }
 
