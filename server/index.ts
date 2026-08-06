@@ -408,15 +408,6 @@ io.on("connection", (socket: any) => {
       return;
     }
 
-    if (room.gameMode !== MULTIPLAYER_MODES.COOP) {
-      const errRes = {
-        success: false,
-        error: "Level completion is only available in co-op mode",
-      };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
-
     room.status = "finished";
     const playerConfig = room.playerConfigs.get(socket.id);
     const playerName = playerConfig ? playerConfig.name : "Player";

@@ -176,7 +176,6 @@ export class GameLoop {
 
       if (
         room.status === "playing" &&
-        room.gameMode === MULTIPLAYER_MODES.COOP &&
         room.tileMap
       ) {
         const allEmeraldsCaught =
