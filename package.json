@@ -22,7 +22,8 @@
     "test:compete-delay": "tsx scripts/test_compete_delay.ts",
     "test:compete-exit": "tsx scripts/test_compete_exit.ts",
     "test:extralife": "tsx scripts/test_extralife.ts",
-    "test:boss": "tsx scripts/test_boss.ts"
+    "test:boss": "tsx scripts/test_boss.ts",
+    "test:wall-hit": "tsx scripts/test_enemy_wall_hit.ts"
   },
   "keywords": [
     "jetpack",

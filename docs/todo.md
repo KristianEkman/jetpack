@@ -16,7 +16,7 @@
 - [ ] lower volume of hits, different hits sounds
 - [x] moving on ladders left right is slower -> good, but when also standing on normail tile dont move so slow.
 - [ ] customizable controls
-- [ ] bosses
+- [x] bosses
 - [ ] better error handling. no dialogs.
 - [x] typed payloads over network
 - [ ] more maps

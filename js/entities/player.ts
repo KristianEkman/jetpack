@@ -247,6 +247,17 @@ export class Player {
       const targetCol = Math.floor(targetX / TILE_SIZE);
       const targetRow = Math.floor(startY / TILE_SIZE);
 
+      const t = this.tileMap.getTile(targetCol, targetRow);
+      if (t === TILES.PHASE_BRICK) {
+        this.audio.playExplosion?.();
+        this.tileMap.phaseTile(targetCol, targetRow);
+        this.phaseBeamLength = dist;
+        return null;
+      } else if (this.tileMap.isSolid(targetCol, targetRow)) {
+        this.phaseBeamLength = dist;
+        return null;
+      }
+
       if (targets.length > 0) {
         for (const target of targets) {
           if (
@@ -302,17 +313,6 @@ export class Player {
           this.phaseBeamLength = dist;
           return null;
         }
-      }
-
-      const t = this.tileMap.getTile(targetCol, targetRow);
-      if (t === TILES.PHASE_BRICK) {
-        this.audio.playExplosion?.();
-        this.tileMap.phaseTile(targetCol, targetRow);
-        this.phaseBeamLength = dist;
-        return null;
-      } else if (this.tileMap.isSolid(targetCol, targetRow)) {
-        this.phaseBeamLength = dist;
-        return null;
       }
     }
     return null;
@@ -375,6 +375,13 @@ export class Player {
       const dir = this.facingRight ? 1 : -1;
       for (let dist = 0; dist <= 160; dist += 8) {
         const targetX = startX + dir * dist;
+        const targetCol = Math.floor(targetX / TILE_SIZE);
+        const targetRow = Math.floor(startY / TILE_SIZE);
+
+        const t = this.tileMap.getTile(targetCol, targetRow);
+        if (t === TILES.PHASE_BRICK || this.tileMap.isSolid(targetCol, targetRow)) {
+          break;
+        }
 
         if (enemyManager && enemyManager.enemies) {
           let hitEnemyIndex = -1;
