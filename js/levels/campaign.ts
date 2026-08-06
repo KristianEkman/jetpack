@@ -184,6 +184,30 @@ const LEVEL_6_STR = `
 ##############################
 `;
 
+// Level 7: Mecha Core Fortress
+// Climax boss encounter combining phase bricks, energy drains, conveyor traps,
+// and heavy enemy artillery anchored by MECHA CORE ALPHA.
+const LEVEL_7_STR = `
+##############################
+#S....E....PPP....E........L.#
+#####.####.PPP.###############
+#...#.V......................#
+#.#.#.V.####################.#
+#.#.#.V.#..........E.......#.#
+#.#.#...#..................#.#
+#.#.#####..................#.#
+#.#.......#...DDDDDDDD...#.#.#
+#.#########.>>>>>>>>>>>>.#.#.#
+#.........#..............#.#.#
+#.#######.################.#.#
+#.#.....#...IIIIIIIIIIII.#.#.#
+#.#.###.###.IIIIIIIIIIII.#.#.#
+#.#...#.....<<<<<<<<<<<<.#.#.#
+#.###.##################.#.O.#
+#...F...F............F...#.###
+##############################
+`;
+
 export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
     {
         name: "Stage 1: Genesis Caverns",
@@ -239,5 +263,24 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
             { x: 560, y: 180, fireInterval: 1.65 },
             { x: 770, y: 470, fireInterval: 2.1 }
         ]
+    },
+    {
+        name: "Stage 7: Mecha Core Fortress",
+        grid: parseLevelString(LEVEL_7_STR),
+        flitzers: [
+            { x: 320, y: 100, vx: 175, vy: 0 },
+            { x: 720, y: 450, vx: -160, vy: 0 }
+        ],
+        missiles: [
+            { x: 820, y: 120 }
+        ],
+        turrets: [
+            { x: 700, y: 100, fireInterval: 1.6 },
+            { x: 220, y: 420, fireInterval: 1.9 }
+        ],
+        bosses: [
+            { x: 440, y: 180, hp: 35 }
+        ]
     }
 ];
+
