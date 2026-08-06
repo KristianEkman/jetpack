@@ -351,3 +351,9 @@ export class Game {
 window.addEventListener("DOMContentLoaded", () => {
   (window as any).gameInstance = new Game();
 });
+
+if (typeof window !== "undefined") {
+  window.addEventListener("DOMContentLoaded", () => {
+    (window as any).gameInstance = new Game();
+  });
+}

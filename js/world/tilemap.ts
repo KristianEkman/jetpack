@@ -581,7 +581,8 @@ export class TileMap {
           !isEditor &&
           (tile === TILES.ENEMY_FLITZER ||
             tile === TILES.ENEMY_MISSILE ||
-            tile === TILES.ENEMY_TURRET)
+            tile === TILES.ENEMY_TURRET ||
+            tile === TILES.ENEMY_BOSS)
         )
           continue;
 
@@ -1305,6 +1306,27 @@ export class TileMap {
         ctx.beginPath();
         ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
+        break;
+      }
+
+      case TILES.ENEMY_BOSS: {
+        ctx.save();
+        ctx.fillStyle = "#1a252f";
+        ctx.fillRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.strokeStyle = "#ff0033";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+        ctx.fillStyle = "#ff0044";
+        ctx.beginPath();
+        ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("👾", x + TILE_SIZE / 2, y + TILE_SIZE / 2);
         ctx.restore();
         break;
       }

@@ -27,6 +27,7 @@ export const TILES = {
   ENEMY_MISSILE: 17,
   ENEMY_TURRET: 18,
   EXTRA_LIFE: 19,
+  ENEMY_BOSS: 20,
 } as const;
 
 export type TileTypeValue = (typeof TILES)[keyof typeof TILES];

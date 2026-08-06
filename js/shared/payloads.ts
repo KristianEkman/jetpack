@@ -30,6 +30,7 @@ export type MultiplayerLevelData = Omit<LevelData, "name"> & {
   flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
   missiles?: Array<{ x: number; y: number }>;
   turrets?: Array<{ x: number; y: number; fireInterval: number }>;
+  bosses?: Array<{ x: number; y: number; hp?: number }>;
 };
 
 export interface MultiplayerRoomInfo {

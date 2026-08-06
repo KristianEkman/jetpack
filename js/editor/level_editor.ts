@@ -32,7 +32,8 @@ export const PALETTE: PaletteItem[] = [
     { type: TILES.TELEPORTER, name: 'Teleporter', icon: '🔮', color: '#9b59b6' },
     { type: TILES.ENEMY_FLITZER, name: 'Flitzer Enemy', icon: '👿', color: '#ff0055' },
     { type: TILES.ENEMY_MISSILE, name: 'Homing Missile', icon: '🚀', color: '#ff5500' },
-    { type: TILES.ENEMY_TURRET, name: 'Turret Enemy', icon: '🤖', color: '#e74c3c' }
+    { type: TILES.ENEMY_TURRET, name: 'Turret Enemy', icon: '🤖', color: '#e74c3c' },
+    { type: TILES.ENEMY_BOSS, name: 'Boss Enemy', icon: '👾', color: '#ff0033' }
 ];
 
 export class LevelEditor {

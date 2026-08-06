@@ -12,7 +12,7 @@ import {
 } from "../shared/constants.js";
 import { SerializedInputState } from "../shared/types.js";
 import { TeleporterPad, TileMap } from "../world/tilemap.js";
-import { EnemyManager } from "./enemy.js";
+import { EnemyManager, ENEMY_TYPES } from "./enemy.js";
 import { UnpackedPlayerSnapshot } from "./playerManager.js";
 
 export interface PlayerOptions {
@@ -289,15 +289,14 @@ export class Player {
         }
         if (hitEnemyIndex >= 0) {
           const enemy = enemyManager.enemies[hitEnemyIndex];
-          const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
+          const isBoss = enemy.type === ENEMY_TYPES.BOSS;
+          const wasDestroyed = enemyManager.damageEnemy
+            ? enemyManager.damageEnemy(enemy.id, 1, this.id)
+            : !!enemyManager.removeEnemyById(enemy.id);
 
-          if (destroyedEnemy) {
+          if (wasDestroyed) {
             this.audio?.playExplosion?.();
-            this.addScore(200);
-            enemyManager.onEnemyDestroyed?.({
-              enemyId: destroyedEnemy.id,
-              playerId: this.id,
-            });
+            this.addScore(isBoss ? 5000 : 200);
           }
 
           this.phaseBeamLength = dist;
@@ -393,22 +392,21 @@ export class Player {
           }
           if (hitEnemyIndex >= 0) {
             const enemy = enemyManager.enemies[hitEnemyIndex];
+            const isBoss = enemy.type === ENEMY_TYPES.BOSS;
             this.tileMap.addSparkles(
               enemy.x + enemy.width / 2,
               enemy.y + enemy.height / 2,
               "#ff0055",
               25,
             );
-            this.audio?.playExplosion?.();
 
-            const destroyedEnemy = enemyManager.removeEnemyById(enemy.id);
+            const wasDestroyed = enemyManager.damageEnemy
+              ? enemyManager.damageEnemy(enemy.id, 1, this.id)
+              : !!enemyManager.removeEnemyById(enemy.id);
 
-            if (destroyedEnemy) {
-              this.addScore(200);
-              enemyManager.onEnemyDestroyed?.({
-                enemyId: destroyedEnemy.id,
-                playerId: this.id,
-              });
+            if (wasDestroyed) {
+              this.audio?.playExplosion?.();
+              this.addScore(isBoss ? 5000 : 200);
             }
             break;
           }

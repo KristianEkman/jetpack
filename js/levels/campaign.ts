@@ -10,6 +10,7 @@ export interface CampaignLevelConfig {
     flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
     missiles?: Array<{ x: number; y: number }>;
     turrets?: Array<{ x: number; y: number; fireInterval: number }>;
+    bosses?: Array<{ x: number; y: number; hp?: number }>;
 }
 
 const CHAR_TO_TILE: Record<string, number> = {
@@ -32,6 +33,7 @@ const CHAR_TO_TILE: Record<string, number> = {
     '1': TILES.ENEMY_FLITZER,
     '2': TILES.ENEMY_MISSILE,
     '3': TILES.ENEMY_TURRET,
+    'B': TILES.ENEMY_BOSS,
     'L': TILES.EXTRA_LIFE
 };
 
