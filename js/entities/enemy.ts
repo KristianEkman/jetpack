@@ -612,11 +612,13 @@ export class EnemyManager {
         enemy.x += (enemy.vx || 0) * dt;
         enemy.y += (enemy.vy || 0) * dt;
 
-        if (Math.random() < 0.5 && this.tileMap && this.tileMap.addSparkles) {
+        if (Math.random() < 0.75 && this.tileMap && this.tileMap.addSparkles) {
+          const trailColors = ["#ffffff", "#ffee00", "#ff5500", "#ff0033"];
+          const col = trailColors[Math.floor(Math.random() * trailColors.length)];
           this.tileMap.addSparkles(
-            enemy.x + 8 - (enemy.vx || 0) * 0.05,
-            enemy.y + 8 - (enemy.vy || 0) * 0.05,
-            "#ff5500",
+            enemy.x + enemy.width / 2 - (enemy.vx || 0) * 0.06,
+            enemy.y + enemy.height / 2 - (enemy.vy || 0) * 0.06,
+            col,
             1,
           );
         }
@@ -883,23 +885,70 @@ export class EnemyManager {
     ctx.translate(cx, cy);
     ctx.rotate(angle);
 
-    const flameLen = 10 + Math.random() * 8;
+    const pulse = (Math.sin(Date.now() / 80) + 1) / 2;
+
+    // Thruster jet flame
+    const flameLen = 14 + Math.random() * 10;
     const flameGrad = ctx.createLinearGradient(-8, 0, -8 - flameLen, 0);
     flameGrad.addColorStop(0, "#ffffff");
-    flameGrad.addColorStop(0.3, "#ffaa00");
-    flameGrad.addColorStop(0.7, "#ff0033");
+    flameGrad.addColorStop(0.25, "#ffee00");
+    flameGrad.addColorStop(0.65, "#ff4400");
     flameGrad.addColorStop(1, "rgba(255, 0, 0, 0)");
     ctx.fillStyle = flameGrad;
     ctx.beginPath();
-    ctx.moveTo(-6, -4);
+    ctx.moveTo(-6, -5);
     ctx.lineTo(-8 - flameLen, 0);
-    ctx.lineTo(-6, 4);
+    ctx.lineTo(-6, 5);
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = "#1c040d";
+    // Hot inner core
+    ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.moveTo(10, 0);
+    ctx.moveTo(-6, -2);
+    ctx.lineTo(-10 - Math.random() * 4, 0);
+    ctx.lineTo(-6, 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing aura & high-contrast white outer outline
+    ctx.save();
+    ctx.shadowColor = "#ff2200";
+    ctx.shadowBlur = 12 + pulse * 6;
+
+    ctx.beginPath();
+    ctx.moveTo(12, 0);
+    ctx.lineTo(4, -7);
+    ctx.lineTo(-8, -6);
+    ctx.lineTo(-6, 0);
+    ctx.lineTo(-8, 6);
+    ctx.lineTo(4, 7);
+    ctx.closePath();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-2, -5);
+    ctx.lineTo(-8, -11);
+    ctx.lineTo(-5, -3);
+    ctx.moveTo(-2, 5);
+    ctx.lineTo(-8, 11);
+    ctx.lineTo(-5, 3);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.restore();
+
+    // Main body: vibrant rocket gradient
+    const bodyGrad = ctx.createLinearGradient(-8, -6, 12, 6);
+    bodyGrad.addColorStop(0, "#ff2200");
+    bodyGrad.addColorStop(0.5, "#ff5500");
+    bodyGrad.addColorStop(1, "#ffcc00");
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.moveTo(12, 0);
     ctx.lineTo(4, -6);
     ctx.lineTo(-8, -5);
     ctx.lineTo(-6, 0);
@@ -907,29 +956,66 @@ export class EnemyManager {
     ctx.lineTo(4, 6);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = "#ff0044";
-    ctx.lineWidth = 1.2;
+
+    // Hazard stripes for extra readability
+    ctx.fillStyle = "#ffee00";
+    ctx.fillRect(-2, -5, 4, 10);
+    ctx.fillStyle = "#111111";
+    ctx.fillRect(0, -5, 2, 10);
+
+    // Inner dark border
+    ctx.strokeStyle = "#880000";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(12, 0);
+    ctx.lineTo(4, -6);
+    ctx.lineTo(-8, -5);
+    ctx.lineTo(-6, 0);
+    ctx.lineTo(-8, 5);
+    ctx.lineTo(4, 6);
+    ctx.closePath();
     ctx.stroke();
 
-    ctx.fillStyle = "#4a081a";
+    // Vibrant red fins
+    ctx.fillStyle = "#ff0033";
     ctx.beginPath();
     ctx.moveTo(-2, -5);
-    ctx.lineTo(-7, -9);
+    ctx.lineTo(-8, -10);
     ctx.lineTo(-5, -3);
+    ctx.closePath();
     ctx.fill();
     ctx.beginPath();
     ctx.moveTo(-2, 5);
-    ctx.lineTo(-7, 9);
+    ctx.lineTo(-8, 10);
     ctx.lineTo(-5, 3);
+    ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = "#ff0033";
+    // Fin accent border
+    ctx.strokeStyle = "#ffee00";
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(4, 0, 3, 0, Math.PI * 2);
+    ctx.moveTo(-2, -5);
+    ctx.lineTo(-8, -10);
+    ctx.moveTo(-2, 5);
+    ctx.lineTo(-8, 10);
+    ctx.stroke();
+
+    // Pulsing warning beacon tip
+    ctx.fillStyle = "#ff0000";
+    ctx.beginPath();
+    ctx.arc(5, 0, 3.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#ffee00";
+
+    const beaconRad = 4 + pulse * 3.5;
+    ctx.fillStyle = `rgba(255, 230, 0, ${0.4 + pulse * 0.4})`;
     ctx.beginPath();
-    ctx.arc(5, 0, 1.2, 0, Math.PI * 2);
+    ctx.arc(8, 0, beaconRad, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = pulse > 0.5 ? "#ffffff" : "#ffff00";
+    ctx.beginPath();
+    ctx.arc(8, 0, 2, 0, Math.PI * 2);
     ctx.fill();
   }
 

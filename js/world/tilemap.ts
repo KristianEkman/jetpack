@@ -1251,31 +1251,81 @@ export class TileMap {
         const cy = y + 16;
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.fillStyle = "#1c040d";
+
+        const pulse = (Math.sin(Date.now() / 80) + 1) / 2;
+
+        // High-visibility outer glow & white outline
+        ctx.save();
+        ctx.shadowColor = "#ff2200";
+        ctx.shadowBlur = 10 + pulse * 5;
+
         ctx.beginPath();
-        ctx.moveTo(10, 0);
-        ctx.lineTo(3, -6);
+        ctx.moveTo(12, 0);
+        ctx.lineTo(4, -7);
+        ctx.lineTo(-8, -6);
+        ctx.lineTo(-8, 6);
+        ctx.lineTo(4, 7);
+        ctx.closePath();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Vibrant missile body gradient
+        const bodyGrad = ctx.createLinearGradient(-8, -6, 12, 6);
+        bodyGrad.addColorStop(0, "#ff2200");
+        bodyGrad.addColorStop(0.5, "#ff5500");
+        bodyGrad.addColorStop(1, "#ffcc00");
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.moveTo(12, 0);
+        ctx.lineTo(4, -6);
         ctx.lineTo(-8, -5);
         ctx.lineTo(-8, 5);
-        ctx.lineTo(3, 6);
+        ctx.lineTo(4, 6);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = "#ff0044";
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-        ctx.fillStyle = "#4a081a";
-        ctx.fillRect(-8, -8, 4, 3);
-        ctx.fillRect(-8, 5, 4, 3);
+
+        // Yellow hazard stripe
+        ctx.fillStyle = "#ffee00";
+        ctx.fillRect(-2, -5, 4, 10);
+        ctx.fillStyle = "#111111";
+        ctx.fillRect(0, -5, 2, 10);
+
+        // Bright fins
         ctx.fillStyle = "#ff0033";
-        ctx.beginPath();
-        ctx.arc(4, 0, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#ffaa00";
+        ctx.fillRect(-8, -9, 4, 4);
+        ctx.fillRect(-8, 5, 4, 4);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-8, -9, 4, 4);
+        ctx.strokeRect(-8, 5, 4, 4);
+
+        // Thruster flame preview
+        const flameGrad = ctx.createLinearGradient(-8, 0, -14, 0);
+        flameGrad.addColorStop(0, "#ffffff");
+        flameGrad.addColorStop(0.4, "#ffee00");
+        flameGrad.addColorStop(1, "rgba(255, 0, 0, 0)");
+        ctx.fillStyle = flameGrad;
         ctx.beginPath();
         ctx.moveTo(-8, -3);
-        ctx.lineTo(-13, 0);
+        ctx.lineTo(-14, 0);
         ctx.lineTo(-8, 3);
         ctx.fill();
+
+        // Pulsing Tip Beacon
+        const beaconRad = 4 + pulse * 2.5;
+        ctx.fillStyle = `rgba(255, 230, 0, ${0.4 + pulse * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(8, 0, beaconRad, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = pulse > 0.5 ? "#ffffff" : "#ffff00";
+        ctx.beginPath();
+        ctx.arc(8, 0, 2, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.restore();
         break;
       }
