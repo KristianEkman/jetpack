@@ -249,7 +249,11 @@ export class Player {
 
       const t = this.tileMap.getTile(targetCol, targetRow);
       if (t === TILES.PHASE_BRICK) {
-        this.audio.playExplosion?.();
+        if (this.audio?.playPhaseImpact) {
+          this.audio.playPhaseImpact();
+        } else {
+          this.audio?.playExplosion?.();
+        }
         this.tileMap.phaseTile(targetCol, targetRow);
         this.phaseBeamLength = dist;
         return null;
@@ -355,19 +359,20 @@ export class Player {
     }
 
     if (input.thrust && this.fuel > 0) {
+      this.isThrusting = true;
       this.audio?.startThrust?.();
       const px = this.facingRight ? this.x + 2 : this.x + this.width - 2;
       const py = this.y + this.height - 4;
       this.tileMap.addSparkles(px, py, "#ff6600", 2);
     } else {
-      this.audio?.stopThrust?.();
+      this.isThrusting = false;
     }
 
     if (
       input.phase &&
       this.phaseCooldown >= PLAYER_PHYSICS.PHASE_COOLDOWN_TIME - 0.01
     ) {
-      this.audio?.playPhaseSound?.();
+      this.setPhasing(true);
       const startX = this.facingRight ? this.x + this.width : this.x;
       const startY = this.y + 12;
       this.tileMap.addSparkles(startX, startY, "#00f0ff", 6);
@@ -1077,6 +1082,18 @@ export class Player {
     }
   }
 
+  setPhasing(isPhasing: boolean): void {
+    if (!this.isPhasing && isPhasing) {
+      this.audio?.playPhaseSound?.();
+      if (this.tileMap) {
+        const startX = this.facingRight ? this.x + this.width : this.x;
+        const startY = this.y + 12;
+        this.tileMap.addSparkles(startX, startY, "#00f0ff", 6);
+      }
+    }
+    this.isPhasing = isPhasing;
+  }
+
   applySnapshot(player: Player): void {
     if (!player) return;
     if (player.x !== undefined) this.x = player.x;
@@ -1090,7 +1107,7 @@ export class Player {
     if (player.isGrounded !== undefined) this.isGrounded = player.isGrounded;
     if (player.isThrusting !== undefined) this.isThrusting = player.isThrusting;
     if (player.isClimbing !== undefined) this.isClimbing = player.isClimbing;
-    if (player.isPhasing !== undefined) this.isPhasing = player.isPhasing;
+    if (player.isPhasing !== undefined) this.setPhasing(player.isPhasing);
     if (player.isDead !== undefined) this.isDead = player.isDead;
     if (player.respawnInvulnerability !== undefined)
       this.respawnInvulnerability = player.respawnInvulnerability;

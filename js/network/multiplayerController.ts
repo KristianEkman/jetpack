@@ -74,6 +74,11 @@ export class MultiplayerController {
     game.network.onTilePhasedCb = (data) => {
       if (game.isMultiplayer && game.tileMap && data) {
         game.tileMap.phaseTile(data.col, data.row);
+        if (game.audio?.playPhaseImpact) {
+          game.audio.playPhaseImpact();
+        } else {
+          game.audio?.playExplosion?.();
+        }
       }
     };
 

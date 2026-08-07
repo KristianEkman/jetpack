@@ -66,7 +66,7 @@ export class Game {
     this.input = new InputHandler();
     this.tileMap = new TileMap();
     this.player = new Player(this.audio, this.tileMap, { showNameTag: false });
-    this.enemyManager = new EnemyManager(this.tileMap);
+    this.enemyManager = new EnemyManager(this.tileMap, this.audio);
 
     this.playerManager = new PlayerManager(this.audio, this.tileMap);
     this.network = new NetworkManager();

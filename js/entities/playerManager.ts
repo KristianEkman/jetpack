@@ -179,7 +179,9 @@ export class PlayerManager {
       } else {
         if (pData.name) player.name = pData.name;
         if (pData.color) player.color = pData.color;
-        if (this.snapshotBuffer.length <= 1) {
+        if (!player.isDead && pData.isDead) {
+          player.takeDamage();
+        } else if (this.snapshotBuffer.length <= 1) {
           player.applySnapshot(pData);
         }
       }
@@ -238,7 +240,9 @@ export class PlayerManager {
           const dx = pNew.x - pOld.x;
           const dy = pNew.y - pOld.y;
 
-          if (dx * dx + dy * dy > 4096 || pOld.isDead !== pNew.isDead) {
+          if (!player.isDead && pNew.isDead) {
+            player.takeDamage();
+          } else if (dx * dx + dy * dy > 4096 || pOld.isDead !== pNew.isDead) {
             player.applySnapshot(pNew as unknown as Player);
           } else {
             player.x = lerp(pOld.x, pNew.x, t);
@@ -252,38 +256,55 @@ export class PlayerManager {
             player.isGrounded = pNew.isGrounded;
             player.isThrusting = pNew.isThrusting;
             player.isClimbing = pNew.isClimbing;
-            player.isPhasing = pNew.isPhasing;
+            player.setPhasing(pNew.isPhasing);
             player.isDead = pNew.isDead;
             player.respawnInvulnerability = pNew.respawnInvulnerability;
           }
         } else if (pNew) {
-          player.applySnapshot(pNew as unknown as Player);
+          if (!player.isDead && pNew.isDead) {
+            player.takeDamage();
+          } else {
+            player.applySnapshot(pNew as unknown as Player);
+          }
         }
       } else if (latestSnap) {
         const pLatest = latestSnap.players.find(
           (p) => (p.socketId || p.id) === sId,
         );
         if (pLatest) {
-          const extrapTime = Math.min(
-            0.1,
-            Math.max(0, (renderTime - latestSnap.timestamp) / 1000),
-          );
-          player.x = pLatest.x + (pLatest.vx || 0) * extrapTime;
-          player.y = pLatest.y + (pLatest.vy || 0) * extrapTime;
-          player.vx = pLatest.vx || 0;
-          player.vy = pLatest.vy || 0;
-          player.fuel = pLatest.fuel;
-          player.lives = pLatest.lives;
-          player.score = pLatest.score;
-          player.facingRight = pLatest.facingRight;
-          player.isGrounded = pLatest.isGrounded;
-          player.isThrusting = pLatest.isThrusting;
-          player.isClimbing = pLatest.isClimbing;
-          player.isPhasing = pLatest.isPhasing;
-          player.isDead = pLatest.isDead;
-          player.respawnInvulnerability = pLatest.respawnInvulnerability;
+          if (!player.isDead && pLatest.isDead) {
+            player.takeDamage();
+          } else {
+            const extrapTime = Math.min(
+              0.1,
+              Math.max(0, (renderTime - latestSnap.timestamp) / 1000),
+            );
+            player.x = pLatest.x + (pLatest.vx || 0) * extrapTime;
+            player.y = pLatest.y + (pLatest.vy || 0) * extrapTime;
+            player.vx = pLatest.vx || 0;
+            player.vy = pLatest.vy || 0;
+            player.fuel = pLatest.fuel;
+            player.lives = pLatest.lives;
+            player.score = pLatest.score;
+            player.facingRight = pLatest.facingRight;
+            player.isGrounded = pLatest.isGrounded;
+            player.isThrusting = pLatest.isThrusting;
+            player.isClimbing = pLatest.isClimbing;
+            player.setPhasing(pLatest.isPhasing);
+            player.isDead = pLatest.isDead;
+            player.respawnInvulnerability = pLatest.respawnInvulnerability;
+          }
         }
       }
+    }
+
+    const anyPlayerThrusting = Array.from(this.players.values()).some(
+      (p) => !p.isDead && p.isThrusting,
+    );
+    if (anyPlayerThrusting) {
+      this.audio?.startThrust?.();
+    } else {
+      this.audio?.stopThrust?.();
     }
   }
 

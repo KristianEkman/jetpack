@@ -66,6 +66,7 @@ export interface Projectile {
 
 export class EnemyManager {
   tileMap: TileMap;
+  audio: any;
   enemies: Enemy[];
   projectiles: Projectile[];
   nextEnemyId: number;
@@ -73,8 +74,9 @@ export class EnemyManager {
     | ((data: { enemyId: string; playerId: string }) => void)
     | null;
 
-  constructor(tileMap: TileMap) {
+  constructor(tileMap: TileMap, audio: any = null) {
     this.tileMap = tileMap;
+    this.audio = audio;
     this.enemies = [];
     this.projectiles = [];
     this.nextEnemyId = 0;
@@ -350,6 +352,17 @@ export class EnemyManager {
       }
 
       if (localEnemy) {
+        if (
+          localEnemy.hp !== undefined &&
+          sEnemy.hp !== undefined &&
+          sEnemy.hp < localEnemy.hp
+        ) {
+          if (this.audio?.playPhaseImpact) {
+            this.audio.playPhaseImpact();
+          } else {
+            this.audio?.playExplosion?.();
+          }
+        }
         localEnemy.targetX = sEnemy.x;
         localEnemy.targetY = sEnemy.y;
         localEnemy.vx = sEnemy.vx;
