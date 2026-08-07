@@ -12,7 +12,7 @@ import {
 } from "../shared/constants.js";
 import { SerializedInputState } from "../shared/types.js";
 import { TeleporterPad, TileMap } from "../world/tilemap.js";
-import { EnemyManager, ENEMY_TYPES } from "./enemy.js";
+import { EnemyManager, ENEMY_TYPES } from "./enemy/index.js";
 import { UnpackedPlayerSnapshot } from "./playerManager.js";
 
 export interface PlayerOptions {

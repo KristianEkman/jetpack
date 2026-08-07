@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { TILES, TILE_SIZE } from "../js/shared/constants.js";
 import { TileMap } from "../js/world/tilemap.js";
-import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy.js";
+import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy/index.js";
 import { Player } from "../js/entities/player.js";
 
 console.log("🧪 Running Test Case: Hitting Enemies Through Walls Protection...\n");

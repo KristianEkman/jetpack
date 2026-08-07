@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { TileMap } from "../js/world/tilemap.js";
 import { PlayerManager } from "../js/entities/playerManager.js";
-import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy.js";
+import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy/index.js";
 
 class MockAudio {
   phaseSoundsPlayed: number = 0;

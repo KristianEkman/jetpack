@@ -8,7 +8,7 @@ import { InputHandler } from "./engine/input.js";
 import { AudioManager } from "./audio/index.js";
 import { TileMap, TILE_SIZE, TILES } from "./world/tilemap.js";
 import { Player } from "./entities/player.js";
-import { EnemyManager } from "./entities/enemy.js";
+import { EnemyManager } from "./entities/enemy/index.js";
 import { LevelEditor } from "./editor/level_editor.js";
 import { PlayerManager } from "./entities/playerManager.js";
 import { NetworkManager } from "./network/networkManager.js";

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { TILES } from "../js/shared/constants.js";
 import { TileMap } from "../js/world/tilemap.js";
-import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy.js";
+import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy/index.js";
 import { Player } from "../js/entities/player.js";
 
 console.log("🧪 Running Boss Enemy Test Suite...\n");

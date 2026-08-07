@@ -2,7 +2,7 @@
    TILEMAP & WORLD ENGINE
    ========================================================================== */
 
-import { EnemyManager } from "../entities/enemy.js";
+import { EnemyManager } from "../entities/enemy/index.js";
 import { Player } from "../entities/player.js";
 import {
   TILE_SIZE,

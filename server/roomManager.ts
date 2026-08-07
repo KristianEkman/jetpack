@@ -4,7 +4,7 @@
 
 import { TileMap } from "../js/world/tilemap.js";
 import { Player } from "../js/entities/player.js";
-import { EnemyManager } from "../js/entities/enemy.js";
+import { EnemyManager } from "../js/entities/enemy/index.js";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
 import * as types from "../js/shared/types.js";
 import { AudioManager } from "../js/audio/audioManager.js";

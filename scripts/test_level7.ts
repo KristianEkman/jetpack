@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
 import { TileMap, TILES } from "../js/world/tilemap.js";
-import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy.js";
+import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy/index.js";
 
 console.log("🧪 Running Stage 7 Boss Level Validation Suite...\n");
 
