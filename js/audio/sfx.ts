@@ -70,21 +70,29 @@ export class SoundEffects {
     }
 
     stopThrust(): void {
-        if (!this.isThrusting) return;
+        if (!this.isThrusting && !this.thrustNode) return;
         this.isThrusting = false;
-        if (this.thrustGain && this.ctx) {
+        const nodeToStop = this.thrustNode;
+        const gainToStop = this.thrustGain;
+        this.thrustNode = null;
+        this.thrustGain = null;
+
+        if (gainToStop && this.ctx) {
             try {
-                this.thrustGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.08);
-                setTimeout(() => {
-                    if (this.thrustNode) {
-                        this.thrustNode.stop();
-                        this.thrustNode.disconnect();
-                        this.thrustNode = null;
-                    }
-                }, 90);
+                gainToStop.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.08);
             } catch (e) {
                 // ignore
             }
+        }
+        if (nodeToStop) {
+            setTimeout(() => {
+                try {
+                    nodeToStop.stop();
+                    nodeToStop.disconnect();
+                } catch (e) {
+                    // ignore
+                }
+            }, 90);
         }
     }
 

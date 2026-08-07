@@ -369,6 +369,7 @@ export class Player {
       this.tileMap.addSparkles(px, py, "#ff6600", 2);
     } else {
       this.isThrusting = false;
+      this.audio?.stopThrust?.();
     }
 
     if (
