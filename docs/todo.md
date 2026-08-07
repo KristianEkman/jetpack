@@ -32,7 +32,9 @@
 - [ ] mobile controls more transparent and bigger.
 - [x] when compete match ends add a delay so you can see who died
 - [x] extralife
-- [ ] dont kill when out of fuel
+- [x] dont kill when out of fuel
+- [ ] provide only one extralife per level. Dont show it again after it has been collected.
+- [ ] refactor and make files smaller.
 
 Prompts
 I already have a firebase account and databases there. Make a plan to create a jetpack db there and connect. I want the users to store and fetch levels from there. Also a high score list.

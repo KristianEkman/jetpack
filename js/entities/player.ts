@@ -64,6 +64,7 @@ export class Player {
 
   animTimer: number;
   stuckTimer: number;
+  isStuck: boolean;
   teleportCooldown: number;
 
   pendingInputs: SerializedInputState[];
@@ -116,6 +117,7 @@ export class Player {
 
     this.animTimer = 0;
     this.stuckTimer = 0;
+    this.isStuck = false;
     this.teleportCooldown = 0;
 
     this.pendingInputs = [];
@@ -139,6 +141,7 @@ export class Player {
     this.phaseBeamTimer = 0;
     this.phaseCooldown = 0;
     this.stuckTimer = 0;
+    this.isStuck = false;
     this.teleportCooldown = 0;
     this.fuel = Math.max(this.fuel, 50);
     this.pendingInputs = [];
@@ -934,6 +937,7 @@ export class Player {
     this._localDeathTimestamp = Date.now();
     this.lives--;
     this.stuckTimer = 0;
+    this.isStuck = false;
     this.audio?.stopThrust?.();
     this.audio?.stopEnergyDrain?.();
     this.audio?.playExplosion?.();
@@ -944,15 +948,21 @@ export class Player {
   }
 
   checkStuck(dt: number): void {
-    if (this.isDead) return;
+    if (this.isDead) {
+      this.stuckTimer = 0;
+      this.isStuck = false;
+      return;
+    }
 
     if (this.fuel >= 1.0 || this.isThrusting) {
       this.stuckTimer = 0;
+      this.isStuck = false;
       return;
     }
 
     if (!this.isGrounded && !this.isClimbing && Math.abs(this.vy) > 15) {
       this.stuckTimer = 0;
+      this.isStuck = false;
       return;
     }
 
@@ -1071,14 +1081,13 @@ export class Player {
 
     if (!canEscape) {
       this.stuckTimer += dt;
+      this.isStuck = true;
       if (Math.random() < 0.5) {
         this.tileMap.addSparkles(this.x + 11, this.y + 14, "#ff0055", 4);
       }
-      if (this.stuckTimer >= 0.8) {
-        this.takeDamage();
-      }
     } else {
       this.stuckTimer = 0;
+      this.isStuck = false;
     }
   }
 
@@ -1311,6 +1320,34 @@ export class Player {
 
       ctx.fillStyle = "#ffffff";
       ctx.fillText(tagText, tagX, tagY);
+      ctx.restore();
+    }
+
+    if (this.isStuck && !this.isDead) {
+      ctx.save();
+      ctx.font = "bold 11px Orbitron, sans-serif";
+      ctx.textAlign = "center";
+
+      const line1 = "⚠️ NO FUEL!";
+      const line2 = "PRESS 'K' TO RESPAWN";
+
+      const w1 = ctx.measureText(line1).width;
+      const w2 = ctx.measureText(line2).width;
+      const boxWidth = Math.max(w1, w2) + 14;
+      const boxHeight = 32;
+
+      const tagX = px + this.width / 2;
+      const baseY = py - (this.name && this.showNameTag ? 42 : 28);
+
+      ctx.fillStyle = "rgba(255, 0, 85, 0.9)";
+      ctx.fillRect(tagX - boxWidth / 2, baseY - 12, boxWidth, boxHeight);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(tagX - boxWidth / 2, baseY - 12, boxWidth, boxHeight);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(line1, tagX, baseY);
+      ctx.fillText(line2, tagX, baseY + 14);
       ctx.restore();
     }
 
