@@ -408,6 +408,20 @@ io.on("connection", (socket: any) => {
       return;
     }
 
+    if (
+      room.gameMode === MULTIPLAYER_MODES.COOP &&
+      room.tileMap &&
+      room.tileMap.totalEmeralds > 0 &&
+      room.tileMap.collectedEmeralds < room.tileMap.totalEmeralds
+    ) {
+      const errRes = {
+        success: false,
+        error: "Cannot complete level until all emeralds are collected",
+      };
+      if (typeof callback === "function") callback(errRes);
+      return;
+    }
+
     room.status = "finished";
     const playerConfig = room.playerConfigs.get(socket.id);
     const playerName = playerConfig ? playerConfig.name : "Player";

@@ -289,7 +289,10 @@ export class Game {
         (this.player.y + this.player.height / 2) / TILE_SIZE,
       );
 
-      if (this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL) {
+      if (
+        this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL &&
+        this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds
+      ) {
         if (this.isMultiplayer) {
           this.gameState = GAME_STATES.LEVEL_COMPLETE;
           this.network.completeLevel();
@@ -348,12 +351,10 @@ export class Game {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  (window as any).gameInstance = new Game();
-});
-
 if (typeof window !== "undefined") {
   window.addEventListener("DOMContentLoaded", () => {
-    (window as any).gameInstance = new Game();
+    if (!(window as any).gameInstance) {
+      (window as any).gameInstance = new Game();
+    }
   });
 }

@@ -107,6 +107,26 @@ export class NetworkManager {
     this.onLevelCompleteCb = null;
     this.onEnemyDestroyedCb = null;
     this.onGameOverCb = null;
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("beforeunload", () => {
+        this.disconnect();
+      });
+    }
+  }
+
+  disconnect(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    this.isConnected = false;
+    this.socketId = null;
+    this.currentRoom = null;
   }
 
   connect(
@@ -114,7 +134,10 @@ export class NetworkManager {
       ? window.location.origin
       : "http://localhost:3000",
   ): void {
-    if (this.socket) return;
+    if (this.socket && !this.socket.disconnected) return;
+    if (this.socket) {
+      this.disconnect();
+    }
 
     const browserWindow =
       typeof window !== "undefined" ? (window as SocketIoWindow) : null;

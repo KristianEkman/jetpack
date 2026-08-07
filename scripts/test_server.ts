@@ -188,6 +188,11 @@ try {
     });
   });
 
+  const roomToComplete = roomManager.getRoomBySocketId(client2.id);
+  if (roomToComplete && roomToComplete.tileMap) {
+    roomToComplete.tileMap.collectedEmeralds = roomToComplete.tileMap.totalEmeralds;
+  }
+
   const completeResult: any = await new Promise((resolve) => {
     client2.emit(GAME_EVENTS.COMPLETE_LEVEL || "complete_level", {}, resolve);
   });
