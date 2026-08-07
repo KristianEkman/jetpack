@@ -33,7 +33,7 @@
 - [x] when compete match ends add a delay so you can see who died
 - [x] extralife
 - [x] dont kill when out of fuel
-- [ ] provide only one extralife per level. Dont show it again after it has been collected.
+- [x] provide only one extralife per level. Dont show it again after it has been collected.
 - [ ] refactor and make files smaller.
 
 Prompts

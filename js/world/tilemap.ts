@@ -64,6 +64,7 @@ export class TileMap {
   listeners: Record<string, TileMapListener[]>;
   spawnPoints: { x: number; y: number }[];
   effectsEnabled: boolean;
+  collectedExtraLifePositions: Set<string>;
 
   constructor(options: { effectsEnabled?: boolean } = {}) {
     this.cols = GRID_COLS;
@@ -77,6 +78,7 @@ export class TileMap {
     this.portalAngle = 0;
     this.totalEmeralds = 0;
     this.collectedEmeralds = 0;
+    this.collectedExtraLifePositions = new Set();
 
     // Teleporters array: list of tile indices
     this.teleporters = [];
@@ -112,8 +114,27 @@ export class TileMap {
     }
   }
 
-  loadLevelData(levelData: LevelData): void {
+  markExtraLifeCollected(col: number, row: number): void {
+    this.collectedExtraLifePositions.add(`${col},${row}`);
+  }
+
+  resetExtraLifeState(): void {
+    this.collectedExtraLifePositions.clear();
+  }
+
+  loadLevelData(levelData: LevelData, isRestart: boolean = false): void {
     this.grid = [...levelData.grid];
+    if (!isRestart) {
+      this.resetExtraLifeState();
+    } else {
+      for (let r = 0; r < this.rows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+          if (this.collectedExtraLifePositions.has(`${c},${r}`)) {
+            this.grid[r * this.cols + c] = TILES.AIR;
+          }
+        }
+      }
+    }
     this.dissolvedBricks = [];
     this.particles = [];
     this.debris = [];
@@ -131,6 +152,9 @@ export class TileMap {
 
   setTile(col: number, row: number, tileType: number): void {
     if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
+      if (this.getTile(col, row) === TILES.EXTRA_LIFE && tileType === TILES.AIR) {
+        this.markExtraLifeCollected(col, row);
+      }
       this.grid[row * this.cols + col] = tileType;
       this.rebuildTeleporters();
     }

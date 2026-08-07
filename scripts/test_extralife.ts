@@ -78,6 +78,30 @@ assert.equal(player.lives, 9, "Player lives should increase to 9 at 10,000 pts m
 player.addScore(20000);
 assert.equal(player.score, 30100);
 assert.equal(player.lives, 9, "Player lives should be capped at MAX_LIVES (9)");
-console.log("   ✅ Score milestone & max lives cap verified.");
+// 6. Test Extra Life Persistence Across Level Restart After Death
+console.log("6️⃣  Testing Extra Life Persistence Across Level Restart...");
+const testLevelData = {
+  name: "Test Level",
+  grid: new Array(30 * 18).fill(TILES.AIR),
+};
+testLevelData.grid[1 + 1 * 30] = TILES.EXTRA_LIFE;
+
+const testTileMap = new TileMap();
+// Load level fresh
+testTileMap.loadLevelData(testLevelData, false);
+assert.equal(testTileMap.getTile(1, 1), TILES.EXTRA_LIFE, "Fresh level load should contain EXTRA_LIFE tile");
+
+// Collect extra life
+testTileMap.setTile(1, 1, TILES.AIR);
+assert.equal(testTileMap.getTile(1, 1), TILES.AIR);
+
+// Restart level after death (isRestart = true)
+testTileMap.loadLevelData(testLevelData, true);
+assert.equal(testTileMap.getTile(1, 1), TILES.AIR, "Restarting level after death must NOT show collected EXTRA_LIFE tile");
+
+// Fresh level load (e.g. new level or restart new game)
+testTileMap.loadLevelData(testLevelData, false);
+assert.equal(testTileMap.getTile(1, 1), TILES.EXTRA_LIFE, "Fresh level load should restore EXTRA_LIFE tile");
+console.log("   ✅ Extra life level restart persistence verified.");
 
 console.log("\n🎉 ALL EXTRA LIFE TESTS PASSED CLEANLY!");

@@ -110,7 +110,7 @@ export class UIManager {
       .getElementById("btnRestartLevel")
       ?.addEventListener("click", () => {
         this.closeAllDialogs();
-        game.levelManager.startLevel(game.currentLevelIndex);
+        game.levelManager.startLevel(game.currentLevelIndex, true);
       });
     document
       .getElementById("btnPauseControls")

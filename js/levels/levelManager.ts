@@ -14,7 +14,7 @@ export class LevelManager {
         this.game = game;
     }
 
-    startLevel(index: number): void {
+    startLevel(index: number, isRestart: boolean = false): void {
         const game = this.game;
         game.isCustomLevel = false;
         game.currentLevelIndex = index;
@@ -22,7 +22,7 @@ export class LevelManager {
         game.isDeathHandled = false;
         const levelData = CAMPAIGN_LEVELS[index];
 
-        game.tileMap.loadLevelData(levelData);
+        game.tileMap.loadLevelData(levelData, isRestart);
         game.enemyManager.clear();
 
         // Spawn player at SPAWN tile
@@ -106,6 +106,7 @@ export class LevelManager {
         game.isCustomLevel = true;
         game.enemyManager.clear();
         game.tileMap.collectedEmeralds = 0;
+        game.tileMap.resetExtraLifeState();
 
         let total = 0;
         let spawnX = 100, spawnY = 100;

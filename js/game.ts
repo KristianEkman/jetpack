@@ -151,8 +151,8 @@ export class Game {
     this.uiManager.updateHUD();
   }
 
-  startLevel(index: number): void {
-    this.levelManager.startLevel(index);
+  startLevel(index: number, isRestart: boolean = false): void {
+    this.levelManager.startLevel(index, isRestart);
   }
   openLevelSelect(): void {
     this.levelManager.openLevelSelect();
@@ -253,7 +253,7 @@ export class Game {
         } else if (this.isMultiplayer) {
           this.deathSequenceTimer = 0;
         } else {
-          this.levelManager.startLevel(this.currentLevelIndex);
+          this.levelManager.startLevel(this.currentLevelIndex, true);
         }
       }
     } else if (this.isDeathHandled) {
