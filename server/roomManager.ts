@@ -73,8 +73,14 @@ export class RoomManager {
   }
 
   createRoom(hostSocketId: string, options: any = {}): ServerRoom {
-    if (this.socketToRoom.has(hostSocketId)) {
-      throw new Error("You must leave your current room before creating another one");
+    const existingRoomId = this.socketToRoom.get(hostSocketId);
+    if (existingRoomId) {
+      const existingRoom = this.rooms.get(existingRoomId);
+      if (existingRoom && existingRoom.status === "finished") {
+        this.leaveRoom(hostSocketId);
+      } else {
+        throw new Error("You must leave your current room before creating another one");
+      }
     }
 
     const customCode =

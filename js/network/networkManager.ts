@@ -267,6 +267,10 @@ export class NetworkManager {
     socket.on(ROOM_EVENTS.JOIN_ERROR, (error: { error?: string }) => {
       this.onErrorCb?.(error.error || "Failed to join room");
     });
+
+    socket.on(ROOM_EVENTS.ROOM_CREATE_ERROR, (error: { error?: string }) => {
+      this.onErrorCb?.(error.error || "Failed to create room");
+    });
   }
 
   private getConnectedSocket(): Socket | null {
@@ -287,6 +291,8 @@ export class NetworkManager {
       (response: RoomActionResponse) => {
         if (response.success && response.room) {
           this.currentRoom = response.room;
+        } else if (!response.success && response.error) {
+          this.onErrorCb?.(response.error);
         }
         callback?.(response);
       },

@@ -118,6 +118,10 @@ export class UIManager {
         this.showDialog("dlgControls");
       });
     document.getElementById("btnQuitToMenu")?.addEventListener("click", () => {
+      if (game.isMultiplayer || game.network.currentRoom) {
+        game.network.leaveRoom();
+        game.isMultiplayer = false;
+      }
       game.audio.stopThrust();
       if (game.audio.stopEnergyDrain) game.audio.stopEnergyDrain();
       game.audio.stopMusic();
@@ -138,6 +142,10 @@ export class UIManager {
     document
       .getElementById("btnGameOverMenu")
       ?.addEventListener("click", () => {
+        if (game.isMultiplayer || game.network.currentRoom) {
+          game.network.leaveRoom();
+          game.isMultiplayer = false;
+        }
         game.audio.stopMusic();
         this.showDialog("dlgMainMenu");
       });
@@ -164,6 +172,10 @@ export class UIManager {
     document
       .getElementById("btnCompleteMenu")
       ?.addEventListener("click", () => {
+        if (game.isMultiplayer || game.network.currentRoom) {
+          game.network.leaveRoom();
+          game.isMultiplayer = false;
+        }
         game.audio.stopMusic();
         this.showDialog("dlgMainMenu");
       });
