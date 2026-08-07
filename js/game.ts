@@ -16,6 +16,7 @@ import { NetworkManager } from "./network/networkManager.js";
 import { UIManager } from "./ui/uiManager.js";
 import { LevelManager } from "./levels/levelManager.js";
 import { MultiplayerController } from "./network/multiplayerController.js";
+import { initErrorMonitor } from "./ui/errorMonitor.js";
 
 export const GAME_STATES = {
   MENU: "menu",
@@ -59,6 +60,8 @@ export class Game {
   loop: GameLoop;
 
   constructor() {
+    initErrorMonitor();
+
     this.canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d")!;
 
