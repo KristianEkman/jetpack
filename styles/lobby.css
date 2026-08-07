@@ -1,0 +1,391 @@
+/* ==========================================================================
+   MULTIPLAYER LOBBY, ROOM CREATION & VERSION BADGE
+   ========================================================================== */
+
+.btn-menu.primary-glow {
+  background: linear-gradient(135deg, #00f0ff 0%, #0088ff 100%);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+  border-color: #00f0ff;
+}
+
+.btn-menu.primary-glow:hover {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.9);
+  transform: translateY(-2px);
+}
+
+.mp-tabs {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(0, 240, 255, 0.4);
+  position: relative;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.mp-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: rgba(0, 20, 35, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-bottom: 2px solid rgba(0, 240, 255, 0.4);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  position: relative;
+  bottom: -2px;
+  z-index: 1;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.mp-tab-btn:hover:not(.active) {
+  background: rgba(0, 240, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(0, 240, 255, 0.5);
+  border-bottom-color: rgba(0, 240, 255, 0.4);
+  box-shadow: inset 0 2px 0 rgba(0, 240, 255, 0.4);
+}
+
+.mp-tab-btn.active {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 240, 255, 0.22) 0%,
+    rgba(10, 14, 24, 0.98) 100%
+  );
+  border: 2px solid #00f0ff;
+  border-bottom: 2px solid rgba(10, 14, 24, 0.98);
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+  box-shadow:
+    inset 0 3px 0 0 #00f0ff,
+    0 -4px 15px rgba(0, 240, 255, 0.35);
+  z-index: 2;
+}
+
+.mp-view-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.game-mode-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.game-mode-selector legend {
+  width: 100%;
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.game-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(0, 240, 255, 0.06);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.game-mode-option:has(input:checked) {
+  border-color: var(--color-primary);
+  background: rgba(0, 240, 255, 0.16);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+.game-mode-option.compete-option:has(input:checked) {
+  border-color: var(--color-danger);
+  background: rgba(255, 42, 95, 0.12);
+  box-shadow: 0 0 12px rgba(255, 42, 95, 0.25);
+}
+
+.game-mode-option input {
+  margin-top: 3px;
+  accent-color: var(--color-primary);
+}
+
+.game-mode-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.game-mode-option strong {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+}
+
+.game-mode-option small {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.retro-input {
+  width: 100%;
+  padding: 10px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #fff;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.retro-input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.code-input {
+  font-family: var(--font-retro);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.color-picker-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 5px;
+}
+
+.color-chip {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.color-chip:hover {
+  transform: scale(1.15);
+}
+
+.color-chip.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 12px #ffffff;
+  transform: scale(1.2);
+}
+
+.room-code-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1.5px dashed rgba(0, 240, 255, 0.6);
+  padding: 12px 18px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.room-info-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.room-info-item .info-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.room-info-item strong#displayRoomCode {
+  font-family: var(--font-retro);
+  font-size: 1.25rem;
+  color: #00f0ff;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+#displayRoomGameMode {
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+}
+
+@media (max-width: 520px) {
+  .game-mode-selector {
+    grid-template-columns: 1fr;
+  }
+}
+
+.room-info-item #displayRoomMapName {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffee55;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.room-info-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 240, 255, 0.25);
+  margin: 2px 0;
+}
+
+.lobby-players-container {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.lobby-players-container h3 {
+  margin: 0 0 10px 0;
+  font-size: 0.85rem;
+  font-family: var(--font-display);
+  color: var(--color-primary);
+}
+
+.lobby-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lobby-player-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+}
+
+.player-info-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.player-name-text {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.host-badge {
+  font-size: 0.65rem;
+  background: #ffaa00;
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-left: 6px;
+}
+
+.empty-list-note {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #888;
+  padding: 20px;
+}
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   VERSION BADGE (BOTTOM RIGHT CORNER)
+   ========================================================================== */
+.game-version-badge {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  z-index: 99999;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(230, 247, 255, 0.65);
+  background: rgba(10, 15, 26, 0.85);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+  user-select: none;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.game-version-badge:hover {
+  color: var(--color-text);
+  border-color: rgba(0, 255, 204, 0.6);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.25);
+}
+
+.game-version-badge .version-label {
+  color: var(--color-primary);
+  font-weight: bold;
+}

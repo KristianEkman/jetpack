@@ -1,0 +1,208 @@
+/* ==========================================================================
+   HUD BAR & STATUS METRICS STYLES
+   ========================================================================== */
+
+.hud-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: rgba(10, 15, 26, 0.95);
+  border-bottom: 2px solid rgba(0, 255, 204, 0.3);
+  z-index: 10;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hud-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.logo-item .logo-text {
+  font-family: var(--font-retro);
+  font-size: 1.1rem;
+  color: var(--color-primary);
+  text-shadow:
+    0 0 10px rgba(0, 255, 204, 0.8),
+    0 0 20px rgba(0, 255, 204, 0.4);
+  letter-spacing: 2px;
+}
+
+.hud-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-family: var(--font-retro);
+  font-size: 0.9rem;
+  color: var(--color-text);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+.emerald-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #7effc5;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+}
+
+.emerald-icon {
+  font-size: 1.15rem;
+  animation: emeraldGlowPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes emeraldGlowPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px #00ffaa)
+      drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+    transform: scale(1);
+  }
+
+  50% {
+    filter: drop-shadow(0 0 14px #00ffaa) drop-shadow(0 0 20px #7effc5);
+    transform: scale(1.15);
+  }
+}
+
+.hud-buttons-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Fuel Bar */
+.fuel-item {
+  min-width: 160px;
+  flex: 0 0 auto;
+}
+
+.fuel-bar-container {
+  width: 160px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+/* Responsive HUD: keep everything visible on small screens */
+@media (max-width: 520px) {
+  .hud-bar {
+    padding: 8px 12px;
+  }
+
+  .hud-group {
+    gap: 12px;
+  }
+
+  .hud-label {
+    font-size: 0.55rem;
+  }
+
+  .hud-value {
+    font-size: 0.8rem;
+  }
+
+  .fuel-item {
+    min-width: 110px;
+  }
+
+  .fuel-bar-container {
+    width: 120px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hud-bar {
+    padding: 6px 8px;
+    align-items: flex-start;
+  }
+
+  .hud-group {
+    gap: 8px;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .hud-item {
+    gap: 1px;
+    flex: 0 0 auto;
+  }
+
+  .hud-label {
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+  }
+
+  .hud-value {
+    font-size: 0.75rem;
+  }
+
+  .fuel-item {
+    min-width: 90px;
+  }
+
+  .fuel-bar-container {
+    width: 100px;
+    height: 14px;
+  }
+}
+
+.fuel-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #ff2a5f 0%, #ffcc00 50%, #00ffcc 100%);
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+}
+
+.fuel-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 4px #000;
+}
+
+/* HUD Buttons */
+.btn-icon {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: rgba(0, 255, 204, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+  transform: translateY(-1px);
+}

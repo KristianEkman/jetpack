@@ -1,0 +1,314 @@
+/* ==========================================================================
+   RETRO DIALOG MODALS & OVERLAY MENUS
+   ========================================================================== */
+
+.retro-dialog {
+  border: 2px solid var(--color-primary);
+  background: rgba(10, 14, 24, 0.98);
+  color: var(--color-text);
+  border-radius: 12px;
+  padding: 0;
+  box-shadow:
+    0 0 40px rgba(0, 255, 204, 0.3),
+    0 0 80px rgba(0, 0, 0, 0.9);
+  margin: auto;
+  max-width: 520px;
+  width: 90%;
+}
+
+.retro-dialog:has(.wide),
+.retro-dialog.wide {
+  max-width: 620px;
+}
+
+.retro-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.dialog-content {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+}
+
+.dialog-content.wide {
+  max-width: 760px;
+}
+
+.game-title {
+  font-family: var(--font-retro);
+  font-size: 2.2rem;
+  color: var(--color-primary);
+  text-shadow:
+    0 0 15px rgba(0, 255, 204, 0.8),
+    0 0 30px rgba(0, 255, 204, 0.4);
+  letter-spacing: 4px;
+}
+
+.subtitle {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  letter-spacing: 3px;
+}
+
+.retro-dialog h2 {
+  font-family: var(--font-retro);
+  font-size: 1.3rem;
+  color: var(--color-primary);
+  text-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+}
+
+.retro-dialog h2.danger-title {
+  color: var(--color-danger);
+  text-shadow: 0 0 15px rgba(255, 42, 95, 0.8);
+}
+
+.retro-dialog h2.success-title {
+  color: var(--color-secondary);
+  text-shadow: 0 0 15px rgba(51, 255, 119, 0.8);
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-menu {
+  padding: 14px 20px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(0, 255, 204, 0.4);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.btn-menu.primary {
+  background: linear-gradient(135deg, #00ffcc 0%, #00b386 100%);
+  color: #050a12;
+  border: none;
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+}
+
+.btn-menu.accent {
+  background: linear-gradient(135deg, #ffcc00 0%, #cc9900 100%);
+  color: #050a12;
+  border: none;
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+}
+
+.btn-menu.danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-menu:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+  filter: brightness(1.15);
+}
+
+.footer-note {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.footer-note strong {
+  color: var(--color-primary);
+}
+
+/* Level Select Grid */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.level-card {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  border-radius: 8px;
+  font-family: var(--font-retro);
+  font-size: 1.1rem;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-card:hover {
+  background: rgba(0, 255, 204, 0.2);
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+  transform: scale(1.05);
+}
+
+/* Instructions Box */
+.instructions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  text-align: left;
+}
+
+.instruction-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.instruction-box h3 {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+
+.instruction-box ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+kbd {
+  background: rgba(0, 255, 204, 0.15);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-retro);
+  font-size: 0.65rem;
+}
+
+.dialog-actions {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.stats-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  padding: 16px;
+  border-radius: 8px;
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.multiplayer-results {
+  width: 100%;
+}
+
+.multiplayer-results h3 {
+  margin-bottom: 10px;
+  color: var(--color-primary);
+  font-family: var(--font-retro);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.results-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid rgba(0, 255, 204, 0.4);
+  border-radius: 8px;
+}
+
+.results-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.results-table th,
+.results-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(0, 255, 204, 0.18);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.results-table th {
+  color: var(--color-primary);
+  background: rgba(0, 255, 204, 0.1);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.results-table th:nth-child(2),
+.results-table td:nth-child(2) {
+  text-align: left;
+}
+
+.results-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.results-table tbody tr.local-player {
+  color: var(--color-primary);
+  background: rgba(0, 255, 204, 0.08);
+}
+
+.results-table .empty-results {
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+.game-over-message {
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Audio Unlock Prompt */
+.audio-prompt {
+  font-family: var(--font-retro);
+  font-size: 0.65rem;
+  color: var(--color-primary);
+  margin-top: 15px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
+  animation: audioPulse 1.5s infinite alternate;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+  min-height: 1.2em;
+}
+
+@keyframes audioPulse {
+  from {
+    opacity: 0.5;
+    text-shadow: 0 0 4px rgba(0, 255, 204, 0.4);
+  }
+
+  to {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(0, 255, 204, 0.9);
+  }
+}
