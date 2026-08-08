@@ -29,6 +29,18 @@
             <div class="hud-group">
                 <div class="hud-item logo-item">
                     <span class="logo-text">JETPACK</span>
+                    <!-- Version & Build Info Badge (Top Left under Title) -->
+                    <div id="gameVersionBadge" class="game-version-badge" title="Git Commit Version & Deployed Date Time">
+                        <span class="version-label">v</span><span id="versionCommit">--</span> • <span id="versionDate">--</span>
+                        <!-- Error monitor badge (hidden by default) -->
+                        <div id="errorMonitorBadge" class="error-monitor-badge" title="Click to view errors">
+                            <span class="error-icon" style="color:red">⚠</span>
+                            <span id="errorMonitorCount">0</span>
+                        </div>
+
+                        <!-- Error monitor tooltip (hidden by default) -->
+                        <div id="errorMonitorTooltip" class="error-monitor-tooltip"></div>
+                    </div>
                 </div>
                 <div class="hud-item">
                     <span class="hud-label">LEVEL</span>
@@ -115,18 +127,7 @@
             </div>
         </div>
 
-        <!-- Version & Build Info Badge (Bottom Right Corner) -->
-        <div id="gameVersionBadge" class="game-version-badge" title="Git Commit Version & Deployed Date Time">
-            <span class="version-label">v</span><span id="versionCommit">--</span> • <span id="versionDate">--</span>
-            <!-- Error monitor badge (hidden by default) -->
-            <div id="errorMonitorBadge" class="error-monitor-badge" title="Click to view errors">
-                <span class="error-icon" style="color:red">⚠</span>
-                <span id="errorMonitorCount">0</span>
-            </div>
 
-            <!-- Error monitor tooltip (hidden by default) -->
-            <div id="errorMonitorTooltip" class="error-monitor-tooltip"></div>
-        </div>
 
     </div>
 

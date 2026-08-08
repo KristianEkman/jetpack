@@ -245,9 +245,11 @@ export class UIManager {
 
   closeAllDialogs(): void {
     const badge = document.getElementById("gameVersionBadge");
+    const logoItem = document.querySelector(".logo-item");
     const appContainer = document.getElementById("appContainer");
-    if (badge && appContainer && badge.parentElement !== appContainer) {
-      appContainer.appendChild(badge);
+    const targetParent = logoItem || appContainer;
+    if (badge && targetParent && badge.parentElement !== targetParent) {
+      targetParent.appendChild(badge);
     }
     document.querySelectorAll("dialog").forEach((d) => {
       if (d.open) d.close();
