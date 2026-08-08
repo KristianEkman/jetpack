@@ -99,7 +99,7 @@ export class LevelManager {
         const game = this.game;
         const validation = game.editor.validateLevel();
         if (!validation.valid) {
-            alert(validation.error);
+            console.error(validation.error);
             return;
         }
 
@@ -211,10 +211,10 @@ export class LevelManager {
                     game.editor.autoSaveLocal();
                     game.uiManager.showBanner('CUSTOM LEVEL IMPORTED!');
                 } else {
-                    alert('Invalid level format!');
+                    console.error('Invalid level format!');
                 }
             } catch (err) {
-                alert('Error parsing JSON level file!');
+                console.error('Error parsing JSON level file!');
             }
         };
         reader.readAsText(file);

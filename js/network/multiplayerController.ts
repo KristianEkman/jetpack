@@ -200,7 +200,7 @@ export class MultiplayerController {
     };
 
     game.network.onErrorCb = (errMsg: string) => {
-      alert(`Multiplayer Error: ${errMsg}`);
+      console.error(`Multiplayer Error: ${errMsg}`);
     };
   }
 
@@ -291,12 +291,12 @@ export class MultiplayerController {
               statusText.textContent = `Loaded map: "${parsed.name || file.name}" (${parsed.grid.length} tiles)`;
             }
           } else {
-            alert(
+            console.error(
               "Invalid level JSON file! Grid must contain 540 tiles (30x18).",
             );
           }
         } catch {
-          alert("Error parsing map JSON file.");
+          console.error("Error parsing map JSON file.");
         }
       };
       reader.readAsText(file);
@@ -387,7 +387,7 @@ export class MultiplayerController {
             } catch {}
           }
           if (!this.customMapDataPayload) {
-            alert(
+            console.error(
               "Please upload a valid custom map JSON file or build one in the Level Editor!",
             );
             return;
