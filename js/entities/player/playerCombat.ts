@@ -18,7 +18,7 @@ export function performPhaseBeam(
 ): Player | null {
   if (!player.tileMap) return null;
 
-  player.isPhasing = true;
+  setPhasing(player, true);
   player.phaseBeamTimer = 0.14;
   player.phaseCooldown = PLAYER_PHYSICS.PHASE_COOLDOWN_TIME;
 

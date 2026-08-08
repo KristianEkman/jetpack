@@ -55,63 +55,7 @@ export function processLocalEffects(
     player.audio?.stopThrust?.();
   }
 
-  if (
-    input.phase &&
-    player.phaseCooldown >= PLAYER_PHYSICS.PHASE_COOLDOWN_TIME - 0.01
-  ) {
-    player.setPhasing(true);
-    const startX = player.facingRight ? player.x + player.width : player.x;
-    const startY = player.y + 12;
-    player.tileMap.addSparkles(startX, startY, "#00f0ff", 6);
 
-    const dir = player.facingRight ? 1 : -1;
-    for (let dist = 0; dist <= 160; dist += 8) {
-      const targetX = startX + dir * dist;
-      const targetCol = Math.floor(targetX / TILE_SIZE);
-      const targetRow = Math.floor(startY / TILE_SIZE);
-
-      const t = player.tileMap.getTile(targetCol, targetRow);
-      if (t === TILES.PHASE_BRICK || player.tileMap.isSolid(targetCol, targetRow)) {
-        break;
-      }
-
-      if (enemyManager && enemyManager.enemies) {
-        let hitEnemyIndex = -1;
-        for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
-          const enemy = enemyManager.enemies[i];
-          if (
-            targetX >= enemy.x &&
-            targetX <= enemy.x + enemy.width &&
-            startY >= enemy.y &&
-            startY <= enemy.y + enemy.height
-          ) {
-            hitEnemyIndex = i;
-            break;
-          }
-        }
-        if (hitEnemyIndex >= 0) {
-          const enemy = enemyManager.enemies[hitEnemyIndex];
-          const isBoss = enemy.type === ENEMY_TYPES.BOSS;
-          player.tileMap.addSparkles(
-            enemy.x + enemy.width / 2,
-            enemy.y + enemy.height / 2,
-            "#ff0055",
-            25,
-          );
-
-          const wasDestroyed = enemyManager.damageEnemy
-            ? enemyManager.damageEnemy(enemy.id, 1, player.id)
-            : !!enemyManager.removeEnemyById(enemy.id);
-
-          if (wasDestroyed) {
-            player.audio?.playExplosion?.();
-            player.addScore(isBoss ? 5000 : 200);
-          }
-          break;
-        }
-      }
-    }
-  }
 
   player.checkCollectibles();
   player.checkTeleporter();
