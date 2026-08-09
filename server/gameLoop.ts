@@ -99,6 +99,23 @@ export class GameLoop {
           if (config && !playerEntity.isDead) {
             const input = config.pendingInputs.shift() || config.lastInput;
             if (input) {
+              if (typeof input.x === "number" && typeof input.y === "number") {
+                playerEntity.x = input.x;
+                playerEntity.y = input.y;
+                playerEntity.vx = input.vx || 0;
+                playerEntity.vy = input.vy || 0;
+                if (input.facingRight !== undefined)
+                  playerEntity.facingRight = input.facingRight;
+                if (input.isGrounded !== undefined)
+                  playerEntity.isGrounded = input.isGrounded;
+                if (input.isThrusting !== undefined)
+                  playerEntity.isThrusting = input.isThrusting;
+                if (input.isClimbing !== undefined)
+                  playerEntity.isClimbing = input.isClimbing;
+                if (input.isPhasing !== undefined)
+                  playerEntity.isPhasing = input.isPhasing;
+              }
+
               const playerTargets =
                 room.gameMode === MULTIPLAYER_MODES.COMPETE
                   ? room.players.values()

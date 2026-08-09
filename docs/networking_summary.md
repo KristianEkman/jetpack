@@ -59,7 +59,7 @@ All event names are defined in [constants.ts](file:///Users/kristianekman/jetpac
 
 | Event | Direction | Purpose |
 |---|---|---|
-| `player_input` | Client → Server | Serialized input state with sequence ID, position, velocity, and boolean flags |
+| `player_input` | Client → Server | Serialized input state with sequence ID and boolean flags (left, right, up, down, thrust, phase, suicide) |
 | `world_snapshot` | Server → Room | Authoritative world state broadcast every 6 ticks (~10 Hz) via **volatile emit** |
 | `start_match` → `game_started` | Host → Server → Room | Host starts match; server initializes tile map, enemies, spawn positions |
 | `tile_phased` / `tile_restored` | Server → Room | Phase-brick destruction/regeneration relay (driven by server-side `TileMap` events) |
@@ -82,14 +82,15 @@ sequenceDiagram
     participant GL as GameLoop (60 Hz)
     participant R as Room
 
-    C->>N: sendInput(serializedInputState)
-    Note over N: Throttled: only sends if<br/>input changed or heartbeat<br/>expired (100ms)
+    C->>C: Run local physics (Client-Authoritative)
+    C->>N: sendInput(inputBooleans + position + sequenceId)
+    Note over N: Throttled: only sends if<br/>input/position changed or<br/>heartbeat expired (100ms)
     N->>S: emit("player_input", inputState)
     S->>R: config.pendingInputs.push(input)
     
     loop Every tick (1/60s)
         GL->>R: Shift pendingInputs
-        GL->>R: Apply position + simulateMovement()
+        GL->>R: Update player entity position & bounds
         GL->>R: Update enemies, check collectibles
         GL->>R: Check win/lose conditions
     end
@@ -97,6 +98,7 @@ sequenceDiagram
     Note over GL: Every 6th tick (~10 Hz)
     GL->>C: volatile.emit("world_snapshot", snapshot)
     C->>C: PlayerManager.updateFromSnapshot()
+    Note over C: Sync remote players via interpolation.<br/>Local player position remains local (100% smooth).<br/>Sync game attributes (lives, score).
     C->>C: EnemyManager.applyEnemySnapshot()
 ```
 
@@ -144,11 +146,11 @@ interpolationDelay = clamp(80 + jitter × 2, 80, 180) ms
 
 ## Authority Model
 
-> **Server-authoritative with client-side state forwarding.**
+> **Client-Authoritative for local player movement; Server-Authoritative for game rules & world state.**
 
-- The **client** runs its own physics locally and sends its current position/velocity along with input state (the `x`, `y`, `vx`, `vy` fields in `SerializedInputState`).
-- The **server** accepts the client's reported position and then runs `simulateMovement()` to apply input-driven physics for the tick.
-- The server is the **single source of truth** for: tile state, item collection, enemy destruction (deduplicated), death/lives, and win/lose conditions.
+- **Local Player Movement (Client-Authoritative)**: The local client is 100% master of its own X/Y position and physics. It simulates movement locally with zero latency or jitter, and sends its updated position/velocity to the server via `player_input`.
+- **Remote Player Rendering**: The server broadcasts all player positions in `world_snapshot` (~10 Hz). Remote clients smoothly interpolate remote players using `PlayerManager` snapshot buffering.
+- **World State & Game Rules (Server-Authoritative)**: The server is the single source of truth for: tile grid state, item collection, enemy destruction (deduplicated), damage, lives/respawns, and win/lose triggers.
 - Snapshots are emitted with **`volatile`** (Socket.IO unreliable delivery) since stale snapshots are worthless — the next one replaces them.
 
 ---

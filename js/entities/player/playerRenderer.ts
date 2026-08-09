@@ -41,11 +41,8 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
     walkBobY = Math.abs(Math.sin(player.animTimer * walkSpeed)) * 2.0;
   }
 
-  player.visualCorrectionX = (player.visualCorrectionX || 0) * 0.75;
-  player.visualCorrectionY = (player.visualCorrectionY || 0) * 0.75;
-
-  const px = player.x + player.visualCorrectionX;
-  const py = player.y + player.visualCorrectionY - walkBobY;
+  const px = player.x;
+  const py = player.y - walkBobY;
 
   ctx.fillStyle = "#3b82f6";
   const leg1X = px + 4 + strideX;

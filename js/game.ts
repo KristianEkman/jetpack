@@ -208,15 +208,6 @@ export class Game {
     let effectiveDt = dt;
 
     if (this.isMultiplayer) {
-      const inputState = this.input.serializeInputState();
-      this.network.sendInput(inputState);
-      if (!this.player.isDead) {
-        this.player.pendingInputs.push(inputState);
-        if (this.player.pendingInputs.length > 60) {
-          this.player.pendingInputs.shift();
-        }
-      }
-      this.playerManager.update(effectiveDt);
       this.enemyManager.interpolateEnemies(effectiveDt);
     }
 
@@ -279,7 +270,11 @@ export class Game {
     this.tileMap.update(effectiveDt, this.player, this.enemyManager);
     this.player.update(effectiveDt, currentInput, this.enemyManager);
 
-    if (!this.isMultiplayer) {
+    if (this.isMultiplayer) {
+      const netInput = this.input.serializeInputState(null, this.player);
+      this.network.sendInput(netInput);
+      this.playerManager.update(effectiveDt);
+    } else {
       this.enemyManager.update(effectiveDt, [this.player]);
     }
 

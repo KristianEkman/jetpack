@@ -195,21 +195,18 @@ export class Player {
     if (!serverPlayer) return;
 
     const acknowledgedSeq = serverPlayer.lastSequenceId || 0;
-    const prevPredictedX = this.x;
-    const prevPredictedY = this.y;
 
+    // Save current client-predicted state
+    const clientX = this.x;
+    const clientY = this.y;
+    const clientVx = this.vx;
+    const clientVy = this.vy;
+
+    // Reset to server-authoritative state and replay unacknowledged inputs
     this.x = serverPlayer.x;
     this.y = serverPlayer.y;
     this.vx = serverPlayer.vx;
     this.vy = serverPlayer.vy;
-    this.fuel = serverPlayer.fuel;
-    this.lives = serverPlayer.lives;
-    this.score = serverPlayer.score;
-    this.facingRight = serverPlayer.facingRight;
-    this.isGrounded = serverPlayer.isGrounded;
-    this.isThrusting = serverPlayer.isThrusting;
-    this.isClimbing = serverPlayer.isClimbing;
-    this.isPhasing = serverPlayer.isPhasing;
 
     this.pendingInputs = this.pendingInputs.filter(
       (inp) => inp.sequenceId > acknowledgedSeq,
@@ -219,23 +216,46 @@ export class Player {
       this.simulateMovement(1 / 60, inp);
     }
 
-    const errX = prevPredictedX - this.x;
-    const errY = prevPredictedY - this.y;
+    // this.x/y now holds the reconciled position (server + replayed inputs)
+    const reconciledX = this.x;
+    const reconciledY = this.y;
+    const reconciledVx = this.vx;
+    const reconciledVy = this.vy;
+
+    // Measure prediction error
+    const errX = clientX - reconciledX;
+    const errY = clientY - reconciledY;
     const errSq = errX * errX + errY * errY;
 
     if (errSq > 4096 || serverPlayer.isDead || this.isDead) {
-      this.visualCorrectionX = 0;
-      this.visualCorrectionY = 0;
+      // Large error (>64px) or death state change: hard snap to reconciled
+      this.x = reconciledX;
+      this.y = reconciledY;
+      this.vx = reconciledVx;
+      this.vy = reconciledVy;
+    } else if (errSq > 4) {
+      // Small drift (>2px): nudge 20% toward reconciled position per snapshot
+      this.x = clientX - errX * 0.2;
+      this.y = clientY - errY * 0.2;
+      this.vx = reconciledVx;
+      this.vy = reconciledVy;
     } else {
-      this.visualCorrectionX = Math.max(
-        -32,
-        Math.min(32, this.visualCorrectionX + errX),
-      );
-      this.visualCorrectionY = Math.max(
-        -32,
-        Math.min(32, this.visualCorrectionY + errY),
-      );
+      // Negligible error (≤2px): keep client prediction as-is
+      this.x = clientX;
+      this.y = clientY;
+      this.vx = clientVx;
+      this.vy = clientVy;
     }
+
+    // Always sync non-positional authoritative state from server
+    this.fuel = serverPlayer.fuel;
+    this.lives = serverPlayer.lives;
+    this.score = serverPlayer.score;
+    this.facingRight = serverPlayer.facingRight;
+    this.isGrounded = serverPlayer.isGrounded;
+    this.isThrusting = serverPlayer.isThrusting;
+    this.isClimbing = serverPlayer.isClimbing;
+    this.isPhasing = serverPlayer.isPhasing;
   }
 
   checkCollectibles(): void {
