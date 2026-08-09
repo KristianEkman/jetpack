@@ -82,15 +82,6 @@ export interface SerializedInputState {
   phase: boolean;
   suicide: boolean;
   sequenceId: number;
-  x?: number;
-  y?: number;
-  vx?: number;
-  vy?: number;
-  facingRight?: boolean;
-  isGrounded?: boolean;
-  isThrusting?: boolean;
-  isClimbing?: boolean;
-  isPhasing?: boolean;
 }
 
 export interface ParticleSpec {

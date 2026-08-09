@@ -185,8 +185,8 @@ export class InputHandler {
         }
     }
 
-    serializeInputState(sequenceId: number | null = null, player: PlayerStateLike | null = null): SerializedInputState {
-        const state: SerializedInputState = {
+    serializeInputState(sequenceId: number | null = null): SerializedInputState {
+        return {
             left: !!this.keys.left,
             right: !!this.keys.right,
             up: !!this.keys.up,
@@ -196,20 +196,6 @@ export class InputHandler {
             suicide: !!this.keys.suicide,
             sequenceId: sequenceId !== null ? sequenceId : ++this.sequenceCounter
         };
-
-        if (player) {
-            state.x = player.x;
-            state.y = player.y;
-            state.vx = player.vx;
-            state.vy = player.vy;
-            state.facingRight = player.facingRight;
-            state.isGrounded = player.isGrounded;
-            state.isThrusting = player.isThrusting;
-            state.isClimbing = player.isClimbing;
-            state.isPhasing = player.isPhasing;
-        }
-
-        return state;
     }
 
     static deserializeInputState(payload: Partial<SerializedInputState> | null): SerializedInputState {
@@ -222,16 +208,7 @@ export class InputHandler {
             thrust: !!payload.thrust,
             phase: !!payload.phase,
             suicide: !!payload.suicide,
-            sequenceId: payload.sequenceId || 0,
-            x: payload.x,
-            y: payload.y,
-            vx: payload.vx,
-            vy: payload.vy,
-            facingRight: payload.facingRight,
-            isGrounded: payload.isGrounded,
-            isThrusting: payload.isThrusting,
-            isClimbing: payload.isClimbing,
-            isPhasing: payload.isPhasing
+            sequenceId: payload.sequenceId || 0
         };
     }
 }

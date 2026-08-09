@@ -136,9 +136,6 @@ const playerConfig = room.playerConfigs.get("socket_host_1");
 assert.ok(playerConfig, "Player config should exist for socket_host_1");
 
 playerConfig!.pendingInputs.push({
-  x: player!.x,
-  y: player!.y,
-  facingRight: true,
   phase: true,
   left: false,
   right: false,

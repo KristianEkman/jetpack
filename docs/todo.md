@@ -15,6 +15,7 @@
 - [x] optimize performance hot spots, check server
 - [ ] lower volume of hits, different hits sounds
 - [x] moving on ladders left right is slower -> good, but when also standing on normail tile dont move so slow.
+- [ ] better more efficient network logic.
 - [ ] customizable controls
 - [x] bosses
 - [ ] better error handling. no dialogs.
@@ -34,7 +35,7 @@
 - [x] extralife
 - [x] dont kill when out of fuel
 - [x] provide only one extralife per level. Dont show it again after it has been collected.
-- [ ] refactor and make files smaller.
+- [x] refactor and make files smaller.
 
 Prompts
 I already have a firebase account and databases there. Make a plan to create a jetpack db there and connect. I want the users to store and fetch levels from there. Also a high score list.

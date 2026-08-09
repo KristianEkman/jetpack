@@ -208,8 +208,14 @@ export class Game {
     let effectiveDt = dt;
 
     if (this.isMultiplayer) {
-      const inputState = this.input.serializeInputState(null, this.player);
+      const inputState = this.input.serializeInputState();
       this.network.sendInput(inputState);
+      if (!this.player.isDead) {
+        this.player.pendingInputs.push(inputState);
+        if (this.player.pendingInputs.length > 60) {
+          this.player.pendingInputs.shift();
+        }
+      }
       this.playerManager.update(effectiveDt);
       this.enemyManager.interpolateEnemies(effectiveDt);
     }

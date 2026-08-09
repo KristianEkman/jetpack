@@ -154,6 +154,23 @@ try {
   assert.equal(client2Config.lastSequenceId, 101);
   console.log("   ✅ Client 2 input sequenceId updated on server.\n");
 
+  console.log("8️⃣.5️⃣  Testing Anti-Cheat: Ignoring Client-Sent Position Coordinates...");
+  client2.emit(GAME_EVENTS.PLAYER_INPUT || "player_input", {
+    thrust: false,
+    left: false,
+    right: false,
+    x: 9999,
+    y: 9999,
+    sequenceId: 102,
+  });
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const player2Entity = room.players.get(client2.id)!;
+  assert.ok(
+    player2Entity.x < 9000 && player2Entity.y < 9000,
+    `Player entity position (${player2Entity.x}, ${player2Entity.y}) must NOT be overwritten by forged client coordinates (9999, 9999)`,
+  );
+  console.log("   ✅ Server authoritatively rejected client-sent position spoofing.\n");
+
   console.log("9️⃣  Testing Multiplayer Level Complete & Next Level Flow...");
 
   const client3 = ioClient(SERVER_URL, { forceNew: true });

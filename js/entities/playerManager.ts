@@ -175,6 +175,7 @@ export class PlayerManager {
           if (pData.lives !== undefined) player.lives = pData.lives;
         } else {
           player.serverAcknowledgedDeath = false;
+          player.reconcileServerSnapshot(pData);
         }
       } else {
         if (pData.name) player.name = pData.name;

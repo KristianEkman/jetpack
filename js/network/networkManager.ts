@@ -398,9 +398,7 @@ export class NetworkManager {
       this.lastSentInput.down !== inputState.down ||
       this.lastSentInput.thrust !== inputState.thrust ||
       this.lastSentInput.phase !== inputState.phase ||
-      this.lastSentInput.suicide !== inputState.suicide ||
-      Math.abs((this.lastSentInput.x || 0) - (inputState.x || 0)) > 0.5 ||
-      Math.abs((this.lastSentInput.y || 0) - (inputState.y || 0)) > 0.5;
+      this.lastSentInput.suicide !== inputState.suicide;
 
     const heartbeatExpired =
       now - this.lastInputTime >=

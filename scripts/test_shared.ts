@@ -234,9 +234,9 @@ import("../js/entities/playerManager.js").then(({ PlayerManager }) => {
     ["socket_3", "p3", 400, 200, 0, 0, 100, 3, 0, 0, 0, 0],
   ]);
 
-  assert.equal(pLocal.x, 100);
-  assert.equal(pLocal.fuel, 100);
-  assert.equal(pLocal.isThrusting, false);
+  assert.equal(pLocal.x, 200);
+  assert.equal(pLocal.fuel, 85);
+  assert.equal(pLocal.isThrusting, true);
   assert.equal(pRemote.x, 300);
   assert.equal(pRemote.isPhasing, true);
 
