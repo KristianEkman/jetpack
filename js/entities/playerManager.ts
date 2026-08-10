@@ -175,8 +175,7 @@ export class PlayerManager {
           if (pData.lives !== undefined) player.lives = pData.lives;
         } else {
           player.serverAcknowledgedDeath = false;
-          if (pData.lives !== undefined) player.lives = pData.lives;
-          if (pData.score !== undefined) player.score = Math.max(player.score, pData.score);
+          player.reconcileServerSnapshot(pData);
         }
       } else {
         if (pData.name) player.name = pData.name;

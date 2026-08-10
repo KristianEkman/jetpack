@@ -436,7 +436,8 @@ export class EnemyManager {
       for (const targetPlayer of livingPlayers) {
         const dx = p.x - (targetPlayer.x + targetPlayer.width / 2);
         const dy = p.y - (targetPlayer.y + targetPlayer.height / 2);
-        if (Math.sqrt(dx * dx + dy * dy) < p.radius + 10) {
+        const hitDist = p.radius + 10;
+        if (dx * dx + dy * dy < hitDist * hitDist) {
           targetPlayer.takeDamage();
           p.life = 0;
           break;
@@ -446,7 +447,8 @@ export class EnemyManager {
       const col = Math.floor(p.x / TILE_SIZE);
       const row = Math.floor(p.y / TILE_SIZE);
       if (this.tileMap.isSolid(col, row) || p.life <= 0) {
-        this.projectiles.splice(i, 1);
+        this.projectiles[i] = this.projectiles[this.projectiles.length - 1];
+        this.projectiles.pop();
       }
     }
   }

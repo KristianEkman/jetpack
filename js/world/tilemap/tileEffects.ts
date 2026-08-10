@@ -169,7 +169,8 @@ export function updateParticles(particles: ParticleSpec[], dt: number): void {
     }
 
     if (p.life <= 0) {
-      particles.splice(i, 1);
+      particles[i] = particles[particles.length - 1];
+      particles.pop();
     }
   }
 }
@@ -184,7 +185,8 @@ export function updateDebris(
     const d = debris[i];
     d.life -= dt;
     if (d.life <= 0) {
-      debris.splice(i, 1);
+      debris[i] = debris[debris.length - 1];
+      debris.pop();
       continue;
     }
 
