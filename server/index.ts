@@ -128,6 +128,11 @@ function initRoomEnemies(
       room.enemyManager.addTurret(t.x, t.y, t.fireInterval),
     );
   }
+  if (levelData.bosses) {
+    levelData.bosses.forEach((b: any) =>
+      room.enemyManager.addBoss(b.x, b.y, b.hp || 25),
+    );
+  }
   for (let r = 0; r < room.tileMap.rows; r++) {
     for (let c = 0; c < room.tileMap.cols; c++) {
       const tile = room.tileMap.getTile(c, r);
@@ -137,6 +142,8 @@ function initRoomEnemies(
         room.enemyManager.addHomingMissile(c * 32 + 8, r * 32 + 8);
       } else if (tile === TILES.ENEMY_TURRET) {
         room.enemyManager.addTurret(c * 32 + 4, r * 32 + 4, 2.0);
+      } else if (tile === TILES.ENEMY_BOSS) {
+        room.enemyManager.addBoss(c * 32, r * 32, 25);
       }
     }
   }

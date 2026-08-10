@@ -284,7 +284,7 @@ export class Game {
 
     if (
       !this.player.isDead &&
-      this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds
+      this.tileMap.isExitUnlocked(this.enemyManager)
     ) {
       const playerCol = Math.floor(
         (this.player.x + this.player.width / 2) / TILE_SIZE,
@@ -294,8 +294,7 @@ export class Game {
       );
 
       if (
-        this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL &&
-        this.tileMap.collectedEmeralds >= this.tileMap.totalEmeralds
+        this.tileMap.getTile(playerCol, playerRow) === TILES.EXIT_PORTAL
       ) {
         if (this.isMultiplayer) {
           this.gameState = GAME_STATES.LEVEL_COMPLETE;
@@ -325,7 +324,11 @@ export class Game {
     this.ctx.fillStyle = "#05070c";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.tileMap.render(this.ctx, this.gameState === GAME_STATES.LEVEL_EDITOR);
+    this.tileMap.render(
+      this.ctx,
+      this.gameState === GAME_STATES.LEVEL_EDITOR,
+      this.enemyManager,
+    );
     this.enemyManager.render(this.ctx, this.player);
 
     if (this.isMultiplayer) {

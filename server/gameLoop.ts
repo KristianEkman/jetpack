@@ -178,11 +178,15 @@ export class GameLoop {
         room.status === "playing" &&
         room.tileMap
       ) {
+        const bossAlive = room.enemyManager
+          ? room.enemyManager.hasAliveBoss()
+          : false;
         const allEmeraldsCaught =
-          (room.tileMap.totalEmeralds > 0 &&
+          ((room.tileMap.totalEmeralds > 0 &&
             room.tileMap.collectedEmeralds >= room.tileMap.totalEmeralds) ||
-          (room.tileMap.totalEmeralds === 0 &&
-            room.tileMap.collectedEmeralds >= 4);
+            (room.tileMap.totalEmeralds === 0 &&
+              room.tileMap.collectedEmeralds >= 4)) &&
+          !bossAlive;
 
         if (allEmeraldsCaught) {
           let levelCleared = false;

@@ -151,4 +151,53 @@ assert.ok(
 );
 console.log("   ✅ Boss wall collision & bounce verified.");
 
+// 9. Test Boss Required for Exit Portal Enablement
+console.log("9️⃣  Testing Boss Required for Exit Portal Enablement...");
+const exitTileMap = new TileMap();
+exitTileMap.totalEmeralds = 5;
+exitTileMap.collectedEmeralds = 5;
+
+const exitEnemyManager = new EnemyManager(exitTileMap);
+
+// Without boss: exit is unlocked when all emeralds are collected
+assert.equal(
+  exitEnemyManager.hasAliveBoss(),
+  false,
+  "hasAliveBoss should be false when no boss exists",
+);
+assert.equal(
+  exitTileMap.isExitUnlocked(exitEnemyManager),
+  true,
+  "Exit should be unlocked when all emeralds are collected and no boss exists",
+);
+
+// Add boss: exit is locked even though all emeralds are collected
+exitEnemyManager.addBoss(100, 50, 10, "boss_gatekeeper");
+assert.equal(
+  exitEnemyManager.hasAliveBoss(),
+  true,
+  "hasAliveBoss should be true when active boss exists",
+);
+assert.equal(
+  exitTileMap.isExitUnlocked(exitEnemyManager),
+  false,
+  "Exit MUST be locked while boss is still alive, even with all emeralds collected",
+);
+
+// Defeat boss: exit unlocks (boss drops loot emeralds which increase totalEmeralds)
+exitEnemyManager.damageEnemy("boss_gatekeeper", 10, player.id);
+assert.equal(
+  exitEnemyManager.hasAliveBoss(),
+  false,
+  "hasAliveBoss should be false after boss is defeated",
+);
+// Collect any extra emeralds dropped by the boss
+exitTileMap.collectedEmeralds = exitTileMap.totalEmeralds;
+assert.equal(
+  exitTileMap.isExitUnlocked(exitEnemyManager),
+  true,
+  "Exit MUST be unlocked after boss is killed and all emeralds collected",
+);
+console.log("   ✅ Boss exit portal enablement requirement verified.");
+
 console.log("\n🎉 ALL BOSS ENEMY TESTS PASSED CLEANLY!");

@@ -375,7 +375,18 @@ export class TileMap {
     );
   }
 
-  render(ctx: CanvasRenderingContext2D, isEditor: boolean = false): void {
+  isExitUnlocked(enemyManager?: EnemyManager | null): boolean {
+    const emeraldsCleared = this.collectedEmeralds >= this.totalEmeralds;
+    const bossAlive = enemyManager ? enemyManager.hasAliveBoss() : false;
+    return emeraldsCleared && !bossAlive;
+  }
+
+  render(
+    ctx: CanvasRenderingContext2D,
+    isEditor: boolean = false,
+    enemyManager?: EnemyManager | null,
+  ): void {
+    const hasBoss = enemyManager ? enemyManager.hasAliveBoss() : false;
     renderTileMap(
       ctx,
       this.cols,
@@ -388,6 +399,7 @@ export class TileMap {
       this.collectedEmeralds,
       this.totalEmeralds,
       isEditor,
+      hasBoss,
     );
   }
 
@@ -398,6 +410,7 @@ export class TileMap {
     y: number,
     c: number,
     r: number,
+    hasBoss: boolean = false,
   ): void {
     renderSingleTile(
       ctx,
@@ -409,6 +422,7 @@ export class TileMap {
       this.portalAngle,
       this.collectedEmeralds,
       this.totalEmeralds,
+      hasBoss,
     );
   }
 }

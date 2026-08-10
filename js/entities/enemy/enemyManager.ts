@@ -120,6 +120,15 @@ export class EnemyManager {
     });
   }
 
+  hasAliveBoss(): boolean {
+    return this.enemies.some(
+      (e) =>
+        e.type === ENEMY_TYPES.BOSS &&
+        !e.dead &&
+        (e.hp === undefined || e.hp > 0),
+    );
+  }
+
   damageEnemy(
     enemyId: string,
     damage: number = 1,

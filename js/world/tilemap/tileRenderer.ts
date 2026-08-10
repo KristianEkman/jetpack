@@ -12,6 +12,7 @@ export function renderTile(
   portalAngle: number,
   collectedEmeralds: number,
   totalEmeralds: number,
+  hasBoss: boolean = false,
 ): void {
   switch (tile) {
     case TILES.BRICK:
@@ -446,7 +447,7 @@ export function renderTile(
       break;
 
     case TILES.EXIT_PORTAL: {
-      const isUnlocked = collectedEmeralds >= totalEmeralds;
+      const isUnlocked = collectedEmeralds >= totalEmeralds && !hasBoss;
       ctx.save();
       ctx.translate(x + 16, y + 16);
       ctx.rotate(portalAngle);
@@ -822,6 +823,7 @@ export function renderTileMap(
   collectedEmeralds: number,
   totalEmeralds: number,
   isEditor: boolean = false,
+  hasBoss: boolean = false,
 ): void {
   ctx.clearRect(0, 0, cols * TILE_SIZE, rows * TILE_SIZE);
 
@@ -866,6 +868,7 @@ export function renderTileMap(
         portalAngle,
         collectedEmeralds,
         totalEmeralds,
+        hasBoss,
       );
     }
   }

@@ -294,8 +294,8 @@ export class Player {
     }
   }
 
-  checkStuck(dt: number): void {
-    checkStuck(this, dt);
+  checkStuck(dt: number, enemyManager?: EnemyManager | null): void {
+    checkStuck(this, dt, enemyManager);
   }
 
   applySnapshot(player: Player): void {

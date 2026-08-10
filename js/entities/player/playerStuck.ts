@@ -3,9 +3,14 @@
    ========================================================================== */
 
 import { TILE_SIZE, TILES } from "../../shared/constants.js";
+import { EnemyManager } from "../enemy/index.js";
 import type { Player } from "./playerClass.js";
 
-export function checkStuck(player: Player, dt: number): void {
+export function checkStuck(
+  player: Player,
+  dt: number,
+  enemyManager?: EnemyManager | null,
+): void {
   if (player.isDead) {
     player.stuckTimer = 0;
     player.isStuck = false;
@@ -54,7 +59,7 @@ export function checkStuck(player: Player, dt: number): void {
 
     if (
       tile === TILES.EXIT_PORTAL &&
-      player.tileMap.collectedEmeralds >= player.tileMap.totalEmeralds
+      player.tileMap.isExitUnlocked(enemyManager)
     ) {
       canEscape = true;
       break;

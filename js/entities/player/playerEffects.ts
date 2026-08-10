@@ -59,5 +59,5 @@ export function processLocalEffects(
 
   player.checkCollectibles();
   player.checkTeleporter();
-  player.checkStuck(dt);
+  player.checkStuck(dt, enemyManager);
 }
