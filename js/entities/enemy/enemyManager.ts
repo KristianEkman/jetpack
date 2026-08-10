@@ -2,7 +2,7 @@
    ENEMY MANAGER MODULE
    ========================================================================== */
 
-import { TILE_SIZE, TileMap } from "../../world/tilemap.js";
+import { TILE_SIZE, TileMap, TILES } from "../../world/tilemap.js";
 import { Player } from "../player.js";
 import { ENEMY_TYPES, Enemy, Projectile } from "./types.js";
 import { updateFlitzer, renderFlitzer } from "./flitzer.js";
@@ -152,14 +152,34 @@ export class EnemyManager {
         enemy.dead = true;
         const destroyed = this.removeEnemyById(enemy.id);
         if (destroyed) {
-          if (this.tileMap && this.tileMap.addSparkles) {
-            for (let s = 0; s < 30; s++) {
-              this.tileMap.addSparkles(
-                enemy.x + enemy.width / 2 + (Math.random() * 80 - 40),
-                enemy.y + enemy.height / 2 + (Math.random() * 60 - 30),
-                s % 2 === 0 ? "#ff0055" : "#ffaa00",
-                3,
-              );
+          if (this.tileMap) {
+            if (this.tileMap.addSparkles) {
+              for (let s = 0; s < 40; s++) {
+                this.tileMap.addSparkles(
+                  enemy.x + enemy.width / 2 + (Math.random() * 80 - 40),
+                  enemy.y + enemy.height / 2 + (Math.random() * 60 - 30),
+                  s % 2 === 0 ? "#ff0055" : "#55ff55",
+                  3,
+                );
+              }
+            }
+            // Defeating the boss drops a treasure burst of coins and emeralds
+            const startCol = Math.floor(enemy.x / TILE_SIZE);
+            const startRow = Math.floor(enemy.y / TILE_SIZE);
+            for (let dc = -1; dc <= 2; dc++) {
+              for (let dr = -1; dr <= 2; dr++) {
+                const c = startCol + dc;
+                const r = startRow + dr;
+                if (c >= 0 && c < this.tileMap.cols && r >= 0 && r < this.tileMap.rows) {
+                  if (this.tileMap.getTile(c, r) === TILES.AIR) {
+                    const tileType = (dc + dr) % 2 === 0 ? TILES.EMERALD : TILES.GOLD;
+                    this.tileMap.setTile(c, r, tileType);
+                    if (tileType === TILES.EMERALD) {
+                      this.tileMap.totalEmeralds++;
+                    }
+                  }
+                }
+              }
             }
           }
           this.onEnemyDestroyed?.({ enemyId: destroyed.id, playerId });

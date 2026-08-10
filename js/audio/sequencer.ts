@@ -9,6 +9,7 @@ import {
     BASS_PATTERN_L4, MELODY_PATTERN_L4,
     BASS_PATTERN_L5, MELODY_PATTERN_L5,
     BASS_PATTERN_L7, MELODY_PATTERN_L7,
+    BASS_PATTERN_L8, MELODY_PATTERN_L8,
     MENU_BASS_PATTERN, MENU_CHIME_PATTERN
 } from './patterns.js';
 
@@ -114,7 +115,7 @@ export class MusicSequencer {
             this.nextStepTime = this.ctx.currentTime + 0.05;
         }
 
-        const gameBpms = [112, 132, 110, 96, 120, 115, 75];
+        const gameBpms = [112, 132, 110, 96, 120, 115, 75, 140];
         const bpm = this.currentTrack === 'menu' ? 100 : (gameBpms[this.currentLevel] ?? 112);
         const maxSteps = 192;
         const stepDuration = (60 / bpm) / 4;
@@ -234,6 +235,7 @@ export class MusicSequencer {
         const isLevel5 = this.currentLevel === 4;
         const isLevel6 = this.currentLevel === 5;
         const isLevel7 = this.currentLevel === 6;
+        const isLevel8 = this.currentLevel === 7;
 
         let bassPattern = BASS_PATTERN;
         if (isLevel2) bassPattern = BASS_PATTERN_L2;
@@ -242,6 +244,7 @@ export class MusicSequencer {
         if (isLevel5) bassPattern = BASS_PATTERN_L5;
         if (isLevel6) bassPattern = BASS_PATTERN_L3;
         if (isLevel7) bassPattern = BASS_PATTERN_L7;
+        if (isLevel8) bassPattern = BASS_PATTERN_L8;
 
         let bassTied = 1;
         if (isLevel7) {
@@ -257,7 +260,7 @@ export class MusicSequencer {
             const gain = this.ctx.createGain();
             const filter = this.ctx.createBiquadFilter();
 
-            osc.type = (isLevel5 || isLevel7) ? 'square' : ((isLevel2 || isLevel3 || isLevel6) ? 'sawtooth' : 'triangle');
+            osc.type = (isLevel5 || isLevel7) ? 'square' : ((isLevel2 || isLevel3 || isLevel6 || isLevel8) ? 'sawtooth' : 'triangle');
             osc.frequency.setValueAtTime(bassFreq, time);
 
             filter.type = 'lowpass';
@@ -265,6 +268,10 @@ export class MusicSequencer {
                 filter.Q.setValueAtTime(4.2, time);
                 filter.frequency.setValueAtTime(1600, time);
                 filter.frequency.exponentialRampToValueAtTime(300, time + stepDuration * bassDurMult);
+            } else if (isLevel8) {
+                filter.Q.setValueAtTime(3.8, time);
+                filter.frequency.setValueAtTime(1500, time);
+                filter.frequency.exponentialRampToValueAtTime(350, time + stepDuration * 0.88);
             } else if (isLevel2) {
                 filter.Q.setValueAtTime(3.2, time);
                 filter.frequency.setValueAtTime(900, time);
@@ -285,7 +292,7 @@ export class MusicSequencer {
                 filter.frequency.setValueAtTime(800, time);
             }
 
-            gain.gain.setValueAtTime(isLevel7 ? 0.32 : (isLevel5 ? 0.23 : (isLevel4 ? 0.30 : (isLevel2 ? 0.24 : (isLevel3 ? 0.26 : 0.28)))), time);
+            gain.gain.setValueAtTime(isLevel8 ? 0.28 : (isLevel7 ? 0.32 : (isLevel5 ? 0.23 : (isLevel4 ? 0.30 : (isLevel2 ? 0.24 : (isLevel3 ? 0.26 : 0.28))))), time);
             gain.gain.exponentialRampToValueAtTime(0.01, time + stepDuration * bassDurMult);
 
             osc.connect(filter);
@@ -303,6 +310,7 @@ export class MusicSequencer {
         if (isLevel5) melodyPattern = MELODY_PATTERN_L5;
         if (isLevel6) melodyPattern = MELODY_PATTERN_L3;
         if (isLevel7) melodyPattern = MELODY_PATTERN_L7;
+        if (isLevel8) melodyPattern = MELODY_PATTERN_L8;
 
         const leadFreq = melodyPattern[step];
         if (leadFreq) {

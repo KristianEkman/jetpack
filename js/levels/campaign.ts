@@ -209,6 +209,30 @@ const LEVEL_7_STR = `
 ##############################
 `;
 
+// Level 8: Bonus Treasure Vault
+// Celebratory bonus level accessible after defeating the Stage 7 boss/bot.
+// Packed with massive coin cascades, emerald clusters, speed chutes, powerups, and teleporters!
+const LEVEL_8_STR = `
+##############################
+#S..G.E.G.E.G.E.G.E.G.E.G.E.L#
+####.######################.##
+#..E.G.E.G...E...G.E.G.E.G.E.#
+#.PPPPPPPPPP.PPPPPPPPPP.PPPP.#
+#...G.G.G.G...G.G.G.G.G...R..#
+#.##########################.#
+#...E.E.E.E...H...E.E.E.E.E..#
+#.>>>>>>>>>>..H..<<<<<<<<<<<.#
+#.............H..............#
+#.TT.PPPPPPP.HHHHH.PPPPPPP.TT#
+#...G.G.G.G.G.F.G.G.G.G.G....#
+#.##########################.#
+#.IIIIIIIIIIIIIIIIIIIIIIIIII.#
+#...E.G.E.G.E.G.E.G.E.G.E.G..#
+#.##########################.#
+#...F...E..E..E..E..E...F..O.#
+##############################
+`;
+
 export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
     {
         name: "Stage 1: Genesis Caverns",
@@ -282,6 +306,15 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
         bosses: [
             { x: 440, y: 180, hp: 35 }
         ]
+    },
+    {
+        name: "Stage 8: Bonus Treasure Vault",
+        grid: parseLevelString(LEVEL_8_STR),
+        flitzers: [
+            { x: 300, y: 150, vx: 120, vy: 0 },
+            { x: 600, y: 320, vx: -120, vy: 0 }
+        ]
     }
 ];
+
 

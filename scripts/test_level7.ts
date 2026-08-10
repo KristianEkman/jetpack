@@ -6,7 +6,7 @@ import { EnemyManager, ENEMY_TYPES } from "../js/entities/enemy/index.js";
 console.log("🧪 Running Stage 7 Boss Level Validation Suite...\n");
 
 // 1. Check CAMPAIGN_LEVELS count
-assert.equal(CAMPAIGN_LEVELS.length, 7, "CAMPAIGN_LEVELS should now contain 7 levels");
+assert.ok(CAMPAIGN_LEVELS.length >= 7, "CAMPAIGN_LEVELS should contain at least 7 levels");
 
 const stage7 = CAMPAIGN_LEVELS[6];
 assert.equal(stage7.name, "Stage 7: Mecha Core Fortress");
