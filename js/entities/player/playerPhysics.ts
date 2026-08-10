@@ -19,6 +19,7 @@ export function simulateMovement(
   player.phaseCooldown = Math.max(0, player.phaseCooldown - dt);
   player.phaseBeamTimer = Math.max(0, player.phaseBeamTimer - dt);
   player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
+  player.rapidFireTimer = Math.max(0, player.rapidFireTimer - dt);
   player.isPhasing = player.phaseBeamTimer > 0;
 
   const centerCol = Math.floor((player.x + player.width / 2) / TILE_SIZE);

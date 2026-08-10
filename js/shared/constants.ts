@@ -28,6 +28,7 @@ export const TILES = {
   ENEMY_TURRET: 18,
   EXTRA_LIFE: 19,
   ENEMY_BOSS: 20,
+  RAPID_FIRE: 21,
 } as const;
 
 export type TileTypeValue = (typeof TILES)[keyof typeof TILES];
@@ -54,6 +55,8 @@ export const PLAYER_PHYSICS = {
   PHASE_BEAM_LENGTH: 160,
   PHASE_BEAM_PERSIST_TIME: 0.14,
   PHASE_COOLDOWN_TIME: 0.3,
+  RAPID_FIRE_COOLDOWN: 0.08,
+  RAPID_FIRE_DURATION: 15.0,
   PHASE_BRICK_REGEN_TIME: 5.0,
 } as const;
 

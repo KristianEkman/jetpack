@@ -34,7 +34,8 @@ const CHAR_TO_TILE: Record<string, number> = {
     '2': TILES.ENEMY_MISSILE,
     '3': TILES.ENEMY_TURRET,
     'B': TILES.ENEMY_BOSS,
-    'L': TILES.EXTRA_LIFE
+    'L': TILES.EXTRA_LIFE,
+    'R': TILES.RAPID_FIRE
 };
 
 function parseLevelString(str: string): number[] {
@@ -147,7 +148,7 @@ const LEVEL_5_STR = `
 #.PPPPPPPPPPPPPPPPPPPPPPPPPP.#
 #............................#
 #.##########################.#
-#.#...E....F...E....F......#.#
+#.#...E.R..F...E....F......#.#
 #.#.######################.#.#
 #.#.#.IIIIIIIIIIIIIIIIII.#.#.#
 #.#.#.I................I.#.#.#

@@ -19,8 +19,11 @@ export function performPhaseBeam(
   if (!player.tileMap) return null;
 
   setPhasing(player, true);
-  player.phaseBeamTimer = 0.14;
-  player.phaseCooldown = PLAYER_PHYSICS.PHASE_COOLDOWN_TIME;
+  player.phaseBeamTimer = player.rapidFireTimer > 0 ? 0.08 : 0.14;
+  player.phaseCooldown =
+    player.rapidFireTimer > 0
+      ? PLAYER_PHYSICS.RAPID_FIRE_COOLDOWN
+      : PLAYER_PHYSICS.PHASE_COOLDOWN_TIME;
 
   const playerCol = Math.floor((player.x + player.width / 2) / TILE_SIZE);
   const playerRow = Math.floor((player.y + player.height / 2) / TILE_SIZE);

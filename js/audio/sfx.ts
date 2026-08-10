@@ -211,6 +211,33 @@ export class SoundEffects {
         });
     }
 
+    // Rapid Fire Power-Up Pickup Synth Chime
+    playRapidFirePickup(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const notes = [NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.E6, NOTES.G6];
+        notes.forEach((freq, idx) => {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.035);
+
+            gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.035);
+            gain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + idx * 0.035 + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.035 + 0.15);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(this.ctx.currentTime + idx * 0.035);
+            osc.stop(this.ctx.currentTime + idx * 0.035 + 0.15);
+        });
+    }
+
     // Rewarding fanfare when all diamonds are caught
     playAllDiamondsCaught(): void {
         if (this.isMuted) return;

@@ -160,6 +160,10 @@ export class AudioManager {
         this.sfx.playExtraLifePickup();
     }
 
+    playRapidFirePickup(): void {
+        this.sfx.playRapidFirePickup();
+    }
+
     playAllDiamondsCaught(): void {
         this.sfx.playAllDiamondsCaught();
     }

@@ -146,6 +146,20 @@ export class MultiplayerController {
             "#ff88a5",
             12,
           );
+        } else if (data.tileType === TILES.RAPID_FIRE) {
+          game.audio?.playRapidFirePickup?.();
+          game.tileMap.addSparkles(
+            data.col * TILE_SIZE + 16,
+            data.row * TILE_SIZE + 16,
+            "#ffaa00",
+            15,
+          );
+          game.tileMap.addSparkles(
+            data.col * TILE_SIZE + 16,
+            data.row * TILE_SIZE + 16,
+            "#00f0ff",
+            15,
+          );
         }
       }
     };

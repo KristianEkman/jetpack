@@ -27,6 +27,7 @@ export const PALETTE: PaletteItem[] = [
     { type: TILES.FUEL, name: 'Fuel Can', icon: '⛽', color: '#f39c12' },
     { type: TILES.GOLD, name: 'Gold Coin', icon: '🪙', color: '#f1c40f' },
     { type: TILES.EXTRA_LIFE, name: 'Extra Life', icon: '❤️', color: '#ff2d55' },
+    { type: TILES.RAPID_FIRE, name: 'Rapid Fire', icon: '⚡', color: '#ffcc00' },
     { type: TILES.SPAWN, name: 'Player Spawn', icon: '🚀', color: '#00ffcc' },
     { type: TILES.EXIT_PORTAL, name: 'Exit Portal', icon: '🌀', color: '#ff00ff' },
     { type: TILES.TELEPORTER, name: 'Teleporter', icon: '🔮', color: '#9b59b6' },

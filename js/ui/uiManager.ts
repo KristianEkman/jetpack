@@ -13,6 +13,7 @@ export interface HUDState {
   lives: number | null;
   emeralds: string | null;
   fuel: number | null;
+  powerupTime: string | null;
 }
 
 export class UIManager {
@@ -24,6 +25,8 @@ export class UIManager {
   hudEmeraldsEl: HTMLElement | null;
   fuelBarFillEl: HTMLElement | null;
   fuelTextEl: HTMLElement | null;
+  hudPowerupEl: HTMLElement | null;
+  hudPowerupTextEl: HTMLElement | null;
 
   hudState: HUDState;
 
@@ -36,6 +39,8 @@ export class UIManager {
     this.hudEmeraldsEl = document.getElementById("hudEmeralds");
     this.fuelBarFillEl = document.getElementById("fuelBarFill");
     this.fuelTextEl = document.getElementById("fuelText");
+    this.hudPowerupEl = document.getElementById("hudPowerup");
+    this.hudPowerupTextEl = document.getElementById("hudPowerupText");
 
     this.hudState = {
       level: null,
@@ -43,6 +48,7 @@ export class UIManager {
       lives: null,
       emeralds: null,
       fuel: null,
+      powerupTime: null,
     };
 
     this.setupVisibilityHandler();
@@ -318,6 +324,18 @@ export class UIManager {
       this.hudState.fuel = fuelPct;
       if (this.fuelBarFillEl) this.fuelBarFillEl.style.width = `${fuelPct}%`;
       if (this.fuelTextEl) this.fuelTextEl.textContent = `${fuelPct}%`;
+    }
+
+    if (game.player.rapidFireTimer > 0) {
+      const timeStr = `${game.player.rapidFireTimer.toFixed(1)}s`;
+      if (this.hudPowerupEl) this.hudPowerupEl.classList.remove("hidden");
+      if (this.hudState.powerupTime !== timeStr) {
+        this.hudState.powerupTime = timeStr;
+        if (this.hudPowerupTextEl) this.hudPowerupTextEl.textContent = timeStr;
+      }
+    } else {
+      if (this.hudPowerupEl) this.hudPowerupEl.classList.add("hidden");
+      this.hudState.powerupTime = null;
     }
   }
 

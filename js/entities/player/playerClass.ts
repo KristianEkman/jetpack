@@ -53,6 +53,7 @@ export class Player {
   phaseCooldown: number;
   phaseBeamTimer: number;
   phaseBeamLength: number;
+  rapidFireTimer: number;
 
   animTimer: number;
   stuckTimer: number;
@@ -106,6 +107,7 @@ export class Player {
     this.phaseCooldown = 0;
     this.phaseBeamTimer = 0;
     this.phaseBeamLength = PLAYER_PHYSICS.PHASE_BEAM_LENGTH;
+    this.rapidFireTimer = 0;
 
     this.animTimer = 0;
     this.stuckTimer = 0;
@@ -116,6 +118,10 @@ export class Player {
     this.visualCorrectionX = 0;
     this.visualCorrectionY = 0;
     this.deathTimer = 0;
+  }
+
+  isRapidFireActive(): boolean {
+    return this.rapidFireTimer > 0;
   }
 
   spawn(x: number, y: number): void {
@@ -132,6 +138,7 @@ export class Player {
     this.isPhasing = false;
     this.phaseBeamTimer = 0;
     this.phaseCooldown = 0;
+    this.rapidFireTimer = 0;
     this.stuckTimer = 0;
     this.isStuck = false;
     this.teleportCooldown = 0;

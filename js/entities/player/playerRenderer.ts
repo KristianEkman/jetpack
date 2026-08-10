@@ -131,40 +131,72 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
       ? beamStartX + player.phaseBeamLength
       : beamStartX - player.phaseBeamLength;
 
-    ctx.strokeStyle = "rgba(0, 240, 255, 0.35)";
-    ctx.lineWidth = 10;
+    const isRapid = player.rapidFireTimer > 0;
+    const outerColor = isRapid ? "rgba(255, 170, 0, 0.45)" : "rgba(0, 240, 255, 0.35)";
+    const mainColor = isRapid ? "#ffaa00" : "#00f0ff";
+    const coreColor = isRapid ? "#ffee55" : "#ffffff";
+
+    ctx.strokeStyle = outerColor;
+    ctx.lineWidth = isRapid ? 12 : 10;
     ctx.beginPath();
     ctx.moveTo(beamStartX, beamStartY);
     ctx.lineTo(beamEndX, beamStartY);
     ctx.stroke();
 
-    ctx.strokeStyle = "#00f0ff";
+    ctx.strokeStyle = mainColor;
     ctx.lineWidth = 5;
     ctx.beginPath();
     ctx.moveTo(beamStartX, beamStartY);
     ctx.lineTo(beamEndX, beamStartY);
     ctx.stroke();
 
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = coreColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(beamStartX, beamStartY);
     ctx.lineTo(beamEndX, beamStartY);
     ctx.stroke();
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = coreColor;
     ctx.beginPath();
     ctx.arc(beamStartX, beamStartY, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "rgba(0, 255, 255, 0.4)";
+    ctx.fillStyle = outerColor;
     ctx.beginPath();
-    ctx.arc(beamEndX, beamStartY, 8, 0, Math.PI * 2);
+    ctx.arc(beamEndX, beamStartY, isRapid ? 10 : 8, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#00ffff";
+    ctx.fillStyle = mainColor;
     ctx.beginPath();
     ctx.arc(beamEndX, beamStartY, 4, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  if (player.rapidFireTimer > 0) {
+    ctx.save();
+    const pulse = (Math.sin(player.animTimer * 25) + 1) * 0.5;
+    const auraRadius = 18 + pulse * 4;
+    const cx = px + player.width / 2;
+    const cy = py + player.height / 2;
+
+    const grad = ctx.createRadialGradient(cx, cy, 4, cx, cy, auraRadius);
+    grad.addColorStop(0, `rgba(255, 230, 0, ${0.45 + pulse * 0.25})`);
+    grad.addColorStop(0.6, `rgba(255, 100, 0, ${0.25 + pulse * 0.15})`);
+    grad.addColorStop(1, "rgba(255, 170, 0, 0)");
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, auraRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(255, 220, 0, ${0.6 + pulse * 0.4})`;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = "#ffea00";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 17, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   if (player.respawnInvulnerability > 0) {

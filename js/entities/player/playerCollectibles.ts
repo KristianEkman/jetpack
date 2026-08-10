@@ -157,6 +157,39 @@ export function checkCollectibles(player: Player): void {
           lives: player.lives,
           score: player.score,
         });
+      } else if (tile === TILES.RAPID_FIRE) {
+        player.tileMap.setTile(col, row, TILES.AIR);
+        player.rapidFireTimer = PLAYER_PHYSICS.RAPID_FIRE_DURATION;
+        player.addScore(300);
+        player.audio?.playRapidFirePickup?.();
+        player.tileMap.addSparkles(
+          col * TILE_SIZE + 16,
+          row * TILE_SIZE + 16,
+          "#ffaa00",
+          15,
+        );
+        player.tileMap.addSparkles(
+          col * TILE_SIZE + 16,
+          row * TILE_SIZE + 16,
+          "#00f0ff",
+          15,
+        );
+        player.tileMap.addSparkles(
+          col * TILE_SIZE + 16,
+          row * TILE_SIZE + 16,
+          "#ffffff",
+          10,
+        );
+        player.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+          col,
+          row,
+          tileType: tile,
+          playerId: player.id,
+          collectedEmeralds: player.tileMap.collectedEmeralds,
+          totalEmeralds: player.tileMap.totalEmeralds,
+          score: player.score,
+          rapidFireTimer: player.rapidFireTimer,
+        });
       }
     }
   }

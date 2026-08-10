@@ -752,6 +752,61 @@ export function renderTile(
       ctx.restore();
       break;
     }
+
+    case TILES.RAPID_FIRE: {
+      const now = Date.now();
+      const hoverY = Math.sin(now / 180) * 2.2;
+      const pulse = (Math.sin(now / 140) + 1) * 0.5;
+      const cx = x + 16;
+      const cy = y + 16 + hoverY;
+
+      ctx.save();
+
+      // Energetic aura glow (Amber / Electric Cyan)
+      const glowRadius = 16 + pulse * 3.0;
+      const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+      glow.addColorStop(0, `rgba(255, 200, 0, ${0.6 + pulse * 0.3})`);
+      glow.addColorStop(0.5, `rgba(0, 240, 255, ${0.3 + pulse * 0.2})`);
+      glow.addColorStop(1, "rgba(255, 170, 0, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ground shadow
+      const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.beginPath();
+      ctx.ellipse(cx, y + 29, 7 * shadowScale, 2.2 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Orb background badge
+      const orbGrad = ctx.createLinearGradient(cx - 10, cy - 10, cx + 10, cy + 10);
+      orbGrad.addColorStop(0, "#ffe600");
+      orbGrad.addColorStop(0.5, "#ffaa00");
+      orbGrad.addColorStop(1, "#ff5500");
+
+      ctx.fillStyle = orbGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Center lightning bolt icon ⚡
+      ctx.font = "bold 13px Orbitron, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#ffea00";
+      ctx.shadowBlur = 6;
+      ctx.fillText("⚡", cx, cy + 1);
+
+      ctx.restore();
+      break;
+    }
   }
 }
 
