@@ -2,7 +2,7 @@
    PLAYER PHYSICS & MOVEMENT SIMULATION
    ========================================================================== */
 
-import { TILE_SIZE, TILES } from "../../shared/constants.js";
+import { TILE_SIZE, TILES, PLAYER_PHYSICS } from "../../shared/constants.js";
 import { SerializedInputState } from "../../shared/types.js";
 import { EnemyManager } from "../enemy/index.js";
 import type { Player } from "./playerClass.js";
@@ -30,9 +30,9 @@ export function simulateMovement(
   const onLadder = player.tileMap.isClimbable(centerCol, centerRow);
   const onIce = feetTile === TILES.ICE;
 
-  const accel = onIce ? 400 : 1200;
-  const friction = onIce ? 0.96 : 0.82;
-  const maxSpeed = 200;
+  const accel = onIce ? PLAYER_PHYSICS.ICE_ACCEL : PLAYER_PHYSICS.WALK_ACCEL;
+  const friction = onIce ? PLAYER_PHYSICS.ICE_FRICTION : PLAYER_PHYSICS.WALK_FRICTION;
+  const maxSpeed = PLAYER_PHYSICS.MAX_SPEED;
 
   if (input.left) {
     player.vx -= accel * dt;
@@ -55,8 +55,8 @@ export function simulateMovement(
 
   if (player.isClimbing) {
     player.vy = 0;
-    if (input.up) player.vy = -140;
-    if (input.down) player.vy = 140;
+    if (input.up) player.vy = -PLAYER_PHYSICS.CLIMB_SPEED;
+    if (input.down) player.vy = PLAYER_PHYSICS.CLIMB_SPEED;
     if (!player.isGrounded) {
       player.vx *= 0.5;
     }
@@ -65,16 +65,19 @@ export function simulateMovement(
   if (input.thrust && player.fuel > 0) {
     player.isClimbing = false;
     player.isThrusting = true;
-    player.vy -= 1400 * dt;
+    player.vy -= PLAYER_PHYSICS.THRUST_ACCEL * dt;
     player.fuel = Math.max(0, player.fuel - player.fuelBurnRate * dt);
   } else {
     player.isThrusting = false;
   }
 
   if (!player.isClimbing && !player.isGrounded) {
-    player.vy += 950 * dt;
+    player.vy += PLAYER_PHYSICS.GRAVITY * dt;
   }
-  player.vy = Math.min(450, player.vy);
+  player.vy = Math.max(
+    -PLAYER_PHYSICS.MAX_ASCENT_SPEED,
+    Math.min(PLAYER_PHYSICS.TERMINAL_VELOCITY, player.vy),
+  );
 
   if (input.phase && player.phaseCooldown <= 0) {
     player.performPhaseBeam(enemyManager, playerTargets);
