@@ -36,10 +36,9 @@
 - [x] dont kill when out of fuel
 - [x] provide only one extralife per level. Dont show it again after it has been collected.
 - [x] refactor and make files smaller.
-- [ ] improve typing, replace any with stricter types.
-- [ ] coin and rapid fire looks the same
-- [ ] Am I invinseble when using rapoid fire?
- 
+- [x] improve typing, replace any with stricter types.
+- [x] coin and rapid fire looks almost the same
+
 Bug: After killing the boss, do I always get many dimonds when killing an enemy?
 
 

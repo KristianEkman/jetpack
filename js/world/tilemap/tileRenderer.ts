@@ -429,14 +429,112 @@ export function renderTile(
       break;
     }
 
-    case TILES.GOLD:
-      ctx.fillStyle = "#f1c40f";
+    case TILES.GOLD: {
+      const now = Date.now();
+      const hoverY = Math.sin(now / 220 + c * 0.5 + r * 0.3) * 1.5;
+      const cx = x + 16;
+      const cy = y + 16 + hoverY;
+
+      // 3D Coin Spin (perspective scale X)
+      const rotAngle = now / 300 + c * 0.7 + r * 0.4;
+      const scaleX = Math.abs(Math.cos(rotAngle));
+      const coinWidth = Math.max(2.2, 10 * scaleX);
+      const coinHeight = 10;
+
+      ctx.save();
+
+      // Soft ground shadow beneath spinning coin
+      const shadowScaleX = Math.max(0.3, scaleX);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
       ctx.beginPath();
-      ctx.arc(x + 16, y + 16, 10, 0, Math.PI * 2);
+      ctx.ellipse(cx, y + 28, 7 * shadowScaleX, 2, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = "#d35400";
+
+      // Golden outer glow pulse
+      const glowAlpha = 0.2 + (Math.sin(now / 200) + 1) * 0.15;
+      const goldGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 14);
+      goldGlow.addColorStop(0, `rgba(255, 215, 0, ${glowAlpha})`);
+      goldGlow.addColorStop(1, "rgba(255, 170, 0, 0)");
+      ctx.fillStyle = goldGlow;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, coinWidth + 4, coinHeight + 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer coin body with rich 3D gold gradient
+      const goldGrad = ctx.createLinearGradient(
+        cx - coinWidth,
+        cy - coinHeight,
+        cx + coinWidth,
+        cy + coinHeight,
+      );
+      goldGrad.addColorStop(0, "#fff4a3");
+      goldGrad.addColorStop(0.3, "#ffd700");
+      goldGrad.addColorStop(0.7, "#d4af37");
+      goldGrad.addColorStop(1, "#996515");
+
+      ctx.fillStyle = goldGrad;
+      ctx.strokeStyle = "#855805";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, coinWidth, coinHeight, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.stroke();
+
+      // Inner coin rim and star emblem if coin is wide enough
+      if (scaleX > 0.35) {
+        const innerWidth = coinWidth * 0.72;
+        const innerHeight = coinHeight * 0.72;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, innerWidth, innerHeight, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#855805";
+        ctx.font = `bold ${Math.max(7, Math.round(10 * scaleX))}px Orbitron, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("★", cx, cy + 0.5);
+      }
+
+      // Specular sheen light reflection
+      if (scaleX > 0.25) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(
+          cx - coinWidth * 0.3,
+          cy - coinHeight * 0.3,
+          coinWidth * 0.4,
+          coinHeight * 0.4,
+          -0.4,
+          Math.PI * 0.7,
+          Math.PI * 1.3,
+        );
+        ctx.stroke();
+      }
+
+      // Occasional sparkle on coin edge
+      const sparklePhase = Math.sin(now / 300 + c * 3);
+      if (sparklePhase > 0.84) {
+        const sx =
+          cx + (Math.cos(rotAngle) > 0 ? coinWidth * 0.7 : -coinWidth * 0.7);
+        const sy = cy - coinHeight * 0.5;
+        const sSize = (sparklePhase - 0.84) * 20;
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(sx - sSize, sy);
+        ctx.lineTo(sx + sSize, sy);
+        ctx.moveTo(sx, sy - sSize);
+        ctx.lineTo(sx, sy + sSize);
+        ctx.stroke();
+      }
+
+      ctx.restore();
       break;
+    }
 
     case TILES.SPAWN:
       ctx.strokeStyle = "rgba(0, 255, 204, 0.4)";
@@ -756,54 +854,76 @@ export function renderTile(
 
     case TILES.RAPID_FIRE: {
       const now = Date.now();
-      const hoverY = Math.sin(now / 180) * 2.2;
-      const pulse = (Math.sin(now / 140) + 1) * 0.5;
+      const hoverY = Math.sin(now / 160 + c) * 2.5;
+      const pulse = (Math.sin(now / 120) + 1) * 0.5;
       const cx = x + 16;
       const cy = y + 16 + hoverY;
 
       ctx.save();
 
-      // Energetic aura glow (Amber / Electric Cyan)
-      const glowRadius = 16 + pulse * 3.0;
-      const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
-      glow.addColorStop(0, `rgba(255, 200, 0, ${0.6 + pulse * 0.3})`);
-      glow.addColorStop(0.5, `rgba(0, 240, 255, ${0.3 + pulse * 0.2})`);
-      glow.addColorStop(1, "rgba(255, 170, 0, 0)");
-      ctx.fillStyle = glow;
+      // Fiery plasma aura (Neon Crimson / Plasma Orange)
+      const glowRadius = 18 + pulse * 4.0;
+      const plasmaGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+      plasmaGlow.addColorStop(0, `rgba(255, 50, 0, ${0.7 + pulse * 0.25})`);
+      plasmaGlow.addColorStop(0.4, `rgba(255, 0, 85, ${0.4 + pulse * 0.2})`);
+      plasmaGlow.addColorStop(1, "rgba(255, 0, 85, 0)");
+      ctx.fillStyle = plasmaGlow;
       ctx.beginPath();
       ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
       ctx.fill();
 
       // Ground shadow
       const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.beginPath();
-      ctx.ellipse(cx, y + 29, 7 * shadowScale, 2.2 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, y + 29, 8 * shadowScale, 2.5 * shadowScale, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Orb background badge
-      const orbGrad = ctx.createLinearGradient(cx - 10, cy - 10, cx + 10, cy + 10);
-      orbGrad.addColorStop(0, "#ffe600");
-      orbGrad.addColorStop(0.5, "#ffaa00");
-      orbGrad.addColorStop(1, "#ff5500");
+      // Orbiting energy spark nodes (2 nodes rotating around core)
+      const orbitAngle = now / 200;
+      for (let i = 0; i < 2; i++) {
+        const angle = orbitAngle + i * Math.PI;
+        const ox = cx + Math.cos(angle) * 14;
+        const oy = cy + Math.sin(angle) * 6;
 
-      ctx.fillStyle = orbGrad;
+        ctx.fillStyle = i === 0 ? "#ffff00" : "#ff0055";
+        ctx.beginPath();
+        ctx.arc(ox, oy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Angular Hexagonal / Diamond Shield Badge Core
+      const w = 11;
+      const h = 12;
       ctx.beginPath();
-      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.moveTo(cx, cy - h);
+      ctx.lineTo(cx + w, cy - h * 0.4);
+      ctx.lineTo(cx + w, cy + h * 0.4);
+      ctx.lineTo(cx, cy + h);
+      ctx.lineTo(cx - w, cy + h * 0.4);
+      ctx.lineTo(cx - w, cy - h * 0.4);
+      ctx.closePath();
+
+      // High contrast gradient: Crimson -> Fiery Orange -> Neon Yellow
+      const badgeGrad = ctx.createLinearGradient(cx - w, cy - h, cx + w, cy + h);
+      badgeGrad.addColorStop(0, "#ff0055");
+      badgeGrad.addColorStop(0.5, "#ff5500");
+      badgeGrad.addColorStop(1, "#ffcc00");
+      ctx.fillStyle = badgeGrad;
       ctx.fill();
 
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Center lightning bolt icon ⚡
-      ctx.font = "bold 13px Orbitron, sans-serif";
+      // Inner double lightning icon
+      ctx.font = "900 11px Orbitron, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = "#ffea00";
-      ctx.shadowBlur = 6;
-      ctx.fillText("⚡", cx, cy + 1);
+      ctx.shadowColor = "#ff0055";
+      ctx.shadowBlur = 8;
+      ctx.fillText("⚡⚡", cx, cy + 0.5);
 
       ctx.restore();
       break;

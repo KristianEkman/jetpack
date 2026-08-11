@@ -165,13 +165,13 @@ export function checkCollectibles(player: Player): void {
         player.tileMap.addSparkles(
           col * TILE_SIZE + 16,
           row * TILE_SIZE + 16,
-          "#ffaa00",
+          "#ff0055",
           15,
         );
         player.tileMap.addSparkles(
           col * TILE_SIZE + 16,
           row * TILE_SIZE + 16,
-          "#00f0ff",
+          "#ff5500",
           15,
         );
         player.tileMap.addSparkles(
