@@ -163,7 +163,7 @@ io.on("connection", (socket: any) => {
 
   socket.on(
     ROOM_EVENTS.CREATE_ROOM,
-    (data: RoomActionResponse, callback: any) => {
+    (data: any, callback: any) => {
       let room: ServerRoom;
       try {
         room = roomManager.createRoom(socket.id, data);
@@ -216,7 +216,7 @@ io.on("connection", (socket: any) => {
 
   socket.on(
     ROOM_EVENTS.JOIN_ROOM,
-    (data: RoomActionResponse, callback: any) => {
+    (data: any, callback: any) => {
       const roomId = data.roomId;
       if (!roomId) {
         const errResponse = { success: false, error: "Room ID required" };
@@ -226,7 +226,7 @@ io.on("connection", (socket: any) => {
       }
 
       const result = roomManager.joinRoom(roomId, socket.id, data);
-      if (!result.success) {
+      if (!result.success || !result.room) {
         if (typeof callback === "function") callback(result);
         socket.emit(ROOM_EVENTS.JOIN_ERROR, result);
         return;
@@ -439,7 +439,7 @@ io.on("connection", (socket: any) => {
       clearedBy: playerName,
       socketId: socket.id,
       room: serializedRoom,
-      players: serializedRoom.players,
+      players: serializedRoom ? serializedRoom.players : [],
     };
 
     if (typeof callback === "function") callback(payload);

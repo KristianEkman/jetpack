@@ -38,7 +38,7 @@ export function updateTurret(
 export function renderTurret(
   ctx: CanvasRenderingContext2D,
   enemy: Enemy,
-  player: any,
+  player: Player | null,
 ): void {
   const cx = enemy.x + enemy.width / 2;
   const cy = enemy.y + enemy.height / 2;

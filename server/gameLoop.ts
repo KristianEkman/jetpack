@@ -2,6 +2,7 @@
    SERVER FIXED TICK GAME LOOP (60 Hz Engine)
    ========================================================================== */
 
+import { Server } from "socket.io";
 import { Player } from "../js/entities/player.js";
 import {
   GAME_EVENTS,
@@ -12,10 +13,11 @@ import {
   MULTIPLAYER_MODES,
 } from "../js/shared/constants.js";
 import { RoomManager } from "./roomManager.js";
+import { WorldSnapshotPayload } from "../js/shared/types.js";
 
 export class GameLoop {
   roomManager: RoomManager;
-  io: any;
+  io: Server | any;
   tickRate: number;
   dt: number;
   intervalMs: number;
@@ -25,7 +27,7 @@ export class GameLoop {
   lastTime: number;
   maxCatchUpTicks: number;
 
-  constructor(roomManager: RoomManager, io: any, tickRate: number = 60) {
+  constructor(roomManager: RoomManager, io: Server | any, tickRate: number = 60) {
     this.roomManager = roomManager;
     this.io = io;
     this.tickRate = tickRate;
@@ -218,7 +220,7 @@ export class GameLoop {
                   success: true,
                   roomId: room.id,
                   clearedBy: clearingPlayer ? clearingPlayer.name : "Team",
-                  players: serializedRoom.players,
+                  players: serializedRoom?.players || [],
                   levelIndex: room.levelIndex,
                   room: serializedRoom,
                 });
@@ -252,7 +254,7 @@ export class GameLoop {
                   reason: "compete_match_complete",
                   winnerSocketId: winnerEntry?.[0],
                   winnerName: winnerEntry?.[1].name,
-                  players: serializedRoom.players,
+                  players: serializedRoom?.players || [],
                   room: serializedRoom,
                 });
               }
@@ -279,7 +281,7 @@ export class GameLoop {
               this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || "game_over", {
                 roomId: room.id,
                 reason: "all_players_eliminated",
-                players: serializedRoom.players,
+                players: serializedRoom?.players || [],
                 room: serializedRoom,
               });
             }
@@ -296,7 +298,13 @@ export class GameLoop {
         room.tickCount % snapshotInterval === 0 &&
         this.io
       ) {
-        const snapshot: any = {
+        const snapshot: Omit<WorldSnapshotPayload, "enemies"> & {
+          roomId: string;
+          tick: number;
+          worldState: { collectedEmeralds: number; totalEmeralds: number } | null;
+          enemies?: unknown[];
+          projectiles?: unknown[];
+        } = {
           roomId: room.id,
           tick: room.tickCount,
           timestamp: snapshotTimestamp,

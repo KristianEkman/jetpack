@@ -197,15 +197,18 @@ export class LevelManager {
         a.remove();
     }
 
-    importLevelJSON(e: any): void {
+    importLevelJSON(e: Event): void {
         const game = this.game;
-        const file = e.target.files[0];
+        const target = e.target as HTMLInputElement | null;
+        const file = target?.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (event: any) => {
+        reader.onload = (event: ProgressEvent<FileReader>) => {
             try {
-                const parsed = JSON.parse(event.target.result);
+                const result = event.target?.result;
+                if (typeof result !== "string") return;
+                const parsed = JSON.parse(result);
                 if (parsed.grid && parsed.grid.length === game.tileMap.grid.length) {
                     game.tileMap.loadLevelData(parsed);
                     game.editor.autoSaveLocal();

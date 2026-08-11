@@ -32,7 +32,7 @@ const room = roomManager.createRoom("socket_host_1", {
 });
 
 assert.strictEqual(room.mapName, "Test Arena");
-assert.strictEqual(room.customMapData.name, "Test Arena");
+assert.strictEqual(room.customMapData?.name, "Test Arena");
 assert.strictEqual(room.tileMap.grid[2], TILES.EMERALD);
 console.log("   ✅ Custom Map room creation verified.");
 

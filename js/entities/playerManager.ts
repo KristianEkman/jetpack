@@ -1,6 +1,19 @@
 import { Player } from "./player.js";
 import { PLAYER_FLAGS } from "../shared/constants.js";
 import { TileMap } from "../world/tilemap.js";
+import { AudioManager } from "../audio/index.js";
+import { PlayerSnapshotTuple, WorldSnapshotPayload } from "../shared/types.js";
+import { SoundEffects } from "../audio/index.js";
+
+export interface AddPlayerOptions {
+  id?: string;
+  name?: string;
+  color?: string;
+  isLocal?: boolean;
+  showNameTag?: boolean;
+  x?: number;
+  y?: number;
+}
 
 export interface UnpackedPlayerSnapshot {
   socketId: string;
@@ -24,7 +37,7 @@ export interface UnpackedPlayerSnapshot {
   color?: string;
 }
 
-export function unpackPlayerSnapshot(p: any): UnpackedPlayerSnapshot {
+export function unpackPlayerSnapshot(p: PlayerSnapshotTuple | UnpackedPlayerSnapshot | any): UnpackedPlayerSnapshot {
   if (!Array.isArray(p)) return p;
   const flags = p[9] || 0;
   return {
@@ -43,8 +56,8 @@ export function unpackPlayerSnapshot(p: any): UnpackedPlayerSnapshot {
     isClimbing: (flags & PLAYER_FLAGS.IS_CLIMBING) !== 0,
     isPhasing: (flags & PLAYER_FLAGS.IS_PHASING) !== 0,
     isDead: (flags & PLAYER_FLAGS.IS_DEAD) !== 0,
-    respawnInvulnerability: p[10],
-    lastSequenceId: p[11],
+    respawnInvulnerability: p[10] || 0,
+    lastSequenceId: p[11] || 0,
   };
 }
 
@@ -82,12 +95,12 @@ export class PlayerManager {
     }
   }
 
-  addPlayer(socketId: string, options: any = {}): Player {
+  addPlayer(socketId: string, options: AddPlayerOptions = {}): Player {
     const isLocal =
       options.isLocal !== undefined
         ? options.isLocal
         : socketId === this.localSocketId;
-    const player = new Player(this.audio, this.tileMap, {
+    const player = new Player(this.audio || (null as any), this.tileMap, {
       id: options.id || socketId,
       name: options.name || "Player",
       color: options.color || "#00f0ff",
@@ -116,7 +129,7 @@ export class PlayerManager {
     return this.players.values().next().value || null;
   }
 
-  updateFromSnapshot(snapshotPayload: any): void {
+  updateFromSnapshot(snapshotPayload: WorldSnapshotPayload | PlayerSnapshotTuple[] | any): void {
     if (!snapshotPayload) return;
 
     const rawList = Array.isArray(snapshotPayload)

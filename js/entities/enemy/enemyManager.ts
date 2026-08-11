@@ -9,10 +9,43 @@ import { updateFlitzer, renderFlitzer } from "./flitzer.js";
 import { updateHomingMissile, renderHomingMissile } from "./homingMissile.js";
 import { updateTurret, renderTurret } from "./turret.js";
 import { updateBoss, renderBoss, hasBossTileCollision } from "./boss.js";
+import { AudioManager } from "../../audio/index.js";
+
+export type SerializedEnemyTuple = [
+  id: string,
+  type: string,
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  animTimer: number,
+  timer: number,
+  fireInterval: number | undefined,
+  hp: number | undefined,
+  maxHp: number | undefined,
+  phase: number | undefined,
+  hitFlashTimer: number,
+];
+
+export type SerializedProjectileTuple = [
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  radius: number,
+  life: number,
+];
+
+export interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export class EnemyManager {
   tileMap: TileMap;
-  audio: any;
+  audio: AudioManager | null;
   enemies: Enemy[];
   projectiles: Projectile[];
   nextEnemyId: number;
@@ -20,7 +53,7 @@ export class EnemyManager {
     | ((data: { enemyId: string; playerId: string }) => void)
     | null;
 
-  constructor(tileMap: TileMap, audio: any = null) {
+  constructor(tileMap: TileMap, audio: AudioManager | null = null) {
     this.tileMap = tileMap;
     this.audio = audio;
     this.enemies = [];
@@ -213,14 +246,14 @@ export class EnemyManager {
     return this.enemies.splice(index, 1)[0];
   }
 
-  getClosestPlayer(enemy: Enemy, playerInput: Player[]): any {
+  getClosestPlayer(enemy: Enemy, playerInput: Player[]): Player | null {
     if (!playerInput) return null;
-    let playersList: any[] = [];
+    let playersList: Player[] = [];
     if (Array.isArray(playerInput)) {
       playersList = playerInput;
     }
 
-    let closest: any = null;
+    let closest: Player | null = null;
     let minDistSq = Infinity;
     const ex = enemy.x + enemy.width / 2;
     const ey = enemy.y + enemy.height / 2;
@@ -248,7 +281,7 @@ export class EnemyManager {
     return [];
   }
 
-  serializeEnemies(): any[] {
+  serializeEnemies(): SerializedEnemyTuple[] {
     return this.enemies.map((e) => [
       e.id,
       e.type,
@@ -266,7 +299,7 @@ export class EnemyManager {
     ]);
   }
 
-  serializeProjectiles(): any[] {
+  serializeProjectiles(): SerializedProjectileTuple[] {
     return this.projectiles.map((p) => [
       Math.round(p.x * 100) / 100,
       Math.round(p.y * 100) / 100,
@@ -486,7 +519,7 @@ export class EnemyManager {
     }
   }
 
-  checkAABB(rect1: any, rect2: any): boolean {
+  checkAABB(rect1: BoundingBox, rect2: BoundingBox): boolean {
     return (
       rect1.x < rect2.x + rect2.width &&
       rect1.x + rect1.width > rect2.x &&

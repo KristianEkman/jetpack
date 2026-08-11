@@ -7,6 +7,13 @@ import { Player } from "../js/entities/player.js";
 import { EnemyManager } from "../js/entities/enemy/index.js";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
 import * as types from "../js/shared/types.js";
+import {
+  CreateRoomOptions,
+  JoinRoomOptions,
+  MultiplayerRoomInfo,
+  MultiplayerPlayer,
+  MultiplayerLevelData,
+} from "../js/shared/payloads.js";
 import { AudioManager } from "../js/audio/audioManager.js";
 import { MULTIPLAYER_MODES } from "../js/shared/constants.js";
 
@@ -38,7 +45,7 @@ export interface ServerRoom {
   maxPlayers: number;
   levelIndex: number;
   gameMode: types.MultiplayerGameMode;
-  customMapData: any | null;
+  customMapData: MultiplayerLevelData | null;
   mapName: string;
   tileMap: TileMap;
   enemyManager: EnemyManager;
@@ -72,7 +79,7 @@ export class RoomManager {
     return roomId;
   }
 
-  createRoom(hostSocketId: string, options: any = {}): ServerRoom {
+  createRoom(hostSocketId: string, options: CreateRoomOptions = {}): ServerRoom {
     const existingRoomId = this.socketToRoom.get(hostSocketId);
     if (existingRoomId) {
       const existingRoom = this.rooms.get(existingRoomId);
@@ -160,7 +167,7 @@ export class RoomManager {
   addPlayerToRoom(
     room: ServerRoom,
     socketId: string,
-    playerOptions: any = {},
+    playerOptions: JoinRoomOptions & { isHost?: boolean; color?: string; name?: string } = {},
   ): PlayerConfig {
     const playerIndex = room.players.size;
     const color =
@@ -208,8 +215,8 @@ export class RoomManager {
   joinRoom(
     roomId: string,
     socketId: string,
-    playerOptions: any = {},
-  ): { success: boolean; error?: string; room?: any; player?: PlayerConfig } {
+    playerOptions: JoinRoomOptions = {},
+  ): { success: boolean; error?: string; room?: MultiplayerRoomInfo | null; player?: PlayerConfig } {
     const code = roomId.toUpperCase();
     const room = this.rooms.get(code);
 
@@ -242,7 +249,13 @@ export class RoomManager {
     };
   }
 
-  leaveRoom(socketId: string): any {
+  leaveRoom(socketId: string): {
+    roomId: string;
+    roomDestroyed: boolean;
+    newHostSocketId: string | null;
+    leavingPlayer?: PlayerConfig;
+    room: MultiplayerRoomInfo | null;
+  } | null {
     const roomId = this.socketToRoom.get(socketId);
     if (!roomId) return null;
 
@@ -291,10 +304,10 @@ export class RoomManager {
     return roomId ? this.rooms.get(roomId) || null : null;
   }
 
-  serializeRoom(room: ServerRoom | null): any {
+  serializeRoom(room: ServerRoom | null): MultiplayerRoomInfo | null {
     if (!room) return null;
 
-    const playersList: any[] = [];
+    const playersList: MultiplayerPlayer[] = [];
     for (const [sId, config] of room.playerConfigs.entries()) {
       const playerEntity = room.players.get(sId);
       playersList.push({

@@ -17,6 +17,13 @@ import { UIManager } from "./ui/uiManager.js";
 import { LevelManager } from "./levels/levelManager.js";
 import { MultiplayerController } from "./network/multiplayerController.js";
 import { initErrorMonitor } from "./ui/errorMonitor.js";
+import {
+  MultiplayerRoomInfo,
+  PublicRoomInfo,
+  GameStartedPayload,
+  LevelCompletePayload,
+  GameOverPayload,
+} from "./shared/payloads.js";
 
 export const GAME_STATES = {
   MENU: "menu",
@@ -182,19 +189,19 @@ export class Game {
   showLobbyView(): void {
     this.multiplayerController.showLobbyView();
   }
-  updateLobbyUI(room: any): void {
+  updateLobbyUI(room: MultiplayerRoomInfo): void {
     this.multiplayerController.updateLobbyUI(room);
   }
-  renderPublicRoomsList(list: any[]): void {
+  renderPublicRoomsList(list: PublicRoomInfo[]): void {
     this.multiplayerController.renderPublicRoomsList(list);
   }
-  startMultiplayerMatch(payload?: any): void {
+  startMultiplayerMatch(payload?: GameStartedPayload): void {
     this.multiplayerController.startMultiplayerMatch(payload);
   }
-  triggerMultiplayerLevelComplete(data?: any): void {
-    this.multiplayerController.triggerMultiplayerLevelComplete(data);
+  triggerMultiplayerLevelComplete(data?: LevelCompletePayload): void {
+    if (data) this.multiplayerController.triggerMultiplayerLevelComplete(data);
   }
-  triggerMultiplayerGameOver(data?: any): void {
+  triggerMultiplayerGameOver(data?: GameOverPayload): void {
     this.multiplayerController.triggerMultiplayerGameOver(data);
   }
 

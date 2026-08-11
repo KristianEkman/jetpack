@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { TILE_SIZE, TileMap } from "../../world/tilemap.js";
+import { Player } from "../player.js";
 import {
   Enemy,
   FlitzerDirection,
@@ -188,7 +189,7 @@ export function updateFlitzer(
 export function renderFlitzer(
   ctx: CanvasRenderingContext2D,
   enemy: Enemy,
-  player: any,
+  player: Player | null,
 ): void {
   const cx = enemy.x + enemy.width / 2;
   const cy = enemy.y + enemy.height / 2;
