@@ -425,6 +425,10 @@ export class EnemyManager {
           this.projectiles,
           (e, pl) => this.getClosestPlayer(e, pl),
           (x, y) => this.addHomingMissile(x, y),
+          () =>
+            this.enemies.some(
+              (e) => e.type === ENEMY_TYPES.HOMING_MISSILE && !e.dead,
+            ),
         );
       }
 

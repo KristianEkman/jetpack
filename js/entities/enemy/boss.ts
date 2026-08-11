@@ -37,6 +37,7 @@ export function updateBoss(
   projectiles: Projectile[],
   getClosestPlayer: (enemy: Enemy, players: Player[]) => Player | null,
   addHomingMissile: (x: number, y: number) => void,
+  hasActiveHomingMissile?: () => boolean,
 ): void {
   enemy.hitFlashTimer = Math.max(0, (enemy.hitFlashTimer || 0) - dt);
 
@@ -120,24 +121,10 @@ export function updateBoss(
       const targetX = targetPlayer ? targetPlayer.x + targetPlayer.width / 2 : enemy.x + enemy.width / 2;
       const targetY = targetPlayer ? targetPlayer.y + targetPlayer.height / 2 : enemy.y + 200;
 
-      if (isPhase2) {
-        const cx = enemy.x + enemy.width / 2;
-        const cy = enemy.y + enemy.height - 10;
-        const baseAngle = Math.atan2(targetY - cy, targetX - cx);
-        const angles = [-0.4, -0.2, 0, 0.2, 0.4].map((a) => baseAngle + a);
-        for (const angle of angles) {
-          projectiles.push({
-            x: cx,
-            y: cy,
-            vx: Math.cos(angle) * 220,
-            vy: Math.sin(angle) * 220,
-            radius: 6,
-            life: 3.5,
-          });
-        }
-        if (Math.random() < 0.5) {
-          addHomingMissile(enemy.x + enemy.width / 2, enemy.y + enemy.height);
-        }
+      const missileActive = hasActiveHomingMissile ? hasActiveHomingMissile() : false;
+
+      if (isPhase2 && !missileActive) {
+        addHomingMissile(enemy.x + enemy.width / 2, enemy.y + enemy.height);
       } else {
         for (const wingX of [enemy.x + 12, enemy.x + enemy.width - 12]) {
           const dx = targetX - wingX;

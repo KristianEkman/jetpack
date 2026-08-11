@@ -36,6 +36,13 @@
 - [x] dont kill when out of fuel
 - [x] provide only one extralife per level. Dont show it again after it has been collected.
 - [x] refactor and make files smaller.
+- [ ] improve typing, replace any with stricter types.
+- [ ] coin and rapid fire looks the same
+- [ ] Am I invinseble when using rapoid fire?
+ 
+Bug: After killing the boss, do I always get many dimonds when killing an enemy?
+
+
 
 Prompts
 I already have a firebase account and databases there. Make a plan to create a jetpack db there and connect. I want the users to store and fetch levels from there. Also a high score list.

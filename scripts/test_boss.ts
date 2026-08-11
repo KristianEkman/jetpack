@@ -200,4 +200,39 @@ assert.equal(
 );
 console.log("   ✅ Boss exit portal enablement requirement verified.");
 
+// 10. Test Boss Phase 2 Single Homing Missile Cap
+console.log("10️⃣ Testing Boss Phase 2 Single Active Homing Missile Cap...");
+const p2TileMap = new TileMap();
+p2TileMap.cols = 30;
+p2TileMap.rows = 18;
+p2TileMap.grid = new Array(30 * 18).fill(TILES.AIR);
+
+const p2EnemyManager = new EnemyManager(p2TileMap);
+p2EnemyManager.addBoss(100, 50, 10, "boss_p2_cap");
+const p2Boss = p2EnemyManager.enemies[0];
+p2Boss.hp = 5; // Set HP to <= 50% to trigger Phase 2
+
+const testPlayer = new Player(null as any, p2TileMap);
+testPlayer.x = 200;
+testPlayer.y = 300;
+
+// Update until first attack occurs
+p2Boss.attackTimer = 1.5;
+p2EnemyManager.update(0.01, [testPlayer]);
+
+const activeMissiles1 = p2EnemyManager.enemies.filter((e) => e.type === ENEMY_TYPES.HOMING_MISSILE);
+assert.equal(activeMissiles1.length, 1, "First attack in Phase 2 should spawn 1 homing missile");
+
+// Force second attack while missile is still active
+p2Boss.attackTimer = 1.5;
+p2EnemyManager.update(0.01, [testPlayer]);
+
+const activeMissiles2 = p2EnemyManager.enemies.filter((e) => e.type === ENEMY_TYPES.HOMING_MISSILE);
+assert.equal(
+  activeMissiles2.length,
+  1,
+  "Subsequent attacks while a homing missile is alive MUST NOT spawn additional homing missiles",
+);
+console.log("   ✅ Single active homing missile cap verified in Phase 2.");
+
 console.log("\n🎉 ALL BOSS ENEMY TESTS PASSED CLEANLY!");
