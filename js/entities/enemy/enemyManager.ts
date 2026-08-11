@@ -206,18 +206,20 @@ export class EnemyManager {
               }
             }
             // Defeating the boss drops a treasure burst of coins and emeralds
-            const startCol = Math.floor(enemy.x / TILE_SIZE);
-            const startRow = Math.floor(enemy.y / TILE_SIZE);
-            for (let dc = -1; dc <= 2; dc++) {
-              for (let dr = -1; dr <= 2; dr++) {
-                const c = startCol + dc;
-                const r = startRow + dr;
-                if (c >= 0 && c < this.tileMap.cols && r >= 0 && r < this.tileMap.rows) {
-                  if (this.tileMap.getTile(c, r) === TILES.AIR) {
-                    const tileType = (dc + dr) % 2 === 0 ? TILES.EMERALD : TILES.GOLD;
-                    this.tileMap.setTile(c, r, tileType);
-                    if (tileType === TILES.EMERALD) {
-                      this.tileMap.totalEmeralds++;
+            if (enemy.type === ENEMY_TYPES.BOSS) {
+              const startCol = Math.floor(enemy.x / TILE_SIZE);
+              const startRow = Math.floor(enemy.y / TILE_SIZE);
+              for (let dc = -1; dc <= 2; dc++) {
+                for (let dr = -1; dr <= 2; dr++) {
+                  const c = startCol + dc;
+                  const r = startRow + dr;
+                  if (c >= 0 && c < this.tileMap.cols && r >= 0 && r < this.tileMap.rows) {
+                    if (this.tileMap.getTile(c, r) === TILES.AIR) {
+                      const tileType = (dc + dr) % 2 === 0 ? TILES.EMERALD : TILES.GOLD;
+                      this.tileMap.setTile(c, r, tileType);
+                      if (tileType === TILES.EMERALD) {
+                        this.tileMap.totalEmeralds++;
+                      }
                     }
                   }
                 }

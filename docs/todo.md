@@ -18,7 +18,7 @@
 - [ ] better more efficient network logic.
 - [ ] customizable controls
 - [x] bosses
-- [ ] better error handling. no dialogs.
+- [x] better error handling. no dialogs.
 - [x] typed payloads over network
 - [ ] more maps
 - [ ] more power ups, special abilities, jetpacks, armors
@@ -29,7 +29,6 @@
 - [ ] community level hub / workshop
       Upload custom levels to the server, browse/search by rating, and play community maps.
 - [ ] Place in game buttons better.
-
 - [ ] mobile controls more transparent and bigger.
 - [x] when compete match ends add a delay so you can see who died
 - [x] extralife
@@ -39,9 +38,7 @@
 - [x] improve typing, replace any with stricter types.
 - [x] coin and rapid fire looks almost the same
 
-Bug: After killing the boss, do I always get many dimonds when killing an enemy?
-
-
+- [x] Bug: After killing the boss, do I always get many dimonds when killing an enemy?
 
 Prompts
 I already have a firebase account and databases there. Make a plan to create a jetpack db there and connect. I want the users to store and fetch levels from there. Also a high score list.
