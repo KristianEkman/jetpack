@@ -94,7 +94,7 @@ export class EnemyManager {
   addBoss(
     x: number,
     y: number,
-    maxHp: number = 25,
+    maxHp: number = 10,
     id: string | null = null,
   ): void {
     this.enemies.push({
@@ -138,7 +138,7 @@ export class EnemyManager {
     if (!enemy) return false;
 
     if (enemy.type === ENEMY_TYPES.BOSS || enemy.hp !== undefined) {
-      const maxHp = enemy.maxHp || 25;
+      const maxHp = enemy.maxHp || 10;
       enemy.hp = Math.max(0, (enemy.hp !== undefined ? enemy.hp : maxHp) - damage);
       enemy.hitFlashTimer = 0.15;
 
@@ -319,7 +319,7 @@ export class EnemyManager {
           this.addBoss(
             sEnemy.x,
             sEnemy.y,
-            sEnemy.maxHp || 25,
+            sEnemy.maxHp || 10,
             sEnemy.id,
           );
         }

@@ -49,7 +49,7 @@ export class LevelManager {
             levelData.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
         }
         if (levelData.bosses) {
-            levelData.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 25));
+            levelData.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10));
         }
         this.spawnEnemiesFromGrid();
 
@@ -143,7 +143,7 @@ export class LevelManager {
                 } else if (t === TILES.ENEMY_TURRET) {
                     game.enemyManager.addTurret(c * TILE_SIZE + 4, r * TILE_SIZE + 4, 2.0);
                 } else if (t === TILES.ENEMY_BOSS) {
-                    game.enemyManager.addBoss(c * TILE_SIZE, r * TILE_SIZE, 25);
+                    game.enemyManager.addBoss(c * TILE_SIZE, r * TILE_SIZE, 10);
                 }
             }
         }

@@ -40,7 +40,7 @@ export function updateBoss(
 ): void {
   enemy.hitFlashTimer = Math.max(0, (enemy.hitFlashTimer || 0) - dt);
 
-  const maxHp = enemy.maxHp || 25;
+  const maxHp = enemy.maxHp || 10;
   const currentHp = enemy.hp !== undefined ? enemy.hp : maxHp;
   if (currentHp <= maxHp / 2) {
     enemy.phase = 2;
@@ -116,48 +116,41 @@ export function updateBoss(
     if ((enemy.attackTimer || 0) >= attackInterval) {
       enemy.attackTimer = 0;
 
-      if (isPhase2 && Math.random() < 0.35 && livingPlayers.length > 0) {
-        enemy.laserCharging = true;
-        enemy.laserChargeTimer = 0.8;
-        const targetPlayer = getClosestPlayer(enemy, livingPlayers);
-        enemy.laserX = targetPlayer ? targetPlayer.x + targetPlayer.width / 2 : enemy.x + enemy.width / 2;
-      } else {
-        const targetPlayer = getClosestPlayer(enemy, livingPlayers);
-        const targetX = targetPlayer ? targetPlayer.x + targetPlayer.width / 2 : enemy.x + enemy.width / 2;
-        const targetY = targetPlayer ? targetPlayer.y + targetPlayer.height / 2 : enemy.y + 200;
+      const targetPlayer = getClosestPlayer(enemy, livingPlayers);
+      const targetX = targetPlayer ? targetPlayer.x + targetPlayer.width / 2 : enemy.x + enemy.width / 2;
+      const targetY = targetPlayer ? targetPlayer.y + targetPlayer.height / 2 : enemy.y + 200;
 
-        if (isPhase2) {
-          const cx = enemy.x + enemy.width / 2;
-          const cy = enemy.y + enemy.height - 10;
-          const baseAngle = Math.atan2(targetY - cy, targetX - cx);
-          const angles = [-0.4, -0.2, 0, 0.2, 0.4].map((a) => baseAngle + a);
-          for (const angle of angles) {
-            projectiles.push({
-              x: cx,
-              y: cy,
-              vx: Math.cos(angle) * 220,
-              vy: Math.sin(angle) * 220,
-              radius: 6,
-              life: 3.5,
-            });
-          }
-          if (Math.random() < 0.5) {
-            addHomingMissile(enemy.x + enemy.width / 2, enemy.y + enemy.height);
-          }
-        } else {
-          for (const wingX of [enemy.x + 12, enemy.x + enemy.width - 12]) {
-            const dx = targetX - wingX;
-            const dy = targetY - (enemy.y + enemy.height);
-            const angle = Math.atan2(dy, dx);
-            projectiles.push({
-              x: wingX,
-              y: enemy.y + enemy.height - 5,
-              vx: Math.cos(angle) * 200,
-              vy: Math.sin(angle) * 200,
-              radius: 5,
-              life: 4.0,
-            });
-          }
+      if (isPhase2) {
+        const cx = enemy.x + enemy.width / 2;
+        const cy = enemy.y + enemy.height - 10;
+        const baseAngle = Math.atan2(targetY - cy, targetX - cx);
+        const angles = [-0.4, -0.2, 0, 0.2, 0.4].map((a) => baseAngle + a);
+        for (const angle of angles) {
+          projectiles.push({
+            x: cx,
+            y: cy,
+            vx: Math.cos(angle) * 220,
+            vy: Math.sin(angle) * 220,
+            radius: 6,
+            life: 3.5,
+          });
+        }
+        if (Math.random() < 0.5) {
+          addHomingMissile(enemy.x + enemy.width / 2, enemy.y + enemy.height);
+        }
+      } else {
+        for (const wingX of [enemy.x + 12, enemy.x + enemy.width - 12]) {
+          const dx = targetX - wingX;
+          const dy = targetY - (enemy.y + enemy.height);
+          const angle = Math.atan2(dy, dx);
+          projectiles.push({
+            x: wingX,
+            y: enemy.y + enemy.height - 5,
+            vx: Math.cos(angle) * 200,
+            vy: Math.sin(angle) * 200,
+            radius: 5,
+            life: 4.0,
+          });
         }
       }
     }
@@ -326,7 +319,7 @@ export function renderBoss(
 
   ctx.restore();
 
-  const maxHp = enemy.maxHp || 25;
+  const maxHp = enemy.maxHp || 10;
   const currentHp = Math.max(0, enemy.hp !== undefined ? enemy.hp : maxHp);
   const hpRatio = Math.min(1, Math.max(0, currentHp / maxHp));
 
