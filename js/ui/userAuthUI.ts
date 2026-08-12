@@ -14,6 +14,7 @@ export class UserAuthUI {
   private btnLogout: HTMLButtonElement | null = null;
   private btnClose: HTMLButtonElement | null = null;
   private statusMsg: HTMLElement | null = null;
+  private authFormContainer: HTMLElement | null = null;
 
   private loggedInUserCard: HTMLElement | null = null;
   private loggedInUserName: HTMLElement | null = null;
@@ -42,6 +43,7 @@ export class UserAuthUI {
     this.btnLogout = document.getElementById("btnAuthLogout") as HTMLButtonElement | null;
     this.btnClose = document.getElementById("btnCloseUserAuth") as HTMLButtonElement | null;
     this.statusMsg = document.getElementById("userAuthStatus");
+    this.authFormContainer = document.getElementById("userAuthFormContainer");
 
     this.loggedInUserCard = document.getElementById("loggedInUserCard");
     this.loggedInUserName = document.getElementById("loggedInUserName");
@@ -136,9 +138,11 @@ export class UserAuthUI {
       if (this.loggedInUserCard) this.loggedInUserCard.classList.remove("hidden");
       if (this.loggedInUserName) this.loggedInUserName.textContent = user.name;
       if (this.loggedInUserId) this.loggedInUserId.textContent = `ID: ${user.id}`;
+      if (this.authFormContainer) this.authFormContainer.style.display = "none";
       if (this.btnLogout) this.btnLogout.style.display = "block";
     } else {
       if (this.loggedInUserCard) this.loggedInUserCard.classList.add("hidden");
+      if (this.authFormContainer) this.authFormContainer.style.display = "block";
       if (this.btnLogout) this.btnLogout.style.display = "none";
     }
   }

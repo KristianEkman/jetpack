@@ -6,6 +6,8 @@
 import { Game, GAME_STATES } from "../game.js";
 import { CAMPAIGN_LEVELS } from "../levels/campaign.js";
 import { TILES } from "../world/tilemap.js";
+import { userService } from "../network/userService.js";
+import { userAuthUI } from "./userAuthUI.js";
 
 export interface HUDState {
   level: string | null;
@@ -89,6 +91,19 @@ export class UIManager {
 
     document.getElementById("btnLevelSelect")?.addEventListener("click", () => {
       game.levelManager.openLevelSelect();
+    });
+
+    document.getElementById("btnCommunityLevels")?.addEventListener("click", () => {
+      this.loadCommunityLevelsUI();
+      this.showDialog("dlgCommunityLevels");
+    });
+
+    document.getElementById("btnRefreshCommunityLevels")?.addEventListener("click", () => {
+      this.loadCommunityLevelsUI();
+    });
+
+    document.getElementById("btnCloseCommunityLevels")?.addEventListener("click", () => {
+      this.showDialog("dlgMainMenu");
     });
 
     document.getElementById("btnOpenEditor")?.addEventListener("click", () => {
@@ -197,23 +212,55 @@ export class UIManager {
       ?.addEventListener("click", () =>
         game.levelManager.playtestCustomLevel(),
       );
-    document.getElementById("btnEditorSave")?.addEventListener("click", () => {
-      game.editor.autoSaveLocal();
-      this.showBanner("LEVEL SAVED TO LOCAL STORAGE!");
+    document.getElementById("btnEditorUpload")?.addEventListener("click", async () => {
+      const loggedInUser = userService.getLoggedInUser();
+      if (!loggedInUser) {
+        this.showBanner("PLEASE LOG IN TO UPLOAD CUSTOM LEVELS");
+        userAuthUI.openModal();
+        return;
+      }
+
+
+      const validation = game.editor.validateLevel();
+      if (!validation.valid) {
+        this.showBanner(validation.error || "INVALID LEVEL FORMAT");
+        return;
+      }
+
+      let name = game.editor.levelName;
+      if (!name || name === "Custom Level") {
+        const inputName = prompt("Enter a name for your custom level:", "My Custom Level");
+        if (inputName && inputName.trim().length > 0) {
+          name = inputName.trim();
+          game.editor.levelName = name;
+        } else {
+          return;
+        }
+      }
+
+      const exportData = game.editor.getExportData();
+      const levelPayload = {
+        name,
+        grid: exportData.grid,
+      };
+
+      if (game.editor.currentLevelId) {
+        const res = await game.levelManager.updateCustomLevel(game.editor.currentLevelId, levelPayload);
+        if (res.success && res.level) {
+          this.showBanner(`LEVEL "${res.level.name.toUpperCase()}" UPDATED!`);
+        } else {
+          this.showBanner(res.error || "FAILED TO UPDATE LEVEL");
+        }
+      } else {
+        const res = await game.levelManager.uploadCustomLevel(levelPayload);
+        if (res.success && res.level) {
+          game.editor.currentLevelId = res.level.id;
+          this.showBanner(`LEVEL "${res.level.name.toUpperCase()}" UPLOADED!`);
+        } else {
+          this.showBanner(res.error || "FAILED TO UPLOAD LEVEL");
+        }
+      }
     });
-    document
-      .getElementById("btnEditorExport")
-      ?.addEventListener("click", () => game.levelManager.exportLevelJSON());
-    document
-      .getElementById("btnEditorImport")
-      ?.addEventListener("click", () => {
-        document.getElementById("fileImportInput")?.click();
-      });
-    document
-      .getElementById("fileImportInput")
-      ?.addEventListener("change", (e: any) =>
-        game.levelManager.importLevelJSON(e),
-      );
     document.getElementById("btnEditorClear")?.addEventListener("click", () => {
       game.tileMap.grid.fill(TILES.AIR);
       this.showBanner("CANVAS CLEARED");
@@ -232,6 +279,81 @@ export class UIManager {
       }
     };
   }
+
+  async loadCommunityLevelsUI(): Promise<void> {
+    const listContainer = document.getElementById("communityLevelList");
+    if (!listContainer) return;
+    listContainer.innerHTML = `<div style="text-align:center; color: #00ffcc; padding: 20px;">Loading custom levels...</div>`;
+
+    const levels = await this.game.levelManager.fetchCustomLevels();
+    const currentUserId = userService.getLoggedInUserId();
+
+    if (levels.length === 0) {
+      listContainer.innerHTML = `<div style="text-align:center; color: rgba(255,255,255,0.7); padding: 20px;">No community custom levels found yet. Create and upload one!</div>`;
+      return;
+    }
+
+    listContainer.innerHTML = "";
+    levels.forEach((lvl) => {
+      const card = document.createElement("div");
+      card.className = "community-level-card";
+
+      const ratingText = lvl.ratingCount > 0 ? `${lvl.averageRating}★ (${lvl.ratingCount} votes)` : "No ratings yet";
+      const highScoreText = lvl.highScore > 0 ? `High Score: ${lvl.highScore} by ${lvl.highScoreUser}` : "High Score: 0";
+      const isOwner = currentUserId && lvl.authorId === currentUserId;
+
+      card.innerHTML = `
+        <div class="community-level-info">
+          <div class="community-level-title">${lvl.name}</div>
+          <div class="community-level-meta">By ${lvl.authorName} • Rating: ${ratingText} • ${highScoreText}</div>
+        </div>
+        <div class="community-level-actions">
+          <button class="btn-editor primary btn-play-custom" data-id="${lvl.id}">▶️ PLAY</button>
+          ${isOwner ? `<button class="btn-editor btn-edit-custom" data-id="${lvl.id}">✏️ EDIT</button>` : ""}
+          ${isOwner ? `<button class="btn-editor danger btn-delete-custom" data-id="${lvl.id}">🗑️ DELETE</button>` : ""}
+        </div>
+      `;
+
+      card.querySelector(".btn-play-custom")?.addEventListener("click", async () => {
+        const levelRecord = await this.game.levelManager.fetchCustomLevelById(lvl.id);
+        if (levelRecord) {
+          this.game.levelManager.startCustomLevelRecord(levelRecord);
+        } else {
+          this.showBanner("Failed to load custom level!");
+        }
+      });
+
+      if (isOwner) {
+        card.querySelector(".btn-edit-custom")?.addEventListener("click", async () => {
+          const levelRecord = await this.game.levelManager.fetchCustomLevelById(lvl.id);
+          if (levelRecord) {
+            this.game.editor.currentLevelId = levelRecord.id;
+            this.game.editor.levelName = levelRecord.name;
+            this.game.tileMap.loadLevelData(levelRecord);
+            this.game.levelManager.openLevelEditor();
+            this.showBanner(`EDITING "${levelRecord.name.toUpperCase()}"`);
+          } else {
+            this.showBanner("Failed to load custom level!");
+          }
+        });
+
+        card.querySelector(".btn-delete-custom")?.addEventListener("click", async () => {
+          if (confirm(`Are you sure you want to delete "${lvl.name}"?`)) {
+            const res = await this.game.levelManager.deleteCustomLevel(lvl.id);
+            if (res.success) {
+              this.showBanner("Level deleted.");
+              this.loadCommunityLevelsUI();
+            } else {
+              this.showBanner(res.error || "Failed to delete level.");
+            }
+          }
+        });
+      }
+
+      listContainer.appendChild(card);
+    });
+  }
+
 
   showDialog(dialogId: string): void {
     this.game.isCanvasRenderedForState = false;

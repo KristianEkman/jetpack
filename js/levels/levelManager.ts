@@ -6,6 +6,8 @@
 import { Game, GAME_STATES } from '../game.js';
 import { CAMPAIGN_LEVELS } from './campaign.js';
 import { TILE_SIZE, TILES } from '../world/tilemap.js';
+import { userService } from '../network/userService.js';
+import { CustomLevelHeader, CustomLevelRecord, CustomLevelResult } from '../shared/payloads.js';
 
 export class LevelManager {
     game: Game;
@@ -17,6 +19,7 @@ export class LevelManager {
     startLevel(index: number, isRestart: boolean = false): void {
         const game = this.game;
         game.isCustomLevel = false;
+        game.activeCustomLevelRecord = null;
         game.currentLevelIndex = index;
         game.deathSequenceTimer = 0;
         game.isDeathHandled = false;
@@ -61,6 +64,53 @@ export class LevelManager {
         game.uiManager.showBanner(`${levelData.name.toUpperCase()}`);
     }
 
+    startCustomLevelRecord(record: CustomLevelRecord): void {
+        const game = this.game;
+        game.isCustomLevel = true;
+        game.activeCustomLevelRecord = record;
+        game.currentLevelIndex = -1;
+        game.deathSequenceTimer = 0;
+        game.isDeathHandled = false;
+
+        game.tileMap.loadLevelData(record);
+        game.enemyManager.clear();
+
+        let spawnFound = false;
+        for (let r = 0; r < game.tileMap.rows; r++) {
+            for (let c = 0; c < game.tileMap.cols; c++) {
+                if (game.tileMap.getTile(c, r) === TILES.SPAWN) {
+                    game.player.spawn(c * TILE_SIZE + 4, r * TILE_SIZE + 2);
+                    spawnFound = true;
+                    break;
+                }
+            }
+        }
+        if (!spawnFound) {
+            game.player.spawn(record.spawnX ?? 100, record.spawnY ?? 100);
+        }
+
+        if (record.flitzers) {
+            record.flitzers.forEach(f => game.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
+        }
+        if (record.missiles) {
+            record.missiles.forEach(m => game.enemyManager.addHomingMissile(m.x, m.y));
+        }
+        if (record.turrets) {
+            record.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
+        }
+        if (record.bosses) {
+            record.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10));
+        }
+        this.spawnEnemiesFromGrid();
+
+        game.gameState = GAME_STATES.PLAYING;
+        game.audio.startGameMusic(0);
+        document.getElementById('editorToolbar')?.classList.add('hidden');
+        game.uiManager.closeAllDialogs();
+
+        game.uiManager.showBanner(`${record.name.toUpperCase()} (BY ${record.authorName.toUpperCase()})`);
+    }
+
     openLevelSelect(): void {
         const game = this.game;
         const grid = document.getElementById('levelGrid');
@@ -89,10 +139,6 @@ export class LevelManager {
         game.audio.startMenuMusic();
         game.uiManager.closeAllDialogs();
         document.getElementById('editorToolbar')?.classList.remove('hidden');
-
-        if (!game.editor.loadFromLocal()) {
-            game.tileMap.grid.fill(TILES.AIR);
-        }
     }
 
     playtestCustomLevel(): void {
@@ -179,47 +225,156 @@ export class LevelManager {
         }
 
         const sub = document.getElementById('dialogLevelCompleteSub');
-        if (sub) {
+
+        // High score and rating integration for custom level
+        if (game.isCustomLevel && game.activeCustomLevelRecord) {
+            const record = game.activeCustomLevelRecord;
+            const playerName = userService.getLoggedInUser()?.name || "Player";
+            
+            this.submitCustomLevelHighScore(record.id, game.player.score, playerName).then((res) => {
+                if (res.success && res.level) {
+                    game.activeCustomLevelRecord = res.level;
+                }
+            });
+
+            if (sub) {
+                sub.innerHTML = `Custom Level High Score: <strong>${record.highScore}</strong> (${record.highScoreUser})<br>Rate this level: <span class="star-rating" data-level-id="${record.id}"><button data-star="1">⭐1</button> <button data-star="2">⭐2</button> <button data-star="3">⭐3</button> <button data-star="4">⭐4</button> <button data-star="5">⭐5</button></span>`;
+                const ratingButtons = sub.querySelectorAll('.star-rating button');
+                ratingButtons.forEach((btn) => {
+                    btn.addEventListener('click', async (e) => {
+                        const target = e.currentTarget as HTMLButtonElement;
+                        const star = parseInt(target.dataset.star || '5', 10);
+                        const result = await this.rateCustomLevel(record.id, star);
+                        if (result.success && result.level) {
+                            game.activeCustomLevelRecord = result.level;
+                            sub.innerHTML = `Thank you for rating! Level Average Rating: <strong>${result.level.averageRating}★</strong> (${result.level.ratingCount} votes)`;
+                        }
+                    });
+                });
+            }
+        } else if (sub) {
             sub.textContent = '';
         }
 
         game.uiManager.showDialog('dlgLevelComplete');
     }
 
-    exportLevelJSON(): void {
-        const data = this.game.editor.getExportData();
-        const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-        const a = document.createElement('a');
-        a.setAttribute("href", str);
-        a.setAttribute("download", "jetpack_custom_level.json");
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+
+
+    async fetchCustomLevels(): Promise<CustomLevelHeader[]> {
+        try {
+            const res = await fetch("/api/levels");
+            const data = (await res.json()) as { success: boolean; levels?: CustomLevelHeader[]; error?: string };
+            return data.success && data.levels ? data.levels : [];
+        } catch (err) {
+            console.error("Failed to fetch custom levels:", err);
+            return [];
+        }
     }
 
-    importLevelJSON(e: Event): void {
-        const game = this.game;
-        const target = e.target as HTMLInputElement | null;
-        const file = target?.files?.[0];
-        if (!file) return;
+    async fetchCustomLevelById(levelId: string): Promise<CustomLevelRecord | null> {
+        try {
+            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}`);
+            const data = (await res.json()) as CustomLevelResult;
+            return data.success && data.level ? data.level : null;
+        } catch (err) {
+            console.error("Failed to fetch custom level by ID:", err);
+            return null;
+        }
+    }
 
-        const reader = new FileReader();
-        reader.onload = (event: ProgressEvent<FileReader>) => {
-            try {
-                const result = event.target?.result;
-                if (typeof result !== "string") return;
-                const parsed = JSON.parse(result);
-                if (parsed.grid && parsed.grid.length === game.tileMap.grid.length) {
-                    game.tileMap.loadLevelData(parsed);
-                    game.editor.autoSaveLocal();
-                    game.uiManager.showBanner('CUSTOM LEVEL IMPORTED!');
-                } else {
-                    console.error('Invalid level format!');
-                }
-            } catch (err) {
-                console.error('Error parsing JSON level file!');
-            }
-        };
-        reader.readAsText(file);
+    async uploadCustomLevel(levelData: Partial<CustomLevelRecord>): Promise<CustomLevelResult> {
+        const userId = userService.getLoggedInUserId();
+        if (!userId) {
+            return { success: false, error: "Please log in to upload custom levels." };
+        }
+        try {
+            const res = await fetch("/api/levels", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userId}`,
+                },
+                body: JSON.stringify(levelData),
+            });
+            return (await res.json()) as CustomLevelResult;
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err.message : "Network error uploading custom level.";
+            return { success: false, error };
+        }
+    }
+
+    async updateCustomLevel(levelId: string, levelData: Partial<CustomLevelRecord>): Promise<CustomLevelResult> {
+        const userId = userService.getLoggedInUserId();
+        if (!userId) {
+            return { success: false, error: "Please log in to edit your custom levels." };
+        }
+        try {
+            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userId}`,
+                },
+                body: JSON.stringify(levelData),
+            });
+            return (await res.json()) as CustomLevelResult;
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err.message : "Network error updating custom level.";
+            return { success: false, error };
+        }
+    }
+
+    async deleteCustomLevel(levelId: string): Promise<CustomLevelResult> {
+        const userId = userService.getLoggedInUserId();
+        if (!userId) {
+            return { success: false, error: "Please log in to delete custom levels." };
+        }
+        try {
+            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${userId}`,
+                },
+            });
+            return (await res.json()) as CustomLevelResult;
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err.message : "Network error deleting custom level.";
+            return { success: false, error };
+        }
+    }
+
+    async rateCustomLevel(levelId: string, rating: number): Promise<CustomLevelResult> {
+        const userId = userService.getLoggedInUserId();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (userId) {
+            headers["Authorization"] = `Bearer ${userId}`;
+        }
+        try {
+            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}/rate`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ rating }),
+            });
+            return (await res.json()) as CustomLevelResult;
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err.message : "Network error rating custom level.";
+            return { success: false, error };
+        }
+    }
+
+    async submitCustomLevelHighScore(levelId: string, score: number, userName: string): Promise<CustomLevelResult> {
+        try {
+            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}/highscore`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ score, userName }),
+            });
+            return (await res.json()) as CustomLevelResult;
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err.message : "Network error submitting high score.";
+            return { success: false, error };
+        }
     }
 }
+

@@ -40,5 +40,6 @@
 
 - [x] Bug: After killing the boss, do I always get many dimonds when killing an enemy?
 
-Prompts
-I already have a firebase account and databases there. Make a plan to create a jetpack db there and connect. I want the users to store and fetch levels from there. Also a high score list.
+- [ ] During competetive games, each user should have their own spawning tile.
+
+- [ ] upload db secret to azure portal env variables.

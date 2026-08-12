@@ -102,3 +102,61 @@
   filter: brightness(1.2);
   transform: translateY(-1px);
 }
+
+.community-level-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+  margin: 15px 0;
+  padding: 5px;
+}
+
+.community-level-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+
+.community-level-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.community-level-title {
+  font-family: var(--font-display);
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+.community-level-meta {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.community-level-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.star-rating button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  color: #ffd700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.star-rating button:hover {
+  background: rgba(255, 215, 0, 0.3);
+}
+

@@ -33,6 +33,59 @@ export type MultiplayerLevelData = Omit<LevelData, "name"> & {
   bosses?: Array<{ x: number; y: number; hp?: number }>;
 };
 
+export interface CustomLevelRecord {
+  id: string;
+  name: string;
+  authorId: string;
+  authorName: string;
+  createdAt: number;
+  updatedAt: number;
+  grid: number[];
+  spawnX?: number;
+  spawnY?: number;
+  flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
+  missiles?: Array<{ x: number; y: number }>;
+  turrets?: Array<{ x: number; y: number; fireInterval: number }>;
+  bosses?: Array<{ x: number; y: number; hp?: number }>;
+  highScore: number;
+  highScoreUser: string;
+  ratingSum: number;
+  ratingCount: number;
+  averageRating: number;
+  ratings?: Record<string, number>;
+}
+
+export interface CustomLevelHeader {
+  id: string;
+  name: string;
+  authorId: string;
+  authorName: string;
+  createdAt: number;
+  updatedAt: number;
+  highScore: number;
+  highScoreUser: string;
+  averageRating: number;
+  ratingCount: number;
+}
+
+export interface CustomLevelResult {
+  success: boolean;
+  level?: CustomLevelRecord;
+  levels?: CustomLevelHeader[];
+  error?: string;
+}
+
+export interface RateLevelRequest {
+  rating: number;
+  userId?: string;
+}
+
+export interface SubmitHighScoreRequest {
+  score: number;
+  userName: string;
+}
+
+
 export interface MultiplayerRoomInfo {
   id: string;
   hostSocketId: string;

@@ -2,7 +2,6 @@
    LEVEL EDITOR ENGINE
    ========================================================================== */
 
-import { LevelData } from '../shared/payloads.js';
 import { TileMap, TILES, TILE_SIZE, GRID_COLS, GRID_ROWS } from '../world/tilemap.js';
 
 export interface PaletteItem {
@@ -46,8 +45,11 @@ export class LevelEditor {
     isPainting: boolean;
     hoverCol: number;
     hoverRow: number;
+    currentLevelId: string | null = null;
+    levelName: string = "Custom Level";
 
     constructor(canvas: HTMLCanvasElement, tileMap: TileMap, onPlaytest: () => void, isEditorActive: () => boolean = () => true) {
+
         this.canvas = canvas;
         this.tileMap = tileMap;
         this.onPlaytest = onPlaytest;
@@ -126,7 +128,6 @@ export class LevelEditor {
         const handleEnd = () => {
             if (this.isPainting) {
                 this.isPainting = false;
-                this.autoSaveLocal();
             }
         };
 
@@ -194,35 +195,6 @@ export class LevelEditor {
             rows: GRID_ROWS,
             grid: [...this.tileMap.grid]
         };
-    }
-
-    autoSaveLocal(): void {
-        try {
-            localStorage.setItem('jetpack_custom_level', JSON.stringify(this.getExportData()));
-        } catch (e) {
-            // ignore
-        }
-    }
-
-    loadFromLocal(): boolean {
-        try {
-            const data = localStorage.getItem('jetpack_custom_level');
-            if (data) {
-                const parsed = JSON.parse(data);
-                this.tileMap.loadLevelData(parsed);
-                return true;
-            }
-        } catch (e) {
-            // ignore
-        }
-        return false;
-    }
-
-    loadFromJSON(jsonData: LevelData | null): boolean {
-        if (!jsonData || !Array.isArray(jsonData.grid)) return false;
-        this.tileMap.loadLevelData(jsonData);
-        this.autoSaveLocal();
-        return true;
     }
 
     renderHoverPreview(ctx: CanvasRenderingContext2D): void {

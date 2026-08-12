@@ -24,6 +24,7 @@ import {
   GameStartedPayload,
   LevelCompletePayload,
   GameOverPayload,
+  CustomLevelRecord,
 } from "./shared/payloads.js";
 
 export const GAME_STATES = {
@@ -56,10 +57,12 @@ export class Game {
   currentLevelIndex: number;
   gameState: GameState;
   isCustomLevel: boolean;
+  activeCustomLevelRecord: CustomLevelRecord | null = null;
   isCanvasRenderedForState: boolean;
 
   deathSequenceTimer: number;
   isDeathHandled: boolean;
+
 
   uiManager: UIManager;
   levelManager: LevelManager;
@@ -177,9 +180,6 @@ export class Game {
   }
   triggerLevelComplete(): void {
     this.levelManager.triggerLevelComplete();
-  }
-  exportLevelJSON(): void {
-    this.levelManager.exportLevelJSON();
   }
 
   initNetwork(): void {

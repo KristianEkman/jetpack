@@ -270,11 +270,8 @@ export class MultiplayerController {
       if (selectLevel.value === "custom") {
         uploadGroup?.classList.remove("hidden");
         try {
-          const saved = localStorage.getItem("jetpack_custom_level");
-          if (saved && !this.customMapDataPayload) {
-            this.customMapDataPayload = JSON.parse(
-              saved,
-            ) as MultiplayerLevelData;
+          if (!this.customMapDataPayload && this.game.editor) {
+            this.customMapDataPayload = this.game.editor.getExportData() as MultiplayerLevelData;
             if (statusText) {
               statusText.textContent = `Using Editor map: "${this.customMapDataPayload.name || "Custom Level"}"`;
             }
@@ -392,11 +389,8 @@ export class MultiplayerController {
         if (levelValue === "custom") {
           if (!this.customMapDataPayload) {
             try {
-              const saved = localStorage.getItem("jetpack_custom_level");
-              if (saved) {
-                this.customMapDataPayload = JSON.parse(
-                  saved,
-                ) as MultiplayerLevelData;
+              if (this.game.editor) {
+                this.customMapDataPayload = this.game.editor.getExportData() as MultiplayerLevelData;
               }
             } catch {}
           }

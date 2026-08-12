@@ -132,10 +132,7 @@
 
             <div class="editor-actions">
                 <button id="btnEditorPlay" class="btn-editor primary">▶️ PLAYTEST</button>
-                <button id="btnEditorSave" class="btn-editor">💾 SAVE LOCAL</button>
-                <button id="btnEditorExport" class="btn-editor">📥 EXPORT JSON</button>
-                <button id="btnEditorImport" class="btn-editor">📤 IMPORT JSON</button>
-                <input type="file" id="fileImportInput" accept=".json" style="display:none;">
+                <button id="btnEditorUpload" class="btn-editor primary">☁️ UPLOAD / EDIT ONLINE</button>
                 <button id="btnEditorClear" class="btn-editor danger">🗑️ CLEAR</button>
                 <button id="btnEditorExit" class="btn-editor">🚪 MAIN MENU</button>
             </div>
@@ -155,6 +152,7 @@
                 <button id="btnStartGame" class="btn-menu primary">🚀 START CAMPAIGN</button>
                 <button id="btnMultiplayer" class="btn-menu primary-glow">🌐 MULTIPLAYER LOBBY</button>
                 <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
+                <button id="btnCommunityLevels" class="btn-menu accent">🌍 COMMUNITY LEVELS</button>
                 <button id="btnOpenEditor" class="btn-menu accent">✏️ LEVEL EDITOR</button>
                 <button id="btnMenuAccount" class="btn-menu accent">👤 USER ACCOUNT</button>
                 <button id="btnControls" class="btn-menu">❓ CONTROLS & HOW TO PLAY</button>
@@ -178,6 +176,21 @@
             </div>
         </div>
     </dialog>
+
+    <!-- COMMUNITY CUSTOM LEVELS DIALOG -->
+    <dialog id="dlgCommunityLevels" class="retro-dialog">
+        <div class="dialog-content wide">
+            <h2>🌍 COMMUNITY CUSTOM LEVELS</h2>
+            <div id="communityLevelList" class="community-level-list">
+                <!-- Populated via JS -->
+            </div>
+            <div class="dialog-actions">
+                <button id="btnRefreshCommunityLevels" class="btn-menu accent">🔄 REFRESH</button>
+                <button id="btnCloseCommunityLevels" class="btn-menu">BACK TO MAIN MENU</button>
+            </div>
+        </div>
+    </dialog>
+
 
     <!-- CONTROLS & INSTRUCTIONS DIALOG -->
     <dialog id="dlgControls" class="retro-dialog">
@@ -423,26 +436,31 @@
                 <small id="loggedInUserId" style="color: #888; font-size: 0.75rem; word-break: break-all;"></small>
             </div>
 
-            <div class="tab-buttons-row" style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%;">
-                <button id="btnAuthTabLogin" class="btn-menu active" style="flex: 1;">LOGIN</button>
-                <button id="btnAuthTabRegister" class="btn-menu" style="flex: 1;">REGISTER</button>
-            </div>
+            <div id="userAuthFormContainer" style="width: 100%;">
+                <div class="tab-buttons-row" style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%;">
+                    <button id="btnAuthTabLogin" class="btn-menu active" style="flex: 1;">LOGIN</button>
+                    <button id="btnAuthTabRegister" class="btn-menu" style="flex: 1;">REGISTER</button>
+                </div>
 
-            <div class="form-group" style="width: 100%;">
-                <label for="authUserUsername">Username:</label>
-                <input type="text" id="authUserUsername" class="retro-input" placeholder="Enter username (min 1 char)">
-            </div>
+                <div class="form-group" style="width: 100%;">
+                    <label for="authUserUsername">Username:</label>
+                    <input type="text" id="authUserUsername" class="retro-input" placeholder="Enter username (min 1 char)">
+                </div>
 
-            <div class="form-group" style="width: 100%;">
-                <label for="authUserPassword">Password:</label>
-                <input type="password" id="authUserPassword" class="retro-input" placeholder="Enter password (min 1 char)">
+                <div class="form-group" style="width: 100%;">
+                    <label for="authUserPassword">Password:</label>
+                    <input type="password" id="authUserPassword" class="retro-input" placeholder="Enter password (min 1 char)">
+                </div>
+
+                <div style="margin-top: 10px; width: 100%;">
+                    <button id="btnAuthSubmit" class="btn-menu primary" style="width: 100%;">🔑 LOG IN</button>
+                </div>
             </div>
 
             <p id="userAuthStatus" class="auth-status-msg" style="min-height: 1.2rem; font-size: 0.85rem; margin: 10px 0; font-family: 'Rajdhani', sans-serif;"></p>
 
             <div class="dialog-actions" style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
-                <button id="btnAuthSubmit" class="btn-menu primary" style="flex: 1;">🔑 LOG IN</button>
-                <button id="btnAuthLogout" class="btn-menu danger" style="display: none; width: 100%; margin-top: 5px;">🚪 LOG OUT</button>
+                <button id="btnAuthLogout" class="btn-menu danger" style="display: none; flex: 1;">🚪 LOG OUT</button>
                 <button id="btnCloseUserAuth" class="btn-menu" style="flex: 1;">CLOSE</button>
             </div>
         </div>

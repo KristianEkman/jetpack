@@ -16,6 +16,15 @@ import { GameLoop } from "./gameLoop.js";
 import { initFirebaseAdmin, getFirebaseDatabase } from "./firebase.js";
 import { createUser, loginUser, getUserById } from "./userModule.js";
 import {
+  createCustomLevel,
+  updateCustomLevel,
+  getCustomLevelById,
+  listCustomLevels,
+  deleteCustomLevel,
+  rateCustomLevel,
+  submitCustomLevelHighScore,
+} from "./levelModule.js";
+import {
   GAME_EVENTS,
   MULTIPLAYER_MODES,
   ROOM_EVENTS,
@@ -131,6 +140,125 @@ app.get("/api/users/me/:id", async (req, res) => {
   }
   res.json({ success: true, user });
 });
+
+/**
+ * Helper to extract user ID from auth header or request body
+ */
+function getAuthUserId(req: express.Request): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.substring(7).trim();
+  }
+  const customHeader = req.headers["x-user-id"];
+  if (typeof customHeader === "string" && customHeader.trim().length > 0) {
+    return customHeader.trim();
+  }
+  if (req.body && typeof req.body.userId === "string" && req.body.userId.trim().length > 0) {
+    return req.body.userId.trim();
+  }
+  return null;
+}
+
+/* ==========================================================================
+   CUSTOM LEVELS REST API
+   ========================================================================== */
+
+// Create a custom level (requires auth)
+app.post("/api/levels", async (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Authentication required to upload level." });
+    return;
+  }
+  const user = await getUserById(userId);
+  if (!user) {
+    res.status(401).json({ success: false, error: "Invalid user account." });
+    return;
+  }
+
+  const result = await createCustomLevel(user.id, user.name, req.body);
+  if (!result.success) {
+    res.status(400).json(result);
+    return;
+  }
+  res.status(201).json(result);
+});
+
+// List all custom levels
+app.get("/api/levels", async (_req, res) => {
+  const result = await listCustomLevels();
+  if (!result.success) {
+    res.status(500).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+// Get custom level by ID
+app.get("/api/levels/:id", async (req, res) => {
+  const result = await getCustomLevelById(req.params.id);
+  if (!result.success) {
+    res.status(404).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+// Update custom level (author only)
+app.put("/api/levels/:id", async (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Authentication required to update level." });
+    return;
+  }
+  const result = await updateCustomLevel(req.params.id, userId, req.body);
+  if (!result.success) {
+    const status = result.error?.includes("Unauthorized") ? 403 : result.error?.includes("not found") ? 404 : 400;
+    res.status(status).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+// Delete custom level (author only)
+app.delete("/api/levels/:id", async (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Authentication required to delete level." });
+    return;
+  }
+  const result = await deleteCustomLevel(req.params.id, userId);
+  if (!result.success) {
+    const status = result.error?.includes("Unauthorized") ? 403 : result.error?.includes("not found") ? 404 : 400;
+    res.status(status).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+// Rate custom level 1-5 stars (anyone)
+app.post("/api/levels/:id/rate", async (req, res) => {
+  const raterId = getAuthUserId(req) || req.ip || "anonymous";
+  const { rating } = req.body || {};
+  const result = await rateCustomLevel(req.params.id, raterId, rating);
+  if (!result.success) {
+    res.status(400).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+// Submit high score for custom level (anyone)
+app.post("/api/levels/:id/highscore", async (req, res) => {
+  const { score, userName } = req.body || {};
+  const result = await submitCustomLevelHighScore(req.params.id, score, userName);
+  if (!result.success) {
+    res.status(400).json(result);
+    return;
+  }
+  res.json(result);
+});
+
 
 export const roomManager = new RoomManager();
 export const gameLoop = new GameLoop(roomManager, io, 60);

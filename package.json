@@ -13,7 +13,7 @@
     "build": "tsc --noEmit && vite build",
     "deploy": "npm run build && az webapp up --resource-group jetpack-rg",
     "typecheck": "tsc --noEmit",
-    "test": "tsx scripts/test_shared.ts && tsx scripts/test_server.ts && tsx scripts/test_phase5.ts && tsx scripts/test_list_rooms.ts && tsx scripts/test_server_regressions.ts && tsx scripts/test_compete_delay.ts && tsx scripts/test_compete_exit.ts && tsx scripts/test_extralife.ts && tsx scripts/test_boss.ts && tsx scripts/test_stuck_fuel.ts && tsx scripts/test_rapidfire.ts && tsx scripts/test_level8.ts",
+    "test": "tsx scripts/test_shared.ts && tsx scripts/test_server.ts && tsx scripts/test_phase5.ts && tsx scripts/test_list_rooms.ts && tsx scripts/test_server_regressions.ts && tsx scripts/test_compete_delay.ts && tsx scripts/test_compete_exit.ts && tsx scripts/test_extralife.ts && tsx scripts/test_boss.ts && tsx scripts/test_stuck_fuel.ts && tsx scripts/test_rapidfire.ts && tsx scripts/test_level8.ts && tsx scripts/test_custom_levels_api.ts",
     "test:shared": "tsx scripts/test_shared.ts",
     "test:server": "tsx scripts/test_server.ts",
     "test:phase5": "tsx scripts/test_phase5.ts",
@@ -26,7 +26,9 @@
     "test:wall-hit": "tsx scripts/test_enemy_wall_hit.ts",
     "test:stuck-fuel": "tsx scripts/test_stuck_fuel.ts",
     "test:rapidfire": "tsx scripts/test_rapidfire.ts",
-    "test:level8": "tsx scripts/test_level8.ts"
+    "test:level8": "tsx scripts/test_level8.ts",
+    "test:custom-levels": "tsx scripts/test_custom_levels_api.ts"
+
   },
   "keywords": [
     "jetpack",
