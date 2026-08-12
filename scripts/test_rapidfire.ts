@@ -18,7 +18,7 @@ console.log("   ✅ Constants verified.");
 console.log("2️⃣  Testing Palette Integration...");
 const rapidFirePaletteItem = PALETTE.find((item) => item.type === TILES.RAPID_FIRE);
 assert.ok(rapidFirePaletteItem, "Rapid Fire must exist in Level Editor PALETTE");
-assert.equal(rapidFirePaletteItem.icon, "⚡");
+assert.equal(rapidFirePaletteItem.icon, "⚡⚡");
 console.log("   ✅ Palette item verified.");
 
 // 3. Check Campaign Level Parsing for Rapid Fire

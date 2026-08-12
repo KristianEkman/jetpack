@@ -13,6 +13,8 @@ import { execSync } from "node:child_process";
 
 import { RoomManager, ServerRoom } from "./roomManager.js";
 import { GameLoop } from "./gameLoop.js";
+import { initFirebaseAdmin, getFirebaseDatabase } from "./firebase.js";
+import { createUser, loginUser, getUserById } from "./userModule.js";
 import {
   GAME_EVENTS,
   MULTIPLAYER_MODES,
@@ -68,8 +70,10 @@ function loadVersionInfo(): void {
 }
 
 loadVersionInfo();
+initFirebaseAdmin();
 
 const app = express();
+app.use(express.json());
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
@@ -97,6 +101,35 @@ app.get("/health", (req, res) => {
     uptime: process.uptime(),
     activeRooms: roomManager.rooms.size,
   });
+});
+
+app.post("/api/users/register", async (req, res) => {
+  const { name, password } = req.body || {};
+  const result = await createUser(name, password);
+  if (!result.success) {
+    res.status(400).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+app.post("/api/users/login", async (req, res) => {
+  const { name, password } = req.body || {};
+  const result = await loginUser(name, password);
+  if (!result.success) {
+    res.status(401).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+app.get("/api/users/me/:id", async (req, res) => {
+  const user = await getUserById(req.params.id);
+  if (!user) {
+    res.status(404).json({ success: false, error: "User not found" });
+    return;
+  }
+  res.json({ success: true, user });
 });
 
 export const roomManager = new RoomManager();

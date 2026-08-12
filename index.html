@@ -80,7 +80,13 @@
                     </div>
                 </div>
 
+                <div class="hud-item user-item">
+                    <span class="hud-label">USER</span>
+                    <span id="userAccountBadge" class="hud-value">Guest</span>
+                </div>
+
                 <div class="hud-buttons-row">
+                    <button id="btnUserAuth" class="btn-icon" title="User Account">👤</button>
                     <button id="btnPause" class="btn-icon" title="Pause Game (Esc)">⏸️</button>
                     <button id="btnSound" class="btn-icon" title="Mute/Unmute Audio">🔊</button>
                     <button id="btnCRT" class="btn-icon" title="Toggle CRT Retro Filter">📺</button>
@@ -150,6 +156,7 @@
                 <button id="btnMultiplayer" class="btn-menu primary-glow">🌐 MULTIPLAYER LOBBY</button>
                 <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
                 <button id="btnOpenEditor" class="btn-menu accent">✏️ LEVEL EDITOR</button>
+                <button id="btnMenuAccount" class="btn-menu accent">👤 USER ACCOUNT</button>
                 <button id="btnControls" class="btn-menu">❓ CONTROLS & HOW TO PLAY</button>
             </div>
 
@@ -401,6 +408,42 @@
 
             <div class="dialog-actions">
                 <button id="btnCloseMultiplayer" class="btn-menu">BACK TO MAIN MENU</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- User Account Modal -->
+    <dialog id="userAuthModal" class="retro-dialog">
+        <div class="dialog-content">
+            <h2 id="userAuthTitle">USER ACCOUNT</h2>
+
+            <div id="loggedInUserCard" class="logged-in-card hidden" style="background: rgba(0, 255, 204, 0.08); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 12px; margin-bottom: 15px; text-align: center; width: 100%;">
+                <p style="margin: 0; font-size: 0.8rem; color: #888; letter-spacing: 1px;">CURRENTLY LOGGED IN AS</p>
+                <h3 id="loggedInUserName" style="margin: 6px 0; color: #00ffcc; font-family: 'Press Start 2P', monospace; font-size: 0.9rem;">Guest</h3>
+                <small id="loggedInUserId" style="color: #888; font-size: 0.75rem; word-break: break-all;"></small>
+            </div>
+
+            <div class="tab-buttons-row" style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%;">
+                <button id="btnAuthTabLogin" class="btn-menu active" style="flex: 1;">LOGIN</button>
+                <button id="btnAuthTabRegister" class="btn-menu" style="flex: 1;">REGISTER</button>
+            </div>
+
+            <div class="form-group" style="width: 100%;">
+                <label for="authUserUsername">Username:</label>
+                <input type="text" id="authUserUsername" class="retro-input" placeholder="Enter username (min 1 char)">
+            </div>
+
+            <div class="form-group" style="width: 100%;">
+                <label for="authUserPassword">Password:</label>
+                <input type="password" id="authUserPassword" class="retro-input" placeholder="Enter password (min 1 char)">
+            </div>
+
+            <p id="userAuthStatus" class="auth-status-msg" style="min-height: 1.2rem; font-size: 0.85rem; margin: 10px 0; font-family: 'Rajdhani', sans-serif;"></p>
+
+            <div class="dialog-actions" style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
+                <button id="btnAuthSubmit" class="btn-menu primary" style="flex: 1;">🔑 LOG IN</button>
+                <button id="btnAuthLogout" class="btn-menu danger" style="display: none; width: 100%; margin-top: 5px;">🚪 LOG OUT</button>
+                <button id="btnCloseUserAuth" class="btn-menu" style="flex: 1;">CLOSE</button>
             </div>
         </div>
     </dialog>

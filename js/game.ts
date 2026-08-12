@@ -17,6 +17,7 @@ import { UIManager } from "./ui/uiManager.js";
 import { LevelManager } from "./levels/levelManager.js";
 import { MultiplayerController } from "./network/multiplayerController.js";
 import { initErrorMonitor } from "./ui/errorMonitor.js";
+import { userAuthUI } from "./ui/userAuthUI.js";
 import {
   MultiplayerRoomInfo,
   PublicRoomInfo,
@@ -120,6 +121,7 @@ export class Game {
     );
 
     this.uiManager.bindUI();
+    userAuthUI.init();
     this.multiplayerController.initNetwork();
     this.multiplayerController.bindMultiplayerUI();
     this.audio.setupUserUnlock();
