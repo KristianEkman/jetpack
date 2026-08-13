@@ -35,6 +35,30 @@ export function initFirebaseAdmin(): App | null {
     return initializedApp;
   }
 
+  // 1. Check for raw JSON string in environment variable (e.g. for Azure App Service)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+      }
+      initializedApp = initializeApp({
+        credential: cert(serviceAccount),
+        databaseURL: DATABASE_URL,
+      });
+      console.log(
+        "🔥 Firebase Admin SDK initialized using FIREBASE_SERVICE_ACCOUNT_JSON env var.",
+      );
+      return initializedApp;
+    } catch (err) {
+      console.error(
+        "❌ Failed to parse or initialize Firebase Admin SDK from FIREBASE_SERVICE_ACCOUNT_JSON env var:",
+        err,
+      );
+    }
+  }
+
+  // 2. Check for key file path
   const keyPath =
     process.env.FIREBASE_SERVICE_ACCOUNT_PATH || DEFAULT_KEY_PATH;
 
