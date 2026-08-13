@@ -68,7 +68,8 @@ async function runTests(): Promise<void> {
     assert.strictEqual(createData.level.authorId, userA.id);
     assert.strictEqual(createData.level.authorName, userA.name);
     assert.strictEqual(createData.level.name, "User A Castle");
-    console.log(`✅ User A successfully created custom level: ${levelId}`);
+    assert.strictEqual(createData.level.isReleased, true, "Level should be released by default");
+    console.log(`✅ User A successfully created custom level: ${levelId} (isReleased=true by default)`);
 
     // 4. User A edits own custom level (PUT /api/levels/:id)
     testGrid[1] = 2; // phase brick
@@ -88,6 +89,64 @@ async function runTests(): Promise<void> {
     assert.strictEqual(updateData.success, true);
     assert.strictEqual(updateData.level.name, "User A Castle Updated");
     console.log(`✅ User A successfully edited own custom level`);
+
+    // 4b. Test Release Flag: User A unreleases level (isReleased: false)
+    const unreleaseRes = await fetch(`${baseUrl}/api/levels/${levelId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userA.id}`,
+      },
+      body: JSON.stringify({
+        isReleased: false,
+      }),
+    });
+    assert.strictEqual(unreleaseRes.status, 200);
+    const unreleaseData = (await unreleaseRes.json()) as { success: boolean; level?: any };
+    assert.strictEqual(unreleaseData.level.isReleased, false);
+    console.log(`✅ User A successfully unreleased level (isReleased=false)`);
+
+    // 4c. Verify Public cannot see unreleased level in GET /api/levels
+    const publicListRes = await fetch(`${baseUrl}/api/levels`);
+    const publicListData = (await publicListRes.json()) as { success: boolean; levels?: any[] };
+    const publicFound = publicListData.levels?.find((l: any) => l.id === levelId);
+    assert.strictEqual(publicFound, undefined, "Unreleased level must not be listed in public GET /api/levels");
+    console.log(`✅ Unreleased level hidden from public GET /api/levels`);
+
+    // 4d. Verify Owner CAN see unreleased level in GET /api/levels
+    const ownerListRes = await fetch(`${baseUrl}/api/levels`, {
+      headers: { "Authorization": `Bearer ${userA.id}` },
+    });
+    const ownerListData = (await ownerListRes.json()) as { success: boolean; levels?: any[] };
+    const ownerFound = ownerListData.levels?.find((l: any) => l.id === levelId);
+    assert.ok(ownerFound, "Unreleased level must be listed for owner in GET /api/levels");
+    console.log(`✅ Unreleased level visible to owner in GET /api/levels`);
+
+    // 4e. Verify Public direct fetch GET /api/levels/:id returns 404
+    const publicGetRes = await fetch(`${baseUrl}/api/levels/${levelId}`);
+    assert.strictEqual(publicGetRes.status, 404, "Public GET /api/levels/:id for unreleased level should return 404");
+    console.log(`✅ Public direct fetch of unreleased level returned 404`);
+
+    // 4f. Verify Owner direct fetch GET /api/levels/:id returns 200
+    const ownerGetRes = await fetch(`${baseUrl}/api/levels/${levelId}`, {
+      headers: { "Authorization": `Bearer ${userA.id}` },
+    });
+    assert.strictEqual(ownerGetRes.status, 200, "Owner GET /api/levels/:id for unreleased level should return 200");
+    console.log(`✅ Owner direct fetch of unreleased level returned 200 OK`);
+
+    // 4g. Re-release level (isReleased: true)
+    const reReleaseRes = await fetch(`${baseUrl}/api/levels/${levelId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userA.id}`,
+      },
+      body: JSON.stringify({
+        isReleased: true,
+      }),
+    });
+    assert.strictEqual(reReleaseRes.status, 200);
+    console.log(`✅ User A re-released level (isReleased=true)`);
 
     // 5. User B attempts to edit User A's custom level (PUT /api/levels/:id) -> Expect 403 Forbidden
     const forbiddenUpdateRes = await fetch(`${baseUrl}/api/levels/${levelId}`, {

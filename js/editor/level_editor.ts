@@ -47,6 +47,7 @@ export class LevelEditor {
     hoverRow: number;
     currentLevelId: string | null = null;
     levelName: string = "Custom Level";
+    isReleased: boolean = true;
 
     constructor(canvas: HTMLCanvasElement, tileMap: TileMap, onPlaytest: () => void, isEditorActive: () => boolean = () => true) {
 
@@ -187,13 +188,14 @@ export class LevelEditor {
         return { valid: true };
     }
 
-    getExportData(): { name: string; author: string; cols: number; rows: number; grid: number[] } {
+    getExportData(): { name: string; author: string; cols: number; rows: number; grid: number[]; isReleased: boolean } {
         return {
             name: "Custom Jetpack Level",
             author: "User",
             cols: GRID_COLS,
             rows: GRID_ROWS,
-            grid: [...this.tileMap.grid]
+            grid: [...this.tileMap.grid],
+            isReleased: this.isReleased
         };
     }
 

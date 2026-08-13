@@ -281,7 +281,12 @@ export class LevelManager {
 
     async fetchCustomLevels(): Promise<CustomLevelHeader[]> {
         try {
-            const res = await fetch("/api/levels");
+            const userId = userService.getLoggedInUserId();
+            const headers: Record<string, string> = {};
+            if (userId) {
+                headers["Authorization"] = `Bearer ${userId}`;
+            }
+            const res = await fetch("/api/levels", { headers });
             const data = (await res.json()) as { success: boolean; levels?: CustomLevelHeader[]; error?: string };
             return data.success && data.levels ? data.levels : [];
         } catch (err) {
@@ -292,7 +297,12 @@ export class LevelManager {
 
     async fetchCustomLevelById(levelId: string): Promise<CustomLevelRecord | null> {
         try {
-            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}`);
+            const userId = userService.getLoggedInUserId();
+            const headers: Record<string, string> = {};
+            if (userId) {
+                headers["Authorization"] = `Bearer ${userId}`;
+            }
+            const res = await fetch(`/api/levels/${encodeURIComponent(levelId)}`, { headers });
             const data = (await res.json()) as CustomLevelResult;
             return data.success && data.level ? data.level : null;
         } catch (err) {

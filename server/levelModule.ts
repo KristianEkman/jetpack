@@ -30,6 +30,7 @@ function sanitizeRecord(record: CustomLevelRecord): CustomLevelRecord {
     ratingCount: record.ratingCount ?? 0,
     averageRating: record.averageRating ?? 0,
     ratings: record.ratings || {},
+    isReleased: record.isReleased !== undefined ? Boolean(record.isReleased) : true,
   };
 }
 
@@ -82,6 +83,7 @@ export async function createCustomLevel(
     ratingCount: 0,
     averageRating: 0,
     ratings: {},
+    isReleased: levelData.isReleased !== undefined ? Boolean(levelData.isReleased) : true,
   });
 
   try {
@@ -136,6 +138,7 @@ export async function updateCustomLevel(
     missiles: levelData.missiles ?? existing.missiles,
     turrets: levelData.turrets ?? existing.turrets,
     bosses: levelData.bosses ?? existing.bosses,
+    isReleased: levelData.isReleased !== undefined ? Boolean(levelData.isReleased) : existing.isReleased ?? true,
     updatedAt: Date.now(),
   });
 
@@ -151,7 +154,7 @@ export async function updateCustomLevel(
 /**
  * Retrieves a custom level by ID.
  */
-export async function getCustomLevelById(levelId: string): Promise<CustomLevelResult> {
+export async function getCustomLevelById(levelId: string, requestingUserId?: string): Promise<CustomLevelResult> {
   if (!levelId) {
     return { success: false, error: "Level ID is required." };
   }
@@ -167,6 +170,9 @@ export async function getCustomLevelById(levelId: string): Promise<CustomLevelRe
       return { success: false, error: "Custom level not found." };
     }
     const level = sanitizeRecord(snap.val() as CustomLevelRecord);
+    if (level.isReleased === false && level.authorId !== requestingUserId) {
+      return { success: false, error: "Custom level not found." };
+    }
     return { success: true, level };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to get custom level.";
@@ -177,7 +183,7 @@ export async function getCustomLevelById(levelId: string): Promise<CustomLevelRe
 /**
  * Lists all custom levels (returns summary headers).
  */
-export async function listCustomLevels(): Promise<{ success: boolean; levels?: CustomLevelHeader[]; error?: string }> {
+export async function listCustomLevels(requestingUserId?: string): Promise<{ success: boolean; levels?: CustomLevelHeader[]; error?: string }> {
   const db = getFirebaseDatabase();
   if (!db) {
     return { success: false, error: "Database service unavailable." };
@@ -190,9 +196,10 @@ export async function listCustomLevels(): Promise<{ success: boolean; levels?: C
     }
 
     const rawData = snap.val() as Record<string, CustomLevelRecord>;
-    const headers: CustomLevelHeader[] = Object.values(rawData).map((lvl) => {
-      const sanitized = sanitizeRecord(lvl);
-      return {
+    const headers: CustomLevelHeader[] = Object.values(rawData)
+      .map((lvl) => sanitizeRecord(lvl))
+      .filter((sanitized) => sanitized.isReleased !== false || (requestingUserId && sanitized.authorId === requestingUserId))
+      .map((sanitized) => ({
         id: sanitized.id,
         name: sanitized.name,
         authorId: sanitized.authorId,
@@ -203,8 +210,8 @@ export async function listCustomLevels(): Promise<{ success: boolean; levels?: C
         highScoreUser: sanitized.highScoreUser,
         averageRating: sanitized.averageRating,
         ratingCount: sanitized.ratingCount,
-      };
-    });
+        isReleased: sanitized.isReleased,
+      }));
 
     headers.sort((a, b) => b.createdAt - a.createdAt);
 

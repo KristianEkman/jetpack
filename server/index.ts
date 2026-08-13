@@ -184,9 +184,10 @@ app.post("/api/levels", async (req, res) => {
   res.status(201).json(result);
 });
 
-// List all custom levels
-app.get("/api/levels", async (_req, res) => {
-  const result = await listCustomLevels();
+// List custom levels (unreleased levels shown only to owner)
+app.get("/api/levels", async (req, res) => {
+  const userId = getAuthUserId(req);
+  const result = await listCustomLevels(userId || undefined);
   if (!result.success) {
     res.status(500).json(result);
     return;
@@ -194,9 +195,10 @@ app.get("/api/levels", async (_req, res) => {
   res.json(result);
 });
 
-// Get custom level by ID
+// Get custom level by ID (unreleased levels allowed only for owner)
 app.get("/api/levels/:id", async (req, res) => {
-  const result = await getCustomLevelById(req.params.id);
+  const userId = getAuthUserId(req);
+  const result = await getCustomLevelById(req.params.id, userId || undefined);
   if (!result.success) {
     res.status(404).json(result);
     return;

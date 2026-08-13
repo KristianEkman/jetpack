@@ -238,10 +238,15 @@ export class UIManager {
         }
       }
 
+      const chkRelease = document.getElementById("chkEditorIsReleased") as HTMLInputElement | null;
+      const isReleased = chkRelease ? chkRelease.checked : true;
+      game.editor.isReleased = isReleased;
+
       const exportData = game.editor.getExportData();
       const levelPayload = {
         name,
         grid: exportData.grid,
+        isReleased,
       };
 
       if (game.editor.currentLevelId) {
@@ -301,14 +306,16 @@ export class UIManager {
       const ratingText = lvl.ratingCount > 0 ? `${lvl.averageRating}★ (${lvl.ratingCount} votes)` : "No ratings yet";
       const highScoreText = lvl.highScore > 0 ? `High Score: ${lvl.highScore} by ${lvl.highScoreUser}` : "High Score: 0";
       const isOwner = currentUserId && lvl.authorId === currentUserId;
+      const releaseBadge = isOwner ? (lvl.isReleased !== false ? ' <span style="color:#00ffcc; font-size:0.75rem; font-weight:bold;">[🌐 PUBLIC]</span>' : ' <span style="color:#ffcc00; font-size:0.75rem; font-weight:bold;">[🔒 DRAFT]</span>') : '';
 
       card.innerHTML = `
         <div class="community-level-info">
-          <div class="community-level-title">${lvl.name}</div>
+          <div class="community-level-title">${lvl.name}${releaseBadge}</div>
           <div class="community-level-meta">By ${lvl.authorName} • Rating: ${ratingText} • ${highScoreText}</div>
         </div>
         <div class="community-level-actions">
           <button class="btn-editor primary btn-play-custom" data-id="${lvl.id}">▶️ PLAY</button>
+          ${isOwner ? `<button class="btn-editor btn-toggle-release-custom" data-id="${lvl.id}">${lvl.isReleased !== false ? "🔒 UNRELEASE" : "🌐 RELEASE"}</button>` : ""}
           ${isOwner ? `<button class="btn-editor btn-edit-custom" data-id="${lvl.id}">✏️ EDIT</button>` : ""}
           ${isOwner ? `<button class="btn-editor danger btn-delete-custom" data-id="${lvl.id}">🗑️ DELETE</button>` : ""}
         </div>
@@ -324,11 +331,25 @@ export class UIManager {
       });
 
       if (isOwner) {
+        card.querySelector(".btn-toggle-release-custom")?.addEventListener("click", async () => {
+          const newStatus = lvl.isReleased === false;
+          const res = await this.game.levelManager.updateCustomLevel(lvl.id, { isReleased: newStatus });
+          if (res.success) {
+            this.showBanner(`Level is now ${newStatus ? "PUBLIC" : "PRIVATE (UNRELEASED)"}`);
+            this.loadCommunityLevelsUI();
+          } else {
+            this.showBanner(res.error || "Failed to update release status.");
+          }
+        });
+
         card.querySelector(".btn-edit-custom")?.addEventListener("click", async () => {
           const levelRecord = await this.game.levelManager.fetchCustomLevelById(lvl.id);
           if (levelRecord) {
             this.game.editor.currentLevelId = levelRecord.id;
             this.game.editor.levelName = levelRecord.name;
+            this.game.editor.isReleased = levelRecord.isReleased !== false;
+            const chkRelease = document.getElementById("chkEditorIsReleased") as HTMLInputElement | null;
+            if (chkRelease) chkRelease.checked = levelRecord.isReleased !== false;
             this.game.tileMap.loadLevelData(levelRecord);
             this.game.levelManager.openLevelEditor();
             this.showBanner(`EDITING "${levelRecord.name.toUpperCase()}"`);

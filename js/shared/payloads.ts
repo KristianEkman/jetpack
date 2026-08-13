@@ -53,6 +53,7 @@ export interface CustomLevelRecord {
   ratingCount: number;
   averageRating: number;
   ratings?: Record<string, number>;
+  isReleased?: boolean;
 }
 
 export interface CustomLevelHeader {
@@ -66,6 +67,7 @@ export interface CustomLevelHeader {
   highScoreUser: string;
   averageRating: number;
   ratingCount: number;
+  isReleased?: boolean;
 }
 
 export interface CustomLevelResult {
