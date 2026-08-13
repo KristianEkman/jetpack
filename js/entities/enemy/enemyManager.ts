@@ -138,7 +138,7 @@ export class EnemyManager {
       width: 80,
       height: 64,
       vx: 90,
-      vy: 0,
+      vy: 60,
       hp: maxHp,
       maxHp: maxHp,
       phase: 1,

@@ -51,42 +51,51 @@ export function updateBoss(
 
   const isPhase2 = enemy.phase === 2;
   const speedMult = isPhase2 ? 1.4 : 1.0;
-  const currentSpeed = 90 * speedMult;
+  const baseSpeed = 90 * speedMult;
 
-  if (enemy.vx === undefined || enemy.vx === 0) enemy.vx = currentSpeed;
-  if (enemy.vx > 0) enemy.vx = currentSpeed;
-  if (enemy.vx < 0) enemy.vx = -currentSpeed;
+  // Initialize diagonal velocity components if missing or 0
+  if (enemy.vx === undefined || enemy.vx === 0) enemy.vx = baseSpeed * 0.8;
+  if (enemy.vy === undefined || enemy.vy === 0) enemy.vy = baseSpeed * 0.6;
 
-  const nextX = enemy.x + (enemy.vx || currentSpeed) * dt;
-  if (hasBossTileCollision(tileMap, nextX, enemy.y, enemy.width, enemy.height)) {
-    if ((enemy.vx || 0) > 0) {
-      enemy.vx = -currentSpeed;
-    } else {
-      enemy.vx = currentSpeed;
-    }
+  // Maintain direction sign while scaling magnitude by phase speedMult
+  const dirX = enemy.vx >= 0 ? 1 : -1;
+  const dirY = enemy.vy >= 0 ? 1 : -1;
+  enemy.vx = dirX * baseSpeed * 0.8;
+  enemy.vy = dirY * baseSpeed * 0.6;
+
+  // 1. Linear Horizontal movement & wall/tile bounce
+  const minX = TILE_SIZE;
+  const mapWidth = tileMap && tileMap.cols ? tileMap.cols * TILE_SIZE : 960;
+  const maxX = mapWidth - TILE_SIZE - enemy.width;
+
+  const nextX = enemy.x + enemy.vx * dt;
+  if (
+    hasBossTileCollision(tileMap, nextX, enemy.y, enemy.width, enemy.height) ||
+    nextX < minX ||
+    nextX > maxX
+  ) {
+    enemy.vx = -enemy.vx;
+    if (nextX < minX) enemy.x = minX;
+    else if (nextX > maxX) enemy.x = maxX;
   } else {
     enemy.x = nextX;
   }
 
-  const minX = TILE_SIZE;
-  const mapWidth =
-    tileMap && tileMap.cols
-      ? tileMap.cols * TILE_SIZE
-      : 960;
-  const maxX = mapWidth - TILE_SIZE - enemy.width;
-  if (enemy.x < minX) {
-    enemy.x = minX;
-    enemy.vx = currentSpeed;
-  } else if (enemy.x > maxX) {
-    enemy.x = maxX;
-    enemy.vx = -currentSpeed;
-  }
+  // 2. Linear Vertical movement & wall/tile bounce
+  const minY = TILE_SIZE;
+  const mapHeight = tileMap && tileMap.rows ? tileMap.rows * TILE_SIZE : 576;
+  const maxY = mapHeight - TILE_SIZE - enemy.height;
 
-  const startY = enemy.startY !== undefined ? enemy.startY : enemy.y;
-  const nextY =
-    startY +
-    Math.sin((enemy.animTimer || 0) * (isPhase2 ? 3.5 : 2.0)) * 12;
-  if (!hasBossTileCollision(tileMap, enemy.x, nextY, enemy.width, enemy.height)) {
+  const nextY = enemy.y + enemy.vy * dt;
+  if (
+    hasBossTileCollision(tileMap, enemy.x, nextY, enemy.width, enemy.height) ||
+    nextY < minY ||
+    nextY > maxY
+  ) {
+    enemy.vy = -enemy.vy;
+    if (nextY < minY) enemy.y = minY;
+    else if (nextY > maxY) enemy.y = maxY;
+  } else {
     enemy.y = nextY;
   }
 
