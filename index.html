@@ -145,17 +145,28 @@
     <!-- MAIN MENU DIALOG -->
     <dialog id="dlgMainMenu" class="retro-dialog">
         <div class="dialog-content">
-            <h1 class="game-title">JETPACK</h1>
-            <p class="subtitle">RETRO ACTION PUZZLE PLATFORMER</p>
+            <!-- Top Utility Bar inside Main Menu -->
+            <div class="menu-utility-bar">
+                <button id="btnMenuAccount" class="btn-utility" title="User Account">👤 ACCOUNT</button>
+                <button id="btnControls" class="btn-utility" title="Controls & How to Play">❓ HOW TO PLAY</button>
+            </div>
 
-            <div class="menu-buttons">
-                <button id="btnStartGame" class="btn-menu primary">🚀 START CAMPAIGN</button>
+            <div class="menu-branding">
+                <h1 class="game-title">JETPACK</h1>
+                <p class="subtitle">RETRO ACTION PUZZLE PLATFORMER</p>
+            </div>
+
+            <!-- Primary Hero Action -->
+            <div class="menu-hero-section">
+                <button id="btnStartGame" class="btn-menu primary btn-hero">🚀 START CAMPAIGN</button>
+            </div>
+
+            <!-- 2x2 Secondary Game Modes & Editor Grid -->
+            <div class="menu-grid">
                 <button id="btnMultiplayer" class="btn-menu primary-glow">🌐 MULTIPLAYER LOBBY</button>
                 <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
                 <button id="btnCommunityLevels" class="btn-menu accent">🌍 COMMUNITY LEVELS</button>
                 <button id="btnOpenEditor" class="btn-menu accent">✏️ LEVEL EDITOR</button>
-                <button id="btnMenuAccount" class="btn-menu accent">👤 USER ACCOUNT</button>
-                <button id="btnControls" class="btn-menu">❓ CONTROLS & HOW TO PLAY</button>
             </div>
 
             <div class="footer-note">
