@@ -10,6 +10,7 @@ import {
 } from "../shared/constants.js";
 import type { SerializedInputState } from "../shared/types.js";
 import {
+  ChangeLevelOptions,
   CreateRoomOptions,
   EnemyDestroyedPayload,
   EnemyDestroyedResponse,
@@ -26,6 +27,7 @@ import {
   RoomActionResponse,
   RoomCreatedPayload,
   RoomJoinedPayload,
+  RoomUpdatedPayload,
   TilePositionPayload,
 } from "../shared/payloads.js";
 
@@ -78,6 +80,7 @@ export class NetworkManager {
   onLevelCompleteCb: ((data: LevelCompletePayload) => void) | null;
   onEnemyDestroyedCb: ((data: EnemyDestroyedPayload) => void) | null;
   onGameOverCb: ((data: GameOverPayload) => void) | null;
+  onRoomUpdatedCb: ((data: RoomUpdatedPayload) => void) | null;
 
   constructor() {
     this.socket = null;
@@ -107,6 +110,7 @@ export class NetworkManager {
     this.onLevelCompleteCb = null;
     this.onEnemyDestroyedCb = null;
     this.onGameOverCb = null;
+    this.onRoomUpdatedCb = null;
 
     if (typeof window !== "undefined") {
       window.addEventListener("beforeunload", () => {
@@ -208,6 +212,13 @@ export class NetworkManager {
         this.currentRoom = data.room;
       }
       this.onPlayerLeftCb?.(data);
+    });
+
+    socket.on(ROOM_EVENTS.ROOM_UPDATED, (data: RoomUpdatedPayload) => {
+      if (data.room) {
+        this.currentRoom = data.room;
+      }
+      this.onRoomUpdatedCb?.(data);
     });
 
     socket.on("room_list_updated", (list: PublicRoomInfo[]) => {
@@ -327,6 +338,27 @@ export class NetworkManager {
       this.currentRoom = null;
       callback?.(response);
     });
+  }
+
+  changeLevel(
+    options: ChangeLevelOptions = {},
+    callback: NetworkCallback<RoomActionResponse> | null = null,
+  ): void {
+    const socket = this.getConnectedSocket();
+    if (!socket || !this.currentRoom) return;
+
+    socket.emit(
+      ROOM_EVENTS.CHANGE_LEVEL,
+      options,
+      (response: RoomActionResponse) => {
+        if (response.success && response.room) {
+          this.currentRoom = response.room;
+        } else if (!response.success && response.error) {
+          this.onErrorCb?.(response.error);
+        }
+        callback?.(response);
+      },
+    );
   }
 
   startMatch(

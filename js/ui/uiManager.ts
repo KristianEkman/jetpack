@@ -131,7 +131,7 @@ export class UIManager {
       .getElementById("btnRestartLevel")
       ?.addEventListener("click", () => {
         this.closeAllDialogs();
-        game.levelManager.startLevel(game.currentLevelIndex, true);
+        game.levelManager.restartCurrentLevel(true);
       });
     document
       .getElementById("btnPauseControls")
@@ -157,7 +157,7 @@ export class UIManager {
         game.player.lives = 3;
         game.player.score = 0;
         this.closeAllDialogs();
-        game.levelManager.startLevel(game.currentLevelIndex);
+        game.levelManager.restartCurrentLevel(false);
       }
     });
     document

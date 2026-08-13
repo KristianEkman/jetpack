@@ -64,7 +64,7 @@ export class LevelManager {
         game.uiManager.showBanner(`${levelData.name.toUpperCase()}`);
     }
 
-    startCustomLevelRecord(record: CustomLevelRecord): void {
+    startCustomLevelRecord(record: CustomLevelRecord, isRestart: boolean = false): void {
         const game = this.game;
         game.isCustomLevel = true;
         game.activeCustomLevelRecord = record;
@@ -72,7 +72,7 @@ export class LevelManager {
         game.deathSequenceTimer = 0;
         game.isDeathHandled = false;
 
-        game.tileMap.loadLevelData(record);
+        game.tileMap.loadLevelData(record, isRestart);
         game.enemyManager.clear();
 
         let spawnFound = false;
@@ -141,7 +141,7 @@ export class LevelManager {
         document.getElementById('editorToolbar')?.classList.remove('hidden');
     }
 
-    playtestCustomLevel(): void {
+    playtestCustomLevel(isRestart: boolean = false): void {
         const game = this.game;
         const validation = game.editor.validateLevel();
         if (!validation.valid) {
@@ -150,9 +150,14 @@ export class LevelManager {
         }
 
         game.isCustomLevel = true;
+        game.currentLevelIndex = -1;
+        game.deathSequenceTimer = 0;
+        game.isDeathHandled = false;
         game.enemyManager.clear();
         game.tileMap.collectedEmeralds = 0;
-        game.tileMap.resetExtraLifeState();
+        if (!isRestart) {
+            game.tileMap.resetExtraLifeState();
+        }
 
         let total = 0;
         let spawnX = 100, spawnY = 100;
@@ -175,6 +180,19 @@ export class LevelManager {
         document.getElementById('editorToolbar')?.classList.add('hidden');
         game.uiManager.closeAllDialogs();
         game.uiManager.showBanner('PLAYTEST CUSTOM LEVEL');
+    }
+
+    restartCurrentLevel(isRestart: boolean = false): void {
+        const game = this.game;
+        if (game.isCustomLevel) {
+            if (game.activeCustomLevelRecord) {
+                this.startCustomLevelRecord(game.activeCustomLevelRecord, isRestart);
+            } else {
+                this.playtestCustomLevel(isRestart);
+            }
+        } else {
+            this.startLevel(game.currentLevelIndex, isRestart);
+        }
     }
 
     spawnEnemiesFromGrid(): void {

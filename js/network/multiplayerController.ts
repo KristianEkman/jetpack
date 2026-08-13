@@ -67,6 +67,15 @@ export class MultiplayerController {
       }
     };
 
+    game.network.onRoomUpdatedCb = (data) => {
+      if (data.room) {
+        this.updateLobbyUI(data.room);
+        game.uiManager.showBanner(
+          `MAP UPDATED TO ${data.room.mapName?.toUpperCase() || "NEW LEVEL"}!`,
+        );
+      }
+    };
+
     game.network.onGameStartedCb = (payload) => {
       this.startMultiplayerMatch(payload);
     };
@@ -260,57 +269,43 @@ export class MultiplayerController {
     const selectLevel = document.getElementById(
       "selectRoomLevel",
     ) as HTMLSelectElement | null;
-    const uploadGroup = document.getElementById("groupCustomMapUpload");
-    const fileInput = document.getElementById(
-      "inputCustomMapFile",
-    ) as HTMLInputElement | null;
-    const statusText = document.getElementById("customMapStatusText");
+    const lobbySelectLevel = document.getElementById(
+      "selectLobbyRoomLevel",
+    ) as HTMLSelectElement | null;
 
-    selectLevel?.addEventListener("change", () => {
-      if (selectLevel.value === "custom") {
-        uploadGroup?.classList.remove("hidden");
-        try {
-          if (!this.customMapDataPayload && this.game.editor) {
-            this.customMapDataPayload = this.game.editor.getExportData() as MultiplayerLevelData;
-            if (statusText) {
-              statusText.textContent = `Using Editor map: "${this.customMapDataPayload.name || "Custom Level"}"`;
-            }
-          }
-        } catch {}
-      } else {
-        uploadGroup?.classList.add("hidden");
-      }
-    });
+    if (selectLevel) {
+      this.populateLevelDropdown(selectLevel);
+      selectLevel.addEventListener("change", () => {
+        this.handleLevelSelectChange(selectLevel);
+      });
+    }
 
-    fileInput?.addEventListener("change", (event: Event) => {
-      const input = event.currentTarget as HTMLInputElement;
-      const file = input.files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (loadEvent: ProgressEvent<FileReader>) => {
-        try {
-          if (typeof loadEvent.target?.result !== "string") {
-            throw new Error("The selected file could not be read as text.");
+    if (lobbySelectLevel) {
+      lobbySelectLevel.addEventListener("change", async () => {
+        if (!this.game.network.currentRoom) return;
+        const value = lobbySelectLevel.value;
+        if (value.startsWith("custom_db_")) {
+          const levelId = value.replace("custom_db_", "");
+          const record = await this.game.levelManager.fetchCustomLevelById(levelId);
+          if (record && Array.isArray(record.grid) && record.grid.length === 540) {
+            this.customMapDataPayload = record as MultiplayerLevelData;
+            this.game.network.changeLevel({
+              customMapData: this.customMapDataPayload,
+              mapName: record.name,
+            });
           }
-          const parsed = JSON.parse(
-            loadEvent.target.result,
-          ) as Partial<MultiplayerLevelData>;
-          if (Array.isArray(parsed.grid) && parsed.grid.length === 540) {
-            this.customMapDataPayload = parsed as MultiplayerLevelData;
-            if (statusText) {
-              statusText.textContent = `Loaded map: "${parsed.name || file.name}" (${parsed.grid.length} tiles)`;
-            }
-          } else {
-            console.error(
-              "Invalid level JSON file! Grid must contain 540 tiles (30x18).",
-            );
-          }
-        } catch {
-          console.error("Error parsing map JSON file.");
+        } else {
+          const idx = parseInt(value, 10);
+          this.game.network.changeLevel({
+            levelIndex: idx,
+          });
         }
-      };
-      reader.readAsText(file);
+      });
+    }
+
+    tabCreate?.addEventListener("click", () => {
+      switchTab(tabCreate, viewCreate);
+      if (selectLevel) this.populateLevelDropdown(selectLevel);
     });
 
     const hostNameInput = document.getElementById(
@@ -386,18 +381,9 @@ export class MultiplayerController {
           customMapData: undefined as MultiplayerLevelData | undefined,
         };
 
-        if (levelValue === "custom") {
+        if (levelValue.startsWith("custom_db_")) {
           if (!this.customMapDataPayload) {
-            try {
-              if (this.game.editor) {
-                this.customMapDataPayload = this.game.editor.getExportData() as MultiplayerLevelData;
-              }
-            } catch {}
-          }
-          if (!this.customMapDataPayload) {
-            console.error(
-              "Please upload a valid custom map JSON file or build one in the Level Editor!",
-            );
+            console.error("Custom level data is not ready yet!");
             return;
           }
           createOptions.customMapData = this.customMapDataPayload;
@@ -450,18 +436,120 @@ export class MultiplayerController {
     document.getElementById("mpProfileSetup")?.classList.add("hidden");
   }
 
+  async populateLevelDropdown(selectElement: HTMLSelectElement): Promise<void> {
+    const previousValue = selectElement.value;
+    selectElement.innerHTML = "";
+
+    const campaignGroup = document.createElement("optgroup");
+    campaignGroup.label = "Campaign Levels";
+    CAMPAIGN_LEVELS.forEach((level, idx) => {
+      const option = document.createElement("option");
+      option.value = `${idx}`;
+      option.textContent = `Level ${idx + 1} - ${level.name}`;
+      campaignGroup.appendChild(option);
+    });
+    selectElement.appendChild(campaignGroup);
+
+    try {
+      const customLevels = await this.game.levelManager.fetchCustomLevels();
+      if (customLevels && customLevels.length > 0) {
+        const dbGroup = document.createElement("optgroup");
+        dbGroup.label = "Saved Custom Levels";
+        customLevels.forEach((levelHeader) => {
+          const option = document.createElement("option");
+          option.value = `custom_db_${levelHeader.id}`;
+          const ratingStr = levelHeader.averageRating
+            ? ` (${levelHeader.averageRating}★)`
+            : "";
+          option.textContent = `🛠️ ${levelHeader.name} by ${levelHeader.authorName || "Unknown"}${ratingStr}`;
+          dbGroup.appendChild(option);
+        });
+        selectElement.appendChild(dbGroup);
+      }
+    } catch (err) {
+      console.error("Error fetching custom levels for dropdown:", err);
+    }
+
+    if (
+      previousValue &&
+      Array.from(selectElement.options).some((o) => o.value === previousValue)
+    ) {
+      selectElement.value = previousValue;
+    }
+  }
+
+  async handleLevelSelectChange(
+    selectElement: HTMLSelectElement,
+  ): Promise<void> {
+    const value = selectElement.value;
+    if (value.startsWith("custom_db_")) {
+      const levelId = value.replace("custom_db_", "");
+      const record = await this.game.levelManager.fetchCustomLevelById(levelId);
+      if (record && Array.isArray(record.grid) && record.grid.length === 540) {
+        this.customMapDataPayload = record as MultiplayerLevelData;
+      } else {
+        console.error("Invalid custom level data loaded from database.");
+      }
+    } else {
+      this.customMapDataPayload = null;
+    }
+  }
+
+  private setSelectDropdownValue(
+    selectElement: HTMLSelectElement,
+    room: MultiplayerRoomInfo,
+  ): void {
+    if (room.customMapData) {
+      const dbMatch = Array.from(selectElement.options).find((o) =>
+        o.text.includes(room.mapName || ""),
+      );
+      if (dbMatch) {
+        selectElement.value = dbMatch.value;
+      } else {
+        selectElement.value = `${room.levelIndex || 0}`;
+      }
+    } else {
+      selectElement.value = `${room.levelIndex}`;
+    }
+  }
+
   updateLobbyUI(room: MultiplayerRoomInfo): void {
     if (!room) return;
 
+    const isHost = this.game.network.socketId === room.hostSocketId;
     const codeElement = document.getElementById("displayRoomCode");
     if (codeElement) codeElement.textContent = room.id;
     const countElement = document.getElementById("lobbyPlayerCount");
     if (countElement) countElement.textContent = `${room.players.length}`;
     const mapNameElement = document.getElementById("displayRoomMapName");
-    if (mapNameElement) {
+    const lobbySelectLevel = document.getElementById(
+      "selectLobbyRoomLevel",
+    ) as HTMLSelectElement | null;
+
+    if (lobbySelectLevel) {
+      if (isHost) {
+        lobbySelectLevel.classList.remove("hidden");
+        if (mapNameElement) mapNameElement.classList.add("hidden");
+        if (lobbySelectLevel.options.length === 0) {
+          this.populateLevelDropdown(lobbySelectLevel).then(() => {
+            this.setSelectDropdownValue(lobbySelectLevel, room);
+          });
+        } else {
+          this.setSelectDropdownValue(lobbySelectLevel, room);
+        }
+      } else {
+        lobbySelectLevel.classList.add("hidden");
+        if (mapNameElement) {
+          mapNameElement.classList.remove("hidden");
+          mapNameElement.textContent =
+            room.mapName || `Level ${room.levelIndex + 1}`;
+        }
+      }
+    } else if (mapNameElement) {
       mapNameElement.textContent =
         room.mapName || `Level ${room.levelIndex + 1}`;
     }
+
     const gameModeElement = document.getElementById("displayRoomGameMode");
     if (gameModeElement) {
       const isCompeteMatch = room.gameMode === MULTIPLAYER_MODES.COMPETE;
@@ -473,7 +561,6 @@ export class MultiplayerController {
     if (!listElement) return;
     listElement.innerHTML = "";
 
-    const isHost = this.game.network.socketId === room.hostSocketId;
     const startButton = document.getElementById(
       "btnStartMultiplayerGame",
     ) as HTMLButtonElement | null;

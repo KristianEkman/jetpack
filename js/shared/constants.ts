@@ -98,8 +98,10 @@ export const ROOM_EVENTS = {
   ROOM_LEFT: "room_left",
   PLAYER_LEFT: "player_left",
   LIST_ROOMS: "list_rooms",
-  ROOM_LIST: "room_list"
-}
+  ROOM_LIST: "room_list",
+  CHANGE_LEVEL: "change_level",
+  ROOM_UPDATED: "room_updated",
+};
 
 export const PLAYER_FLAGS = {
   FACING_RIGHT: 1 << 0, // 1

@@ -160,6 +160,16 @@ export interface PlayerLeftPayload {
   newHostSocketId?: string | null;
 }
 
+export interface ChangeLevelOptions {
+  levelIndex?: number;
+  customMapData?: MultiplayerLevelData | null;
+  mapName?: string;
+}
+
+export interface RoomUpdatedPayload {
+  room: MultiplayerRoomInfo;
+}
+
 export interface GameStartedPayload extends RoomActionResponse {
   room?: MultiplayerRoomInfo;
   levelIndex?: number;

@@ -361,19 +361,8 @@
                 <div class="form-group">
                     <label for="selectRoomLevel">Select Level / Map:</label>
                     <select id="selectRoomLevel" class="retro-input">
-                        <option value="0">Level 1 - Cavern Run</option>
-                        <option value="1">Level 2 - Toxic Shafts</option>
-                        <option value="2">Level 3 - Vertical Ascent</option>
-                        <option value="3">Level 4 - Teleport Core</option>
-                        <option value="4">Level 5 - The Gauntlet</option>
-                        <option value="custom">🛠️ Custom Map (Uploaded / Saved)</option>
+                        <!-- Populated dynamically with Campaign & Custom levels -->
                     </select>
-                </div>
-                <div id="groupCustomMapUpload" class="form-group hidden">
-                    <label for="inputCustomMapFile">Upload Custom Map JSON:</label>
-                    <input type="file" id="inputCustomMapFile" class="retro-input" accept=".json">
-                    <small id="customMapStatusText"
-                        style="color: #00ffcc; font-size: 0.8rem; display: block; margin-top: 4px;"></small>
                 </div>
                 <button id="btnCreateRoomSubmit" class="btn-menu primary">🏠 CREATE ROOM</button>
             </div>
@@ -394,9 +383,12 @@
                         <strong id="displayRoomCode">----</strong>
                     </div>
                     <div class="room-info-divider"></div>
-                    <div class="room-info-item">
+                    <div class="room-info-item" style="flex: 2; align-items: flex-start;">
                         <span class="info-label">MAP:</span>
-                        <span id="displayRoomMapName">Campaign Level</span>
+                        <span id="displayRoomMapName" class="lobby-map-text">Campaign Level</span>
+                        <select id="selectLobbyRoomLevel" class="retro-input hidden" style="font-size: 0.75rem; padding: 2px 6px; margin-top: 2px; width: 100%;">
+                            <!-- Populated dynamically for Host in lobby -->
+                        </select>
                     </div>
                     <div class="room-info-divider"></div>
                     <div class="room-info-item">

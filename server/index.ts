@@ -437,6 +437,27 @@ io.on("connection", (socket: any) => {
     socket.emit(ROOM_EVENTS.ROOM_LIST, list);
   });
 
+  socket.on(ROOM_EVENTS.CHANGE_LEVEL, (data: any, callback: any) => {
+    try {
+      const room = roomManager.changeRoomLevel(socket.id, data);
+      const serialized = roomManager.serializeRoom(room);
+      const response = { success: true, room: serialized };
+      if (typeof callback === "function") callback(response);
+      io.to(room.id).emit(ROOM_EVENTS.ROOM_UPDATED, { room: serialized });
+      broadcastRoomList();
+      console.log(
+        `🗺️ Room ${room.id} level changed to ${room.mapName} by Host ${socket.id}`,
+      );
+    } catch (error) {
+      const response = {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unable to change level",
+      };
+      if (typeof callback === "function") callback(response);
+    }
+  });
+
   socket.on(GAME_EVENTS.START_MATCH, (data: any = {}, callback: any) => {
     const room = roomManager.getRoomBySocketId(socket.id);
     if (!room) {

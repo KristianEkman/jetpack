@@ -164,6 +164,62 @@ export class RoomManager {
     return room;
   }
 
+  changeRoomLevel(
+    hostSocketId: string,
+    options: {
+      levelIndex?: number;
+      customMapData?: MultiplayerLevelData | null;
+      mapName?: string;
+    } = {},
+  ): ServerRoom {
+    const roomId = this.socketToRoom.get(hostSocketId);
+    if (!roomId) {
+      throw new Error("You are not in a room");
+    }
+
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    if (room.hostSocketId !== hostSocketId) {
+      throw new Error("Only the host can change the level");
+    }
+
+    if (room.status !== "lobby") {
+      throw new Error("Cannot change level while match is in progress");
+    }
+
+    const levelIndex =
+      options.levelIndex !== undefined ? options.levelIndex : 0;
+    room.levelIndex = levelIndex;
+
+    let levelData = CAMPAIGN_LEVELS[levelIndex] || CAMPAIGN_LEVELS[0];
+    let customMapData = null;
+    let mapName =
+      options.mapName ||
+      (levelData ? levelData.name || `Level ${levelIndex + 1}` : "Campaign Level");
+
+    if (
+      options.customMapData &&
+      Array.isArray(options.customMapData.grid) &&
+      options.customMapData.grid.length === 540
+    ) {
+      customMapData = options.customMapData;
+      levelData = customMapData;
+      mapName = customMapData.name || options.mapName || "Custom Map";
+    }
+
+    room.customMapData = customMapData;
+    room.mapName = mapName;
+
+    room.tileMap = new TileMap({ effectsEnabled: false });
+    room.tileMap.loadLevelData(levelData);
+    room.enemyManager = new EnemyManager(room.tileMap);
+
+    return room;
+  }
+
   addPlayerToRoom(
     room: ServerRoom,
     socketId: string,
