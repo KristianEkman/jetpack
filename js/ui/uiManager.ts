@@ -106,6 +106,13 @@ export class UIManager {
       this.showDialog("dlgMainMenu");
     });
 
+    window.addEventListener("click", (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".community-level-dropdown")) {
+        document.querySelectorAll(".community-level-dropdown-menu").forEach((el) => el.classList.add("hidden"));
+        document.querySelectorAll(".community-level-card").forEach((el) => el.classList.remove("dropdown-open"));
+      }
+    });
+
     document.getElementById("btnOpenEditor")?.addEventListener("click", () => {
       game.levelManager.openLevelEditor();
     });
@@ -306,18 +313,32 @@ export class UIManager {
       const ratingText = lvl.ratingCount > 0 ? `${lvl.averageRating}★ (${lvl.ratingCount} votes)` : "No ratings yet";
       const highScoreText = lvl.highScore > 0 ? `High Score: ${lvl.highScore} by ${lvl.highScoreUser}` : "High Score: 0";
       const isOwner = currentUserId && lvl.authorId === currentUserId;
-      const releaseBadge = isOwner ? (lvl.isReleased !== false ? ' <span style="color:#00ffcc; font-size:0.75rem; font-weight:bold;">[🌐 PUBLIC]</span>' : ' <span style="color:#ffcc00; font-size:0.75rem; font-weight:bold;">[🔒 DRAFT]</span>') : '';
+      const releaseBadge = isOwner && lvl.isReleased === false ? ' <span style="color:#ffcc00; font-size:0.75rem; font-weight:bold;">[🔒 DRAFT]</span>' : '';
 
       card.innerHTML = `
         <div class="community-level-info">
-          <div class="community-level-title">${lvl.name}${releaseBadge}</div>
-          <div class="community-level-meta">By ${lvl.authorName} • Rating: ${ratingText} • ${highScoreText}</div>
+          <div class="community-level-title">${lvl.name} by ${lvl.authorName}${releaseBadge}</div>
+          <div class="community-level-meta">${highScoreText}</div>
+          <div class="community-level-rating">Rating: ${ratingText}</div>
         </div>
         <div class="community-level-actions">
           <button class="btn-editor primary btn-play-custom" data-id="${lvl.id}">▶️ PLAY</button>
-          ${isOwner ? `<button class="btn-editor btn-toggle-release-custom" data-id="${lvl.id}">${lvl.isReleased !== false ? "🔒 UNRELEASE" : "🌐 RELEASE"}</button>` : ""}
-          ${isOwner ? `<button class="btn-editor btn-edit-custom" data-id="${lvl.id}">✏️ EDIT</button>` : ""}
-          ${isOwner ? `<button class="btn-editor danger btn-delete-custom" data-id="${lvl.id}">🗑️ DELETE</button>` : ""}
+          ${
+            isOwner
+              ? `
+            <div class="community-level-dropdown">
+              <button class="btn-editor btn-more-custom" data-id="${lvl.id}" title="More options">...</button>
+              <div class="community-level-dropdown-menu hidden">
+                <button class="btn-editor btn-toggle-release-custom" data-id="${lvl.id}">${
+                  lvl.isReleased !== false ? "🔒 UNRELEASE" : "🌐 RELEASE"
+                }</button>
+                <button class="btn-editor btn-edit-custom" data-id="${lvl.id}">✏️ EDIT</button>
+                <button class="btn-editor danger btn-delete-custom" data-id="${lvl.id}">🗑️ DELETE</button>
+              </div>
+            </div>
+          `
+              : ""
+          }
         </div>
       `;
 
@@ -331,7 +352,24 @@ export class UIManager {
       });
 
       if (isOwner) {
+        const moreBtn = card.querySelector(".btn-more-custom");
+        const dropdownMenu = card.querySelector(".community-level-dropdown-menu");
+
+        moreBtn?.addEventListener("click", (e: Event) => {
+          e.stopPropagation();
+          const isCurrentlyHidden = dropdownMenu?.classList.contains("hidden");
+          document.querySelectorAll(".community-level-dropdown-menu").forEach((el) => el.classList.add("hidden"));
+          document.querySelectorAll(".community-level-card").forEach((el) => el.classList.remove("dropdown-open"));
+
+          if (isCurrentlyHidden) {
+            dropdownMenu?.classList.remove("hidden");
+            card.classList.add("dropdown-open");
+          }
+        });
+
         card.querySelector(".btn-toggle-release-custom")?.addEventListener("click", async () => {
+          dropdownMenu?.classList.add("hidden");
+          card.classList.remove("dropdown-open");
           const newStatus = lvl.isReleased === false;
           const res = await this.game.levelManager.updateCustomLevel(lvl.id, { isReleased: newStatus });
           if (res.success) {
@@ -343,6 +381,8 @@ export class UIManager {
         });
 
         card.querySelector(".btn-edit-custom")?.addEventListener("click", async () => {
+          dropdownMenu?.classList.add("hidden");
+          card.classList.remove("dropdown-open");
           const levelRecord = await this.game.levelManager.fetchCustomLevelById(lvl.id);
           if (levelRecord) {
             this.game.editor.currentLevelId = levelRecord.id;
@@ -359,6 +399,8 @@ export class UIManager {
         });
 
         card.querySelector(".btn-delete-custom")?.addEventListener("click", async () => {
+          dropdownMenu?.classList.add("hidden");
+          card.classList.remove("dropdown-open");
           if (confirm(`Are you sure you want to delete "${lvl.name}"?`)) {
             const res = await this.game.levelManager.deleteCustomLevel(lvl.id);
             if (res.success) {
