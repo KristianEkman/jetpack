@@ -130,9 +130,10 @@ export function updateBoss(
       const targetX = targetPlayer ? targetPlayer.x + targetPlayer.width / 2 : enemy.x + enemy.width / 2;
       const targetY = targetPlayer ? targetPlayer.y + targetPlayer.height / 2 : enemy.y + 200;
 
-      const missileActive = hasActiveHomingMissile ? hasActiveHomingMissile() : false;
+      const missileSpawned = enemy.hasSpawnedPhase2Missile ?? false;
 
-      if (isPhase2 && !missileActive) {
+      if (isPhase2 && !missileSpawned) {
+        enemy.hasSpawnedPhase2Missile = true;
         addHomingMissile(enemy.x + enemy.width / 2, enemy.y + enemy.height);
       } else {
         for (const wingX of [enemy.x + 12, enemy.x + enemy.width - 12]) {

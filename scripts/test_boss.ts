@@ -233,6 +233,60 @@ assert.equal(
   1,
   "Subsequent attacks while a homing missile is alive MUST NOT spawn additional homing missiles",
 );
-console.log("   ✅ Single active homing missile cap verified in Phase 2.");
+
+// Destroy the missile (simulating player shooting it down)
+p2EnemyManager.enemies = p2EnemyManager.enemies.filter((e) => e.type !== ENEMY_TYPES.HOMING_MISSILE);
+assert.equal(p2EnemyManager.enemies.filter((e) => e.type === ENEMY_TYPES.HOMING_MISSILE).length, 0);
+
+// Force third attack after missile is destroyed
+p2Boss.attackTimer = 1.5;
+p2EnemyManager.update(0.01, [testPlayer]);
+
+const activeMissiles3 = p2EnemyManager.enemies.filter((e) => e.type === ENEMY_TYPES.HOMING_MISSILE);
+assert.equal(
+  activeMissiles3.length,
+  0,
+  "Even after the first homing missile is destroyed, Phase 2 boss MUST NOT spawn another homing missile",
+);
+console.log("   ✅ Single homing missile total cap verified in Phase 2 (no re-spawning after shot).");
+
+// 11. Test Boss Phase 2 Rapid Fire Power Up Ejection
+console.log("11️⃣ Testing Boss Phase 2 Rapid Fire Power Up Ejection...");
+const powerUpTileMap = new TileMap();
+powerUpTileMap.cols = 30;
+powerUpTileMap.rows = 18;
+powerUpTileMap.grid = new Array(30 * 18).fill(TILES.AIR);
+
+const powerUpEnemyManager = new EnemyManager(powerUpTileMap);
+powerUpEnemyManager.addBoss(100, 50, 20, "boss_p2_powerup");
+const pBoss = powerUpEnemyManager.enemies[0];
+
+// Verify initial state has no RAPID_FIRE tiles
+const initialRapidFireCount = powerUpTileMap.grid.filter((t) => t === TILES.RAPID_FIRE).length;
+assert.equal(initialRapidFireCount, 0, "Initially there should be no rapid fire tiles");
+
+// Deal damage to reduce HP from 20 to 10 (triggers Phase 2)
+powerUpEnemyManager.damageEnemy(pBoss.id, 10, player.id);
+assert.equal(pBoss.phase, 2, "Boss should transition to Phase 2");
+assert.equal(pBoss.rapidFireEjected, true, "rapidFireEjected flag should be set to true");
+
+const rapidFireCountAfterP2 = powerUpTileMap.grid.filter((t) => t === TILES.RAPID_FIRE).length;
+assert.equal(rapidFireCountAfterP2, 1, "A rapid fire power up tile should be ejected upon reaching Phase 2");
+
+const rfIndex = powerUpTileMap.grid.indexOf(TILES.RAPID_FIRE);
+assert.ok(rfIndex !== -1, "Rapid fire tile should be found in map");
+const rfCol = rfIndex % powerUpTileMap.cols;
+const rfRow = Math.floor(rfIndex / powerUpTileMap.cols);
+const bossCenterCol = Math.floor((pBoss.x + pBoss.width / 2) / 32);
+const bossCenterRow = Math.floor((pBoss.y + pBoss.height / 2) / 32);
+const dist = Math.max(Math.abs(rfCol - bossCenterCol), Math.abs(rfRow - bossCenterRow));
+assert.ok(dist >= 4, `Rapid fire power up should be thrown further away (distance ${dist} >= 4 tiles)`);
+
+// Further damage in Phase 2 must not eject a second power up
+powerUpEnemyManager.damageEnemy(pBoss.id, 5, player.id);
+const rapidFireCountAfterExtraDamage = powerUpTileMap.grid.filter((t) => t === TILES.RAPID_FIRE).length;
+assert.equal(rapidFireCountAfterExtraDamage, 1, "Only one rapid fire power up tile should be ejected for Phase 2 transition");
+
+console.log("   ✅ Phase 2 Rapid Fire power up ejection & thrown distance verified.");
 
 console.log("\n🎉 ALL BOSS ENEMY TESTS PASSED CLEANLY!");

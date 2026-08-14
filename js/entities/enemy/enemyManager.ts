@@ -178,6 +178,9 @@ export class EnemyManager {
       if (enemy.hp <= maxHp / 2 && (enemy.phase || 1) === 1) {
         enemy.phase = 2;
       }
+      if (enemy.type === ENEMY_TYPES.BOSS && enemy.phase === 2 && !enemy.rapidFireEjected) {
+        this.ejectBossPowerUp(enemy);
+      }
 
       if (this.tileMap && this.tileMap.addSparkles) {
         for (let s = 0; s < 6; s++) {
@@ -380,6 +383,13 @@ export class EnemyManager {
         if (sEnemy.hp !== undefined) localEnemy.hp = sEnemy.hp;
         if (sEnemy.maxHp !== undefined) localEnemy.maxHp = sEnemy.maxHp;
         if (sEnemy.phase !== undefined) localEnemy.phase = sEnemy.phase;
+        if (
+          localEnemy.type === ENEMY_TYPES.BOSS &&
+          localEnemy.phase === 2 &&
+          !localEnemy.rapidFireEjected
+        ) {
+          this.ejectBossPowerUp(localEnemy);
+        }
         if (sEnemy.hitFlashTimer !== undefined) localEnemy.hitFlashTimer = sEnemy.hitFlashTimer;
         if (sEnemy.timer !== undefined) localEnemy.timer = sEnemy.timer;
         if (sEnemy.animTimer !== undefined) {
@@ -465,6 +475,9 @@ export class EnemyManager {
               (e) => e.type === ENEMY_TYPES.HOMING_MISSILE && !e.dead,
             ),
         );
+        if (enemy.phase === 2 && !enemy.rapidFireEjected) {
+          this.ejectBossPowerUp(enemy);
+        }
       }
 
       for (const p of livingPlayers) {
@@ -517,6 +530,90 @@ export class EnemyManager {
       if (this.tileMap.isSolid(col, row) || p.life <= 0) {
         this.projectiles[i] = this.projectiles[this.projectiles.length - 1];
         this.projectiles.pop();
+      }
+    }
+  }
+
+  ejectBossPowerUp(enemy: Enemy): void {
+    if (enemy.rapidFireEjected) return;
+    enemy.rapidFireEjected = true;
+
+    if (!this.tileMap) return;
+
+    const centerCol = Math.floor((enemy.x + enemy.width / 2) / TILE_SIZE);
+    const centerRow = Math.floor((enemy.y + enemy.height / 2) / TILE_SIZE);
+
+    let targetCol = -1;
+    let targetRow = -1;
+
+    // Search outwards starting at radius 4 to 10 so it lands further away from the boss
+    const searchRanges = [
+      { min: 4, max: 10 },
+      { min: 0, max: 3 }, // Fallback if outer ring has no AIR tiles
+    ];
+
+    searchLoop: for (const range of searchRanges) {
+      for (let radius = range.min; radius <= range.max; radius++) {
+        for (let dr = -radius; dr <= radius; dr++) {
+          for (let dc = -radius; dc <= radius; dc++) {
+            if (radius > 0 && Math.abs(dc) !== radius && Math.abs(dr) !== radius) {
+              continue;
+            }
+            const c = centerCol + dc;
+            const r = centerRow + dr;
+            if (
+              c >= 0 &&
+              c < this.tileMap.cols &&
+              r >= 0 &&
+              r < this.tileMap.rows
+            ) {
+              if (this.tileMap.getTile(c, r) === TILES.AIR) {
+                targetCol = c;
+                targetRow = r;
+                break searchLoop;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (targetCol !== -1 && targetRow !== -1) {
+      this.tileMap.setTile(targetCol, targetRow, TILES.RAPID_FIRE);
+      const bossCenterX = enemy.x + enemy.width / 2;
+      const bossCenterY = enemy.y + enemy.height / 2;
+      const targetX = targetCol * TILE_SIZE + 16;
+      const targetY = targetRow * TILE_SIZE + 16;
+
+      if (this.tileMap.addSparkles) {
+        // Render a parabolic throw trajectory of sparkles from boss to landing site
+        const steps = 14;
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const px = bossCenterX + (targetX - bossCenterX) * t;
+          const arcHeight = 45 * Math.sin(t * Math.PI);
+          const py = bossCenterY + (targetY - bossCenterY) * t - arcHeight;
+          this.tileMap.addSparkles(
+            px,
+            py,
+            i % 2 === 0 ? "#ff0055" : "#ffaa00",
+            3,
+          );
+        }
+
+        // Landing explosion burst of sparkles
+        for (let s = 0; s < 25; s++) {
+          this.tileMap.addSparkles(
+            targetX,
+            targetY,
+            s % 3 === 0 ? "#ffffff" : s % 2 === 0 ? "#ff0055" : "#ff5500",
+            2,
+          );
+        }
+      }
+
+      if (this.audio?.playPhaseImpact) {
+        this.audio.playPhaseImpact();
       }
     }
   }

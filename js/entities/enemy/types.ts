@@ -52,6 +52,8 @@ export interface Enemy {
   laserX?: number;
   bossName?: string;
   startY?: number;
+  rapidFireEjected?: boolean;
+  hasSpawnedPhase2Missile?: boolean;
 }
 
 export interface Projectile {

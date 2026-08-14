@@ -22,11 +22,11 @@
 - [x] typed payloads over network
 - [ ] more maps
 - [ ] more power ups, special abilities, jetpacks, armors
-- [ ] better physics
+- [x] better physics
 - [ ] improve sound effects and music..
 - [ ] gamepad support
       Native support for Xbox/PlayStation/Switch controllers with customizable stick sensitivity.
-- [ ] community level hub / workshop
+- [x] community level hub / workshop
       Upload custom levels to the server, browse/search by rating, and play community maps.
 - [ ] Place in game buttons better.
 - [ ] mobile controls more transparent and bigger.
@@ -42,4 +42,8 @@
 
 - [ ] During competetive games, each user should have their own spawning tile.
 
-- [ ] upload db secret to azure portal env variables.
+- [x] upload db secret to azure portal env variables.
+
+- [ ] monitor server load during multiplayer game. We will see if there is need for optimization.
+
+- [ ] When a boos reaches phase 2, eject a rapid fire power up.
