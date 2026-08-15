@@ -8,6 +8,7 @@ import { CAMPAIGN_LEVELS } from "../levels/campaign.js";
 import { TILES } from "../world/tilemap.js";
 import { userService } from "../network/userService.js";
 import { userAuthUI } from "./userAuthUI.js";
+import { serverHealthUI } from "./serverHealthUI.js";
 
 export interface HUDState {
   level: string | null;
@@ -61,6 +62,11 @@ export class UIManager {
     const game = this.game;
 
     this.initVersionBadge();
+    serverHealthUI.init();
+
+    document.getElementById("btnServerHealth")?.addEventListener("click", () => {
+      serverHealthUI.openModal();
+    });
 
     document
       .getElementById("btnPause")
@@ -442,6 +448,7 @@ export class UIManager {
     if (badge && targetParent && badge.parentElement !== targetParent) {
       targetParent.appendChild(badge);
     }
+    serverHealthUI.stopPolling();
     document.querySelectorAll("dialog").forEach((d) => {
       if (d.open) d.close();
     });

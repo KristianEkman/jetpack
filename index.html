@@ -152,6 +152,7 @@
             <!-- Top Utility Bar inside Main Menu -->
             <div class="menu-utility-bar">
                 <button id="btnMenuAccount" class="btn-utility" title="User Account">👤 ACCOUNT</button>
+                <button id="btnServerHealth" class="btn-utility" title="Server Health & Telemetry">⚡ SERVER HEALTH</button>
                 <button id="btnControls" class="btn-utility" title="Controls & How to Play">❓ HOW TO PLAY</button>
             </div>
 
@@ -469,6 +470,153 @@
             <div class="dialog-actions" style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
                 <button id="btnAuthLogout" class="btn-menu danger" style="display: none; flex: 1;">🚪 LOG OUT</button>
                 <button id="btnCloseUserAuth" class="btn-menu" style="flex: 1;">CLOSE</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- SERVER HEALTH & TELEMETRY MODAL -->
+    <dialog id="dlgServerHealth" class="retro-dialog sh-dialog">
+        <div class="sh-container">
+            <!-- Header -->
+            <div class="sh-header">
+                <div class="sh-header-title">
+                    <h2>🖥️ SERVER HEALTH</h2>
+                </div>
+                <div class="sh-badges">
+                    <div id="shPingBadge" class="sh-ping-badge good">⚡ --ms RTT</div>
+                    <div id="shStatusBadge" class="sh-status-badge online">
+                        <span class="sh-status-dot"></span> ONLINE
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2x2 Telemetry Cards Grid -->
+            <div class="sh-grid">
+                <!-- 1. Game Loop Telemetry -->
+                <div class="sh-card">
+                    <div class="sh-card-header">⏱️ GAME LOOP ENGINE</div>
+                    <div class="sh-stat-row">
+                        <span>Target Tick Rate:</span>
+                        <span id="shLoopTickRate" class="sh-stat-value highlight">60 Hz</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Avg Tick Duration:</span>
+                        <span id="shLoopAvgTick" class="sh-stat-value">-- ms</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Max Tick Duration:</span>
+                        <span id="shLoopMaxTick" class="sh-stat-value">-- ms</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Engine Status:</span>
+                        <span id="shLoopStatus" class="sh-stat-value">RUNNING (60 FPS)</span>
+                    </div>
+                </div>
+
+                <!-- 2. Multiplayer Rooms & Sockets -->
+                <div class="sh-card">
+                    <div class="sh-card-header">🌐 MULTIPLAYER ROOMS</div>
+                    <div class="sh-stat-row">
+                        <span>Total Rooms:</span>
+                        <span id="shRoomsTotal" class="sh-stat-value highlight">0</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Lobby / Waiting:</span>
+                        <span id="shRoomsLobby" class="sh-stat-value">0</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>In-Game Matches:</span>
+                        <span id="shRoomsPlaying" class="sh-stat-value">0</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Connected Sockets:</span>
+                        <span id="shSocketsConnected" class="sh-stat-value">0</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Pilots In-Game:</span>
+                        <span id="shPlayersInGame" class="sh-stat-value">0</span>
+                    </div>
+                </div>
+
+                <!-- 3. System Memory Allocation -->
+                <div class="sh-card">
+                    <div class="sh-card-header">💾 MEMORY ALLOCATION</div>
+                    <div class="sh-stat-row">
+                        <span>Heap Usage:</span>
+                        <span id="shMemPercentText" class="sh-stat-value">--% (-- / --)</span>
+                    </div>
+                    <div class="sh-progress-container">
+                        <div class="sh-progress-track">
+                            <div id="shMemProgressBar" class="sh-progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="sh-stat-row" style="margin-top: 4px;">
+                        <span>Heap Used / Total:</span>
+                        <span class="sh-stat-value"><strong id="shMemHeapUsed">--</strong> / <span id="shMemHeapTotal">--</span></span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>RSS Resident:</span>
+                        <span id="shMemRss" class="sh-stat-value">--</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>External:</span>
+                        <span id="shMemExternal" class="sh-stat-value">--</span>
+                    </div>
+                </div>
+
+                <!-- 4. Server Info & Uptime -->
+                <div class="sh-card">
+                    <div class="sh-card-header">⚙️ SERVER ENVIRONMENT</div>
+                    <div class="sh-stat-row">
+                        <span>Server Uptime:</span>
+                        <span id="shUptimeValue" class="sh-stat-value highlight">--</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Git Commit:</span>
+                        <span id="shVersionValue" class="sh-stat-value" style="font-family: monospace; font-size: 0.8rem;">--</span>
+                    </div>
+                    <div class="sh-stat-row">
+                        <span>Protocol:</span>
+                        <span class="sh-stat-value">HTTP/1.1 + WebSocket</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls & Action Buttons -->
+            <div class="sh-controls-bar">
+                <div class="sh-auto-refresh-group">
+                    <label>
+                        <input type="checkbox" id="chkShAutoRefresh" checked style="accent-color: #00ffcc; cursor: pointer;">
+                        <span>Auto-refresh</span>
+                    </label>
+                    <select id="selectShRefreshRate" class="sh-select-rate">
+                        <option value="1000">1s</option>
+                        <option value="2000" selected>2s</option>
+                        <option value="5000">5s</option>
+                        <option value="10000">10s</option>
+                    </select>
+                </div>
+
+                <div class="sh-actions-group">
+                    <button id="btnShRefresh" class="btn-sh-action primary" title="Poll Server Health Now">
+                        <span class="icon-spin">🔄</span> REFRESH
+                    </button>
+                    <button id="btnShCopyJson" class="btn-sh-action" title="Copy Telemetry JSON to Clipboard">
+                        📋 COPY JSON
+                    </button>
+                    <button id="btnShLogConsole" class="btn-sh-action" title="Log Telemetry Report to Browser DevTools Console">
+                        📟 LOG CONSOLE
+                    </button>
+                    <button id="btnShClose" class="btn-sh-action danger" title="Close Server Health Modal">
+                        🚪 CLOSE
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer status note & Action notification -->
+            <div class="sh-footer">
+                <span id="shLastUpdatedText">Last polled: --</span>
+                <span id="shActionNotice" class="sh-notice hidden"></span>
             </div>
         </div>
     </dialog>

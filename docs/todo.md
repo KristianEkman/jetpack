@@ -10,4 +10,4 @@
 - [ ] mobile controls more transparent and bigger.
 - [ ] During competetive games, each user should have their own spawning tile.
 - [x] monitor server load during multiplayer game. We will see if there is need for optimization.
-- [ ] Health monitor client that logs healt to browser console. Check it out. Maybe it is already there.
+- [x] Health monitor client that logs health to browser console and provides real-time telemetry modal.
