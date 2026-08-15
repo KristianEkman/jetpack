@@ -16,9 +16,6 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
     }
   }
 
-  if (!player.isLocal) {
-    player.animTimer += 0.016;
-  }
 
   const isMovingOnGround =
     (player.isGrounded || Math.abs(player.vy) < 25) &&
@@ -34,11 +31,14 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
   if (isMovingOnGround) {
     const speedRatio = Math.min(1.5, Math.abs(player.vx) / 100);
     const walkSpeed = 14 * Math.max(0.5, speedRatio);
-    const legSwing = Math.sin(player.animTimer * walkSpeed);
+    player.walkPhase = (player.walkPhase || 0) + 0.016 * walkSpeed;
+    const legSwing = Math.sin(player.walkPhase);
     strideX = legSwing * 3.5;
     liftY1 = Math.max(0, legSwing) * 2;
     liftY2 = Math.max(0, -legSwing) * 2;
-    walkBobY = Math.abs(Math.sin(player.animTimer * walkSpeed)) * 2.0;
+    walkBobY = Math.abs(Math.sin(player.walkPhase)) * 2.0;
+  } else if (player.walkPhase) {
+    player.walkPhase = player.walkPhase % (Math.PI * 2);
   }
 
   const px = player.x;

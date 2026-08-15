@@ -100,7 +100,7 @@ g.window = mockWindow;
 // ── 2. Imports ─────────────────────────────────────────────────────────────
 
 const { NetworkManager } = await import("../js/network/networkManager.js");
-const { GAME_EVENTS, MULTIPLAYER_MODES, ROOM_EVENTS } = await import(
+const { GAME_EVENTS, MULTIPLAYER_MODES, ROOM_EVENTS, NETWORK_SETTINGS } = await import(
   "../js/shared/constants.js"
 );
 const { TILES } = await import("../js/world/tilemap.js");
@@ -150,7 +150,7 @@ assert.strictEqual(net.currentRoom, null, "currentRoom should initially be null"
 assert.strictEqual(net.lastPing, 0, "lastPing should default to 0");
 assert.strictEqual(net.jitter, 0, "jitter should default to 0");
 assert.strictEqual(net.pingHistory.length, 0, "pingHistory should be empty");
-assert.strictEqual(net.interpolationDelay, 100, "default interpolationDelay should be 100");
+assert.strictEqual(net.interpolationDelay, NETWORK_SETTINGS.DEFAULT_INTERPOLATION_DELAY, `default interpolationDelay should match NETWORK_SETTINGS.DEFAULT_INTERPOLATION_DELAY (${NETWORK_SETTINGS.DEFAULT_INTERPOLATION_DELAY})`);
 assert.strictEqual(net.lastSentInput, null, "lastSentInput should default to null");
 assert.strictEqual(net.pingTimer, null, "pingTimer should default to null");
 

@@ -1,5 +1,5 @@
 - [ ] lower volume of hits, different hits sounds
-- [ ] better more efficient network logic.
+- [x] better more efficient network logic (clock desync immunity, prediction replay, 20 Hz snapshot rate, enemy dead-reckoning, websocket transport).
 - [ ] customizable controls
 - [ ] more maps
 - [ ] more power ups, special abilities, jetpacks, armors

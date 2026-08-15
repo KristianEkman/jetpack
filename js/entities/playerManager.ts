@@ -1,5 +1,5 @@
 import { Player } from "./player.js";
-import { PLAYER_FLAGS } from "../shared/constants.js";
+import { NETWORK_SETTINGS, PLAYER_FLAGS } from "../shared/constants.js";
 import { TileMap } from "../world/tilemap.js";
 import { AudioLike, AudioManager, SoundEffects } from "../audio/index.js";
 import { PlayerSnapshotTuple, WorldSnapshotPayload } from "../shared/types.js";
@@ -66,6 +66,23 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+function hermite(
+  p0: number,
+  p1: number,
+  v0: number,
+  v1: number,
+  t: number,
+  dtSec: number,
+): number {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  const h00 = 2 * t3 - 3 * t2 + 1;
+  const h10 = t3 - 2 * t2 + t;
+  const h01 = -2 * t3 + 3 * t2;
+  const h11 = t3 - t2;
+  return h00 * p0 + h01 * p1 + h10 * (v0 * dtSec) + h11 * (v1 * dtSec);
+}
+
 export interface SnapshotBufferItem {
   tick: number;
   timestamp: number;
@@ -79,6 +96,9 @@ export class PlayerManager {
   players: Map<string, Player>;
   snapshotBuffer: SnapshotBufferItem[];
   interpolationDelay: number;
+  renderTimeline: number;
+  baseServerTick: number;
+  baseClientTime: number;
 
   constructor(
     audio: AudioManager | SoundEffects | AudioLike | null = null,
@@ -89,7 +109,11 @@ export class PlayerManager {
     this.localSocketId = null;
     this.players = new Map();
     this.snapshotBuffer = [];
-    this.interpolationDelay = 100;
+    this.interpolationDelay =
+      NETWORK_SETTINGS?.DEFAULT_INTERPOLATION_DELAY || 75;
+    this.renderTimeline = 0;
+    this.baseServerTick = 0;
+    this.baseClientTime = 0;
   }
 
   setLocalSocketId(socketId: string): void {
@@ -140,16 +164,32 @@ export class PlayerManager {
       ? snapshotPayload
       : snapshotPayload.players || [];
     const playersList = rawList.map(unpackPlayerSnapshot);
-    const timestamp = snapshotPayload.timestamp || Date.now();
+    const arrivalTimestamp =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
     const tick = snapshotPayload.tick || 0;
+
+    let snapshotTime = arrivalTimestamp;
+    if (tick > 0) {
+      if (
+        this.baseServerTick === 0 ||
+        Math.abs(tick - this.baseServerTick) > 1000
+      ) {
+        this.baseServerTick = tick;
+        this.baseClientTime = arrivalTimestamp;
+      }
+      const tickDeltaMs = (tick - this.baseServerTick) * (1000 / 60);
+      snapshotTime = this.baseClientTime + tickDeltaMs;
+      const drift = arrivalTimestamp - snapshotTime;
+      this.baseClientTime += drift * 0.05;
+    }
 
     this.snapshotBuffer.push({
       tick,
-      timestamp,
+      timestamp: snapshotTime,
       players: playersList,
     });
 
-    if (this.snapshotBuffer.length > 30) {
+    if (this.snapshotBuffer.length > 40) {
       this.snapshotBuffer.shift();
     }
 
@@ -213,7 +253,31 @@ export class PlayerManager {
   }
 
   update(dt: number): void {
-    const renderTime = Date.now() - this.interpolationDelay;
+    const now =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    const targetRenderTime = now - this.interpolationDelay;
+
+    if (this.renderTimeline === 0) {
+      this.renderTimeline = targetRenderTime;
+    } else {
+      this.renderTimeline += dt * 1000;
+      const drift = targetRenderTime - this.renderTimeline;
+      if (Math.abs(drift) > 250) {
+        this.renderTimeline = targetRenderTime;
+      } else {
+        this.renderTimeline += drift * Math.min(1, dt * 5);
+      }
+    }
+
+    const renderTime = this.renderTimeline;
+
+    // Prune stale snapshots older than renderTime - 500ms (keep at least 2)
+    while (
+      this.snapshotBuffer.length > 2 &&
+      this.snapshotBuffer[1].timestamp < renderTime - 500
+    ) {
+      this.snapshotBuffer.shift();
+    }
 
     let older: SnapshotBufferItem | null = null;
     let newer: SnapshotBufferItem | null = null;
@@ -241,6 +305,12 @@ export class PlayerManager {
       player.phaseCooldown = Math.max(0, player.phaseCooldown - dt);
       player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
 
+      let targetX = player.x;
+      let targetY = player.y;
+      let targetVx = player.vx;
+      let targetVy = player.vy;
+      let pTarget: UnpackedPlayerSnapshot | null = null;
+
       if (older && newer && newer.timestamp > older.timestamp) {
         const t = Math.max(
           0,
@@ -255,64 +325,85 @@ export class PlayerManager {
         const pNew = newer.players.find((p) => (p.socketId || p.id) === sId);
 
         if (pOld && pNew) {
-          const dx = pNew.x - pOld.x;
-          const dy = pNew.y - pOld.y;
-
-          if (!player.isDead && pNew.isDead) {
-            player.takeDamage();
-          } else if (dx * dx + dy * dy > 4096 || pOld.isDead !== pNew.isDead) {
-            player.applySnapshot(pNew);
-          } else {
-            player.x = lerp(pOld.x, pNew.x, t);
-            player.y = lerp(pOld.y, pNew.y, t);
-            player.vx = lerp(pOld.vx, pNew.vx, t);
-            player.vy = lerp(pOld.vy, pNew.vy, t);
-            player.fuel = pNew.fuel;
-            player.lives = pNew.lives;
-            player.score = pNew.score;
-            player.facingRight = pNew.facingRight;
-            player.isGrounded = pNew.isGrounded;
-            player.isThrusting = pNew.isThrusting;
-            player.isClimbing = pNew.isClimbing;
-            player.setPhasing(pNew.isPhasing);
-            player.isDead = pNew.isDead;
-            player.respawnInvulnerability = pNew.respawnInvulnerability;
-          }
+          pTarget = pNew;
+          const dtSec = Math.max(
+            0.001,
+            (newer.timestamp - older.timestamp) / 1000,
+          );
+          targetX = hermite(
+            pOld.x,
+            pNew.x,
+            pOld.vx || 0,
+            pNew.vx || 0,
+            t,
+            dtSec,
+          );
+          targetY = hermite(
+            pOld.y,
+            pNew.y,
+            pOld.vy || 0,
+            pNew.vy || 0,
+            t,
+            dtSec,
+          );
+          targetVx = lerp(pOld.vx || 0, pNew.vx || 0, t);
+          targetVy = lerp(pOld.vy || 0, pNew.vy || 0, t);
         } else if (pNew) {
-          if (!player.isDead && pNew.isDead) {
-            player.takeDamage();
-          } else {
-            player.applySnapshot(pNew);
-          }
+          pTarget = pNew;
+          targetX = pNew.x;
+          targetY = pNew.y;
+          targetVx = pNew.vx || 0;
+          targetVy = pNew.vy || 0;
         }
       } else if (latestSnap) {
         const pLatest = latestSnap.players.find(
           (p) => (p.socketId || p.id) === sId,
         );
         if (pLatest) {
-          if (!player.isDead && pLatest.isDead) {
-            player.takeDamage();
-          } else {
-            const extrapTime = Math.min(
-              0.1,
-              Math.max(0, (renderTime - latestSnap.timestamp) / 1000),
-            );
-            player.x = pLatest.x + (pLatest.vx || 0) * extrapTime;
-            player.y = pLatest.y + (pLatest.vy || 0) * extrapTime;
-            player.vx = pLatest.vx || 0;
-            player.vy = pLatest.vy || 0;
-            player.fuel = pLatest.fuel;
-            player.lives = pLatest.lives;
-            player.score = pLatest.score;
-            player.facingRight = pLatest.facingRight;
-            player.isGrounded = pLatest.isGrounded;
-            player.isThrusting = pLatest.isThrusting;
-            player.isClimbing = pLatest.isClimbing;
-            player.setPhasing(pLatest.isPhasing);
-            player.isDead = pLatest.isDead;
-            player.respawnInvulnerability = pLatest.respawnInvulnerability;
-          }
+          pTarget = pLatest;
+          const extrapTime = Math.min(
+            0.1,
+            Math.max(0, (renderTime - latestSnap.timestamp) / 1000),
+          );
+          targetX = pLatest.x + (pLatest.vx || 0) * extrapTime;
+          targetY = pLatest.y + (pLatest.vy || 0) * extrapTime;
+          targetVx = pLatest.vx || 0;
+          targetVy = pLatest.vy || 0;
         }
+      }
+
+      if (pTarget) {
+        if (!player.isDead && pTarget.isDead) {
+          player.takeDamage();
+        }
+
+        const dx = targetX - player.x;
+        const dy = targetY - player.y;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq > 4096 || player.isDead !== pTarget.isDead) {
+          player.x = targetX;
+          player.y = targetY;
+          player.vx = targetVx;
+          player.vy = targetVy;
+        } else {
+          const blend = Math.min(1, dt * 25);
+          player.x += dx * blend;
+          player.y += dy * blend;
+          player.vx = targetVx;
+          player.vy = targetVy;
+        }
+
+        player.fuel = pTarget.fuel;
+        player.lives = pTarget.lives;
+        player.score = pTarget.score;
+        player.facingRight = pTarget.facingRight;
+        player.isGrounded = pTarget.isGrounded;
+        player.isThrusting = pTarget.isThrusting;
+        player.isClimbing = pTarget.isClimbing;
+        player.setPhasing(pTarget.isPhasing);
+        player.isDead = pTarget.isDead;
+        player.respawnInvulnerability = pTarget.respawnInvulnerability;
       }
     }
 
@@ -335,5 +426,8 @@ export class PlayerManager {
   clear(): void {
     this.players.clear();
     this.snapshotBuffer = [];
+    this.renderTimeline = 0;
+    this.baseServerTick = 0;
+    this.baseClientTime = 0;
   }
 }

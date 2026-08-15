@@ -68,7 +68,7 @@ player.performPhaseBeam = (...args) => {
 
 for (let i = 0; i < 60; i++) gameLoop.tick();
 assert.equal(room.tickCount, 60);
-assert.equal(snapshotEmits, 10, "Playing rooms should emit snapshots at 10 Hz");
+assert.equal(snapshotEmits, 20, "Playing rooms should emit snapshots at 20 Hz");
 assert.equal(
   phaseBeams,
   4,

@@ -91,7 +91,7 @@ export class NetworkManager {
     this.jitter = 0;
     this.pingHistory = [];
     this.interpolationDelay =
-      NETWORK_SETTINGS?.DEFAULT_INTERPOLATION_DELAY || 100;
+      NETWORK_SETTINGS?.DEFAULT_INTERPOLATION_DELAY || 65;
     this.lastSentInput = null;
     this.lastInputTime = 0;
     this.pingTimer = null;
@@ -156,6 +156,7 @@ export class NetworkManager {
     const socket = ioFactory(serverUrl, {
       autoConnect: true,
       reconnection: true,
+      transports: ["websocket", "polling"],
     });
     this.socket = socket;
 
@@ -408,9 +409,10 @@ export class NetworkManager {
 
         this.lastPing = Math.round(avgRtt);
         this.jitter = Math.round(jitter);
+        const baseDelay = NETWORK_SETTINGS?.DEFAULT_INTERPOLATION_DELAY || 65;
         this.interpolationDelay = Math.min(
-          180,
-          Math.max(80, Math.round(80 + jitter * 2)),
+          140,
+          Math.max(50, Math.round(baseDelay + jitter * 1.5)),
         );
       });
     }, 2500);

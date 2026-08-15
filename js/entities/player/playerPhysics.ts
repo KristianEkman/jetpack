@@ -13,6 +13,7 @@ export function simulateMovement(
   input: SerializedInputState,
   enemyManager: EnemyManager | null = null,
   playerTargets: Iterable<Player> | null = null,
+  isReplay: boolean = false,
 ): void {
   if (player.isDead || !input) return;
 
@@ -79,7 +80,7 @@ export function simulateMovement(
     Math.min(PLAYER_PHYSICS.TERMINAL_VELOCITY, player.vy),
   );
 
-  if (input.phase && player.phaseCooldown <= 0) {
+  if (!isReplay && input.phase && player.phaseCooldown <= 0) {
     player.performPhaseBeam(enemyManager, playerTargets);
   }
 

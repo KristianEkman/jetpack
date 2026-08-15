@@ -26,6 +26,7 @@ import {
   GameOverPayload,
   CustomLevelRecord,
 } from "./shared/payloads.js";
+import { SerializedInputState } from "./shared/types.js";
 
 export const GAME_STATES = {
   MENU: "menu",
@@ -272,6 +273,10 @@ export class Game {
 
     if (this.gameState === GAME_STATES.SPECTATING) {
       this.tileMap.update(effectiveDt, this.player, this.enemyManager);
+      if (this.isMultiplayer) {
+        this.playerManager.update(effectiveDt);
+        this.enemyManager.interpolateEnemies(effectiveDt);
+      }
       this.uiManager.updateHUD();
       return;
     }
@@ -283,8 +288,25 @@ export class Game {
     this.player.update(effectiveDt, currentInput, this.enemyManager);
 
     if (this.isMultiplayer) {
-      const netInput = this.input.serializeInputState(null, this.player);
-      this.network.sendInput(netInput);
+      if (!this.player.isDead) {
+        const netInput: SerializedInputState = {
+          ...currentInput,
+          x: this.player.x,
+          y: this.player.y,
+          vx: this.player.vx,
+          vy: this.player.vy,
+          facingRight: this.player.facingRight,
+          isGrounded: this.player.isGrounded,
+          isThrusting: this.player.isThrusting,
+          isClimbing: this.player.isClimbing,
+          isPhasing: this.player.isPhasing,
+        };
+        this.player.pendingInputs.push({ ...currentInput });
+        if (this.player.pendingInputs.length > 120) {
+          this.player.pendingInputs.shift();
+        }
+        this.network.sendInput(netInput);
+      }
       this.playerManager.update(effectiveDt);
     } else {
       this.enemyManager.update(effectiveDt, [this.player]);

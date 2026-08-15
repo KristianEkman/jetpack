@@ -445,15 +445,30 @@ export class EnemyManager {
     for (const enemy of this.enemies) {
       enemy.animTimer = (enemy.animTimer || 0) + dt;
       if (enemy.targetX !== undefined && enemy.targetY !== undefined) {
+        enemy.targetX += (enemy.vx || 0) * dt;
+        enemy.targetY += (enemy.vy || 0) * dt;
         const dx = enemy.targetX - enemy.x;
         const dy = enemy.targetY - enemy.y;
         if (dx * dx + dy * dy > 4096) {
           enemy.x = enemy.targetX;
           enemy.y = enemy.targetY;
         } else {
-          enemy.x += dx * Math.min(1, dt * 15);
-          enemy.y += dy * Math.min(1, dt * 15);
+          enemy.x += (enemy.vx || 0) * dt + dx * Math.min(1, dt * 10);
+          enemy.y += (enemy.vy || 0) * dt + dy * Math.min(1, dt * 10);
         }
+      } else {
+        enemy.x += (enemy.vx || 0) * dt;
+        enemy.y += (enemy.vy || 0) * dt;
+      }
+    }
+
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= dt;
+      if (p.life <= 0) {
+        this.projectiles.splice(i, 1);
       }
     }
   }

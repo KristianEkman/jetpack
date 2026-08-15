@@ -56,6 +56,7 @@ export class Player {
   rapidFireTimer: number;
 
   animTimer: number;
+  walkPhase: number;
   stuckTimer: number;
   isStuck: boolean;
   teleportCooldown: number;
@@ -110,6 +111,7 @@ export class Player {
     this.rapidFireTimer = 0;
 
     this.animTimer = 0;
+    this.walkPhase = 0;
     this.stuckTimer = 0;
     this.isStuck = false;
     this.teleportCooldown = 0;
@@ -153,8 +155,9 @@ export class Player {
     input: SerializedInputState,
     enemyManager: EnemyManager | null = null,
     playerTargets: Iterable<Player> | null = null,
+    isReplay: boolean = false,
   ): void {
-    simulateMovement(this, dt, input, enemyManager, playerTargets);
+    simulateMovement(this, dt, input, enemyManager, playerTargets, isReplay);
   }
 
   moveAndCollide(dt: number): void {
@@ -208,6 +211,8 @@ export class Player {
     const clientY = this.y;
     const clientVx = this.vx;
     const clientVy = this.vy;
+    const clientCooldown = this.phaseCooldown;
+    const clientBeamTimer = this.phaseBeamTimer;
 
     // Reset to server-authoritative state and replay unacknowledged inputs
     this.x = serverPlayer.x;
@@ -216,12 +221,16 @@ export class Player {
     this.vy = serverPlayer.vy;
 
     this.pendingInputs = this.pendingInputs.filter(
-      (inp) => inp.sequenceId > acknowledgedSeq,
+      (inp) => (inp.sequenceId || 0) > acknowledgedSeq,
     );
 
     for (const inp of this.pendingInputs) {
-      this.simulateMovement(1 / 60, inp);
+      this.simulateMovement(1 / 60, inp, null, null, true);
     }
+
+    // Preserve local weapon cooldowns so replay doesn't alter combat timers
+    this.phaseCooldown = clientCooldown;
+    this.phaseBeamTimer = clientBeamTimer;
 
     // this.x/y now holds the reconciled position (server + replayed inputs)
     const reconciledX = this.x;
