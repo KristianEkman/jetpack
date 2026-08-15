@@ -148,6 +148,10 @@ export class Player {
     this.pendingInputs = [];
     this.visualCorrectionX = 0;
     this.visualCorrectionY = 0;
+
+    if (this.tileMap?.addSparkles) {
+      this.tileMap.addSparkles(x + 10, y + 12, this.color || "#00f0ff", 16);
+    }
   }
 
   simulateMovement(
@@ -243,8 +247,13 @@ export class Player {
     const errY = clientY - reconciledY;
     const errSq = errX * errX + errY * errY;
 
-    if (errSq > 4096 || serverPlayer.isDead || this.isDead) {
-      // Large error (>64px) or death state change: hard snap to reconciled
+    if (
+      errSq > 4096 ||
+      serverPlayer.isDead ||
+      this.isDead ||
+      (this.respawnInvulnerability || 0) > 2.0
+    ) {
+      // Large error (>64px), death state change, or fresh respawn: hard snap to reconciled
       this.x = reconciledX;
       this.y = reconciledY;
       this.vx = reconciledVx;
@@ -272,6 +281,9 @@ export class Player {
     this.isThrusting = serverPlayer.isThrusting;
     this.isClimbing = serverPlayer.isClimbing;
     this.isPhasing = serverPlayer.isPhasing;
+    if (serverPlayer.respawnInvulnerability !== undefined) {
+      this.respawnInvulnerability = serverPlayer.respawnInvulnerability;
+    }
   }
 
   checkCollectibles(): void {

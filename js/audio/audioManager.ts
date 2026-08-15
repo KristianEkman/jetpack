@@ -184,6 +184,10 @@ export class AudioManager {
         this.sfx.playTeleport();
     }
 
+    playRespawn(): void {
+        this.sfx.playRespawn();
+    }
+
     startEnergyDrain(): void {
         this.sfx.startEnergyDrain();
     }

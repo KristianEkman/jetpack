@@ -223,8 +223,10 @@ export class PlayerManager {
             (player.serverAcknowledgedDeath ||
               Date.now() - (player._localDeathTimestamp || 0) > 500)
           ) {
+            player.spawn(pData.x, pData.y);
             player.applySnapshot(pData);
             player.serverAcknowledgedDeath = false;
+            this.audio?.playRespawn?.();
           }
         } else if (pData.isDead) {
           player.takeDamage();
@@ -239,6 +241,9 @@ export class PlayerManager {
         if (pData.color) player.color = pData.color;
         if (!player.isDead && pData.isDead) {
           player.takeDamage();
+        } else if (player.isDead && !pData.isDead) {
+          player.spawn(pData.x, pData.y);
+          player.applySnapshot(pData);
         } else if (this.snapshotBuffer.length <= 1) {
           player.applySnapshot(pData);
         }
@@ -330,24 +335,41 @@ export class PlayerManager {
             0.001,
             (newer.timestamp - older.timestamp) / 1000,
           );
-          targetX = hermite(
-            pOld.x,
-            pNew.x,
-            pOld.vx || 0,
-            pNew.vx || 0,
-            t,
-            dtSec,
-          );
-          targetY = hermite(
-            pOld.y,
-            pNew.y,
-            pOld.vy || 0,
-            pNew.vy || 0,
-            t,
-            dtSec,
-          );
-          targetVx = lerp(pOld.vx || 0, pNew.vx || 0, t);
-          targetVy = lerp(pOld.vy || 0, pNew.vy || 0, t);
+          const wasDeadTransition = pOld.isDead !== pNew.isDead;
+          const isRespawn =
+            (pNew.respawnInvulnerability || 0) >
+            (pOld.respawnInvulnerability || 0);
+          const distSqSnap =
+            (pNew.x - pOld.x) * (pNew.x - pOld.x) +
+            (pNew.y - pOld.y) * (pNew.y - pOld.y);
+          const isDiscontinuous =
+            wasDeadTransition || isRespawn || distSqSnap > 14400;
+
+          if (isDiscontinuous) {
+            targetX = pNew.x;
+            targetY = pNew.y;
+            targetVx = pNew.vx || 0;
+            targetVy = pNew.vy || 0;
+          } else {
+            targetX = hermite(
+              pOld.x,
+              pNew.x,
+              pOld.vx || 0,
+              pNew.vx || 0,
+              t,
+              dtSec,
+            );
+            targetY = hermite(
+              pOld.y,
+              pNew.y,
+              pOld.vy || 0,
+              pNew.vy || 0,
+              t,
+              dtSec,
+            );
+            targetVx = lerp(pOld.vx || 0, pNew.vx || 0, t);
+            targetVy = lerp(pOld.vy || 0, pNew.vy || 0, t);
+          }
         } else if (pNew) {
           pTarget = pNew;
           targetX = pNew.x;
@@ -375,13 +397,23 @@ export class PlayerManager {
       if (pTarget) {
         if (!player.isDead && pTarget.isDead) {
           player.takeDamage();
+        } else if (player.isDead && !pTarget.isDead) {
+          player.spawn(targetX, targetY);
         }
 
         const dx = targetX - player.x;
         const dy = targetY - player.y;
         const distSq = dx * dx + dy * dy;
 
-        if (distSq > 4096 || player.isDead !== pTarget.isDead) {
+        const isFreshRespawn =
+          (pTarget.respawnInvulnerability || 0) >
+          (player.respawnInvulnerability || 0);
+
+        if (
+          distSq > 4096 ||
+          player.isDead !== pTarget.isDead ||
+          isFreshRespawn
+        ) {
           player.x = targetX;
           player.y = targetY;
           player.vx = targetVx;

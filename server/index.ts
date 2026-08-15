@@ -556,15 +556,30 @@ io.on("connection", (socket: Socket) => {
       room.tileMap.loadLevelData(levelData);
       initRoomEnemies(room, levelData);
 
-      const spawn = room.tileMap.getPrimarySpawnPoint();
-      const spawnX = spawn.x;
-      const spawnY = spawn.y;
+      const spawns =
+        room.tileMap?.spawnPoints && room.tileMap.spawnPoints.length > 0
+          ? room.tileMap.spawnPoints
+          : (room.tileMap?.getPrimarySpawnPoint
+            ? [room.tileMap.getPrimarySpawnPoint()]
+            : [{ x: 128, y: 100 }]);
 
+      let pIdx = 0;
       for (const [sId, playerEntity] of room.players.entries()) {
-        playerEntity.spawn(spawnX, spawnY);
+        const spawn =
+          spawns[pIdx % spawns.length] || spawns[0] || { x: 128, y: 100 };
+        playerEntity.spawn(spawn.x, spawn.y);
         playerEntity.lives = 3;
         playerEntity.score = 0;
         playerEntity.isDead = false;
+        playerEntity.fuel = 100;
+        const config = room.playerConfigs.get(sId);
+        if (config) {
+          config.pendingInputs = [];
+          config.lastInput = null;
+          config.lastSequenceId = 0;
+          config.lastReceivedSequenceId = 0;
+        }
+        pIdx++;
       }
 
       gameLoop.wake();
@@ -611,6 +626,11 @@ io.on("connection", (socket: Socket) => {
     playerEntity.isDead = true;
     playerEntity.lives--;
     playerEntity.deathTimer = 0;
+    const config = room.playerConfigs.get(socket.id);
+    if (config) {
+      config.pendingInputs = [];
+      config.lastInput = null;
+    }
     console.log(
       `💀 Player ${socket.id} died (reason: ${data.reason || "enemy"}, lives: ${playerEntity.lives})`,
     );
@@ -743,15 +763,29 @@ io.on("connection", (socket: Socket) => {
       room.tileMap.loadLevelData(levelData);
       initRoomEnemies(room, levelData);
 
-      const spawn = room.tileMap.getPrimarySpawnPoint();
-      const spawnX = spawn.x;
-      const spawnY = spawn.y;
+      const spawns =
+        room.tileMap?.spawnPoints && room.tileMap.spawnPoints.length > 0
+          ? room.tileMap.spawnPoints
+          : (room.tileMap?.getPrimarySpawnPoint
+            ? [room.tileMap.getPrimarySpawnPoint()]
+            : [{ x: 128, y: 100 }]);
 
+      let pIdx = 0;
       for (const [sId, playerEntity] of room.players.entries()) {
-        playerEntity.spawn(spawnX, spawnY);
+        const spawn =
+          spawns[pIdx % spawns.length] || spawns[0] || { x: 128, y: 100 };
+        playerEntity.spawn(spawn.x, spawn.y);
         playerEntity.lives = 3;
         playerEntity.isDead = false;
         playerEntity.fuel = 100;
+        const config = room.playerConfigs.get(sId);
+        if (config) {
+          config.pendingInputs = [];
+          config.lastInput = null;
+          config.lastSequenceId = 0;
+          config.lastReceivedSequenceId = 0;
+        }
+        pIdx++;
       }
 
       gameLoop.wake();

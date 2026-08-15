@@ -11,9 +11,8 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
   ctx.save();
 
   if (player.respawnInvulnerability > 0) {
-    if (Math.floor(player.animTimer * 20) % 2 === 0) {
-      ctx.globalAlpha = 0.45;
-    }
+    // Gentle energy pulse without making the sprite vanish or flash invisibly
+    ctx.globalAlpha = 0.85 + 0.15 * Math.sin(player.animTimer * 14);
   }
 
 
@@ -201,15 +200,102 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
 
   if (player.respawnInvulnerability > 0) {
     ctx.save();
-    ctx.strokeStyle = "#00ffff";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 4]);
-    ctx.shadowColor = "#00ffff";
-    ctx.shadowBlur = 8;
+    const cx = px + player.width / 2;
+    const cy = py + player.height / 2;
+    const invulnRatio = Math.min(1, player.respawnInvulnerability / 2.5);
+    const themeColor = player.color || "#00f0ff";
+
+    // 1. Vertical re-materialization beacon beam during the first 1.2s of spawn
+    if (player.respawnInvulnerability > 1.3) {
+      const beamProgress = (player.respawnInvulnerability - 1.3) / 1.2;
+      ctx.save();
+      const beamWidth = 18 * beamProgress + 4;
+      const grad = ctx.createLinearGradient(
+        cx - beamWidth,
+        0,
+        cx + beamWidth,
+        0,
+      );
+      grad.addColorStop(0, "rgba(0, 240, 255, 0)");
+      grad.addColorStop(0.5, `rgba(0, 240, 255, ${0.4 * beamProgress})`);
+      grad.addColorStop(1, "rgba(0, 240, 255, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - beamWidth, 0, beamWidth * 2, 600);
+
+      // Bright core ray
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.65 * beamProgress})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, 0);
+      ctx.lineTo(cx, 600);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 2. Radiant energy forcefield shield bubble
+    const pulse = (Math.sin(player.animTimer * 10) + 1) * 0.5;
+    const shieldRadius = 19 + pulse * 2.5;
+
+    const shieldGrad = ctx.createRadialGradient(
+      cx,
+      cy,
+      4,
+      cx,
+      cy,
+      shieldRadius,
+    );
+    shieldGrad.addColorStop(0, "rgba(0, 240, 255, 0.05)");
+    shieldGrad.addColorStop(0.7, "rgba(0, 240, 255, 0.18)");
+    shieldGrad.addColorStop(1, `rgba(0, 240, 255, ${0.45 * invulnRatio})`);
+
+    ctx.fillStyle = shieldGrad;
     ctx.beginPath();
-    ctx.arc(px + player.width / 2, py + player.height / 2, 20, 0, Math.PI * 2);
+    ctx.arc(cx, cy, shieldRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer rotating energy ring
+    ctx.strokeStyle = themeColor;
+    ctx.lineWidth = 1.8;
+    ctx.shadowColor = themeColor;
+    ctx.shadowBlur = 10;
+    ctx.setLineDash([6, 4]);
+    ctx.lineDashOffset = -player.animTimer * 25;
+    ctx.beginPath();
+    ctx.arc(cx, cy, shieldRadius, 0, Math.PI * 2);
     ctx.stroke();
+
+    // Inner counter-rotating ring
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.0;
+    ctx.shadowBlur = 4;
+    ctx.setLineDash([3, 5]);
+    ctx.lineDashOffset = player.animTimer * 30;
+    ctx.beginPath();
+    ctx.arc(cx, cy, shieldRadius - 4, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.restore();
+
+    // 3. Local Player "▼ YOU" spawn indicator badge
+    if (player.isLocal && player.respawnInvulnerability > 0.6) {
+      ctx.save();
+      const badgeY = py - 26 + Math.sin(player.animTimer * 10) * 3;
+      ctx.font = "900 10px Orbitron, sans-serif";
+      ctx.textAlign = "center";
+
+      const badgeText = "▼ YOU";
+      const textW = ctx.measureText(badgeText).width;
+
+      ctx.fillStyle = "rgba(0, 240, 255, 0.95)";
+      ctx.shadowColor = "#00f0ff";
+      ctx.shadowBlur = 8;
+      ctx.fillRect(cx - textW / 2 - 4, badgeY - 10, textW + 8, 13);
+
+      ctx.fillStyle = "#05070c";
+      ctx.shadowBlur = 0;
+      ctx.fillText(badgeText, cx, badgeY);
+      ctx.restore();
+    }
   }
 
   if (player.name && player.showNameTag) {

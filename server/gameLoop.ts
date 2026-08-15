@@ -221,7 +221,8 @@ export class GameLoop {
         room.enemyManager.update(this.dt, room.players.values());
       }
 
-      for (const playerEntity of room.players.values()) {
+      let pIdx = 0;
+      for (const [socketId, playerEntity] of room.players.entries()) {
         if (playerEntity.respawnInvulnerability > 0) {
           playerEntity.respawnInvulnerability = Math.max(
             0,
@@ -236,15 +237,30 @@ export class GameLoop {
           playerEntity.deathTimer += this.dt;
 
           if (playerEntity.deathTimer >= 2.0 && playerEntity.lives > 0) {
-            const spawn = room.tileMap?.getPrimarySpawnPoint
-              ? room.tileMap.getPrimarySpawnPoint()
-              : (room.tileMap?.spawnPoints?.[0] || { x: 128, y: 100 });
+            const spawns =
+              room.tileMap?.spawnPoints && room.tileMap.spawnPoints.length > 0
+                ? room.tileMap.spawnPoints
+                : (room.tileMap?.getPrimarySpawnPoint
+                  ? [room.tileMap.getPrimarySpawnPoint()]
+                  : [{ x: 128, y: 100 }]);
+            const spawn =
+              spawns[pIdx % spawns.length] || spawns[0] || { x: 128, y: 100 };
             playerEntity.spawn(spawn.x, spawn.y);
+            playerEntity.vx = 0;
+            playerEntity.vy = 0;
+            playerEntity.isDead = false;
             playerEntity.deathTimer = 0;
+
+            const config = room.playerConfigs.get(socketId);
+            if (config) {
+              config.pendingInputs = [];
+              config.lastInput = null;
+            }
           }
         } else {
           playerEntity.deathTimer = 0;
         }
+        pIdx++;
       }
 
       if (

@@ -22,6 +22,7 @@ export interface AudioLike {
   playDramaticDeath?: (isGameOver?: boolean) => void;
   playPortalWarp?: () => void;
   playTeleport?: () => void;
+  playRespawn?: () => void;
   startEnergyDrain?: () => void;
   stopEnergyDrain?: () => void;
   startMenuMusic?: (forceReset?: boolean) => void;

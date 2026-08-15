@@ -565,6 +565,38 @@ export class SoundEffects {
         osc2.stop(this.ctx.currentTime + 0.25);
     }
 
+    // Sci-fi Player Respawn Re-materialization Sound Effect
+    playRespawn(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(260, now);
+        osc1.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(520, now);
+        osc2.frequency.exponentialRampToValueAtTime(1760, now + 0.3);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.35);
+        osc2.stop(now + 0.35);
+    }
+
     // Energy Drain hazard sound loop
     startEnergyDrain(): void {
         if (this.isMuted || this.isEnergyDraining) return;
