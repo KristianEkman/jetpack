@@ -3,5 +3,7 @@ node_modules/
 dist/
 flat_sources/
 version.json
+coverage/
+.c8_output/
 
 server/jetpack-a9e21-firebase-adminsdk-fbsvc-8b7404d427.json

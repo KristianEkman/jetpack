@@ -1,0 +1,18 @@
+{
+  "all": true,
+  "include": [
+    "js/**/*.ts",
+    "server/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.d.ts",
+    "js/types/**",
+    "scripts/**"
+  ],
+  "reporter": [
+    "text",
+    "html",
+    "lcov"
+  ],
+  "reports-dir": "./coverage"
+}
