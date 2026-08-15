@@ -19,17 +19,31 @@ import {
   SerializedProjectileTuple,
 } from "../js/shared/types.js";
 
+export interface GameLoopMetrics {
+  isRunning: boolean;
+  tickRate: number;
+  ticksTotal: number;
+  avgTickMs: number;
+  maxTickMs: number;
+  lastTickMs: number;
+  activePlayingRoomsCount: number;
+}
+
 export class GameLoop {
   roomManager: RoomManager;
   io: Server | null;
   tickRate: number;
   dt: number;
   intervalMs: number;
+  idleIntervalMs: number;
   timer: NodeJS.Timeout | null;
   isRunning: boolean;
   accumulator: number;
   lastTime: number;
   maxCatchUpTicks: number;
+  ticksTotal: number;
+  lastTickMs: number;
+  tickDurationSamples: number[];
 
   constructor(roomManager: RoomManager, io: Server | any, tickRate: number = 60) {
     this.roomManager = roomManager;
@@ -37,11 +51,46 @@ export class GameLoop {
     this.tickRate = tickRate;
     this.dt = 1 / tickRate;
     this.intervalMs = 1000 / tickRate;
+    this.idleIntervalMs = 200; // 5 Hz idle check when 0 rooms are playing
     this.timer = null;
     this.isRunning = false;
     this.accumulator = 0;
     this.lastTime = 0;
     this.maxCatchUpTicks = 5;
+    this.ticksTotal = 0;
+    this.lastTickMs = 0;
+    this.tickDurationSamples = [];
+  }
+
+  recordTickDuration(durationMs: number): void {
+    this.ticksTotal++;
+    this.lastTickMs = durationMs;
+    this.tickDurationSamples.push(durationMs);
+    if (this.tickDurationSamples.length > 60) {
+      this.tickDurationSamples.shift();
+    }
+  }
+
+  getMetrics(): GameLoopMetrics {
+    let sum = 0;
+    let max = 0;
+    const len = this.tickDurationSamples.length;
+    for (let i = 0; i < len; i++) {
+      const val = this.tickDurationSamples[i];
+      sum += val;
+      if (val > max) max = val;
+    }
+    const avg = len > 0 ? sum / len : 0;
+
+    return {
+      isRunning: this.isRunning,
+      tickRate: this.tickRate,
+      ticksTotal: this.ticksTotal,
+      avgTickMs: Math.round(avg * 1000) / 1000,
+      maxTickMs: Math.round(max * 1000) / 1000,
+      lastTickMs: Math.round(this.lastTickMs * 1000) / 1000,
+      activePlayingRoomsCount: this.roomManager.playingRooms.size,
+    };
   }
 
   start(): void {
@@ -49,7 +98,7 @@ export class GameLoop {
     this.isRunning = true;
     this.accumulator = 0;
     this.lastTime = performance.now();
-    this.timer = setTimeout(() => this.runScheduledLoop(), this.intervalMs);
+    this.scheduleNextTick(this.intervalMs);
     console.log(
       `⏱️ Server Game Loop running at ${this.tickRate} Hz (${Math.round(this.intervalMs)}ms interval)`,
     );
@@ -65,8 +114,32 @@ export class GameLoop {
     console.log("🛑 Server Game Loop stopped.");
   }
 
+  wake(): void {
+    if (!this.isRunning) return;
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    this.accumulator = 0;
+    this.lastTime = performance.now();
+    this.runScheduledLoop();
+  }
+
+  scheduleNextTick(delayMs: number): void {
+    if (!this.isRunning) return;
+    this.timer = setTimeout(() => this.runScheduledLoop(), Math.max(1, delayMs));
+  }
+
   runScheduledLoop(): void {
     if (!this.isRunning) return;
+
+    const playingRooms = this.roomManager.getPlayingRooms();
+    if (playingRooms.length === 0) {
+      this.accumulator = 0;
+      this.lastTime = performance.now();
+      this.scheduleNextTick(this.idleIntervalMs);
+      return;
+    }
 
     const now = performance.now();
     const elapsed = Math.min((now - this.lastTime) / 1000, 0.25);
@@ -85,14 +158,18 @@ export class GameLoop {
     }
 
     const delay = Math.max(1, (this.dt - this.accumulator) * 1000);
-    this.timer = setTimeout(() => this.runScheduledLoop(), delay);
+    this.scheduleNextTick(delay);
   }
 
   tick(): void {
-    const snapshotTimestamp = Date.now();
-    for (const room of this.roomManager.rooms.values()) {
-      if (room.status !== "playing") continue;
+    const tickStart = performance.now();
+    const playingRooms = this.roomManager.getPlayingRooms();
+    if (playingRooms.length === 0) return;
 
+    let snapshotTimestamp = 0;
+    const snapshotInterval = NETWORK_SETTINGS?.SNAPSHOT_INTERVAL_TICKS || 3;
+
+    for (const room of playingRooms) {
       room.tickCount++;
 
       if (room.tileMap) {
@@ -141,10 +218,10 @@ export class GameLoop {
       }
 
       if (room.status === "playing" && room.enemyManager) {
-        room.enemyManager.update(this.dt, Array.from(room.players.values()));
+        room.enemyManager.update(this.dt, room.players.values());
       }
 
-      for (const [socketId, playerEntity] of room.players.entries()) {
+      for (const playerEntity of room.players.values()) {
         if (playerEntity.respawnInvulnerability > 0) {
           playerEntity.respawnInvulnerability = Math.max(
             0,
@@ -159,20 +236,10 @@ export class GameLoop {
           playerEntity.deathTimer += this.dt;
 
           if (playerEntity.deathTimer >= 2.0 && playerEntity.lives > 0) {
-            let spawnX = 128,
-              spawnY = 100;
-            if (room.tileMap) {
-              for (let r = 0; r < room.tileMap.rows; r++) {
-                for (let c = 0; c < room.tileMap.cols; c++) {
-                  if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
-                    spawnX = c * TILE_SIZE + 4;
-                    spawnY = r * TILE_SIZE + 2;
-                    break;
-                  }
-                }
-              }
-            }
-            playerEntity.spawn(spawnX, spawnY);
+            const spawn = room.tileMap?.getPrimarySpawnPoint
+              ? room.tileMap.getPrimarySpawnPoint()
+              : (room.tileMap?.spawnPoints?.[0] || { x: 128, y: 100 });
+            playerEntity.spawn(spawn.x, spawn.y);
             playerEntity.deathTimer = 0;
           }
         } else {
@@ -215,7 +282,7 @@ export class GameLoop {
           }
 
           if (levelCleared) {
-            room.status = "finished";
+            this.roomManager.setRoomStatus(room.id, "finished");
             const serializedRoom = this.roomManager.serializeRoom(room);
             if (this.io) {
               this.io
@@ -236,11 +303,19 @@ export class GameLoop {
 
       if (room.status === "playing" && room.players.size > 0) {
         if (room.gameMode === MULTIPLAYER_MODES.COMPETE) {
-          const remainingPlayers = Array.from(room.players.entries()).filter(
-            ([, playerEntity]) => playerEntity.lives > 0,
-          );
+          let aliveCount = 0;
+          let lastAliveSocketId: string | null = null;
+          let lastAlivePlayer: Player | null = null;
 
-          if (remainingPlayers.length <= 1) {
+          for (const [sId, playerEntity] of room.players.entries()) {
+            if (playerEntity.lives > 0) {
+              aliveCount++;
+              lastAliveSocketId = sId;
+              lastAlivePlayer = playerEntity;
+            }
+          }
+
+          if (aliveCount <= 1) {
             if (room.competeEndTimer === undefined) {
               room.competeEndTimer = 2.5;
             } else {
@@ -248,22 +323,21 @@ export class GameLoop {
             }
 
             if (room.competeEndTimer <= 0) {
-              room.status = "finished";
+              this.roomManager.setRoomStatus(room.id, "finished");
               room.competeEndTimer = undefined;
-              const winnerEntry = remainingPlayers[0] || null;
               const serializedRoom = this.roomManager.serializeRoom(room);
               if (this.io) {
                 this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || "game_over", {
                   roomId: room.id,
                   reason: "compete_match_complete",
-                  winnerSocketId: winnerEntry?.[0],
-                  winnerName: winnerEntry?.[1].name,
+                  winnerSocketId: aliveCount === 1 ? lastAliveSocketId : undefined,
+                  winnerName: aliveCount === 1 ? lastAlivePlayer?.name : undefined,
                   players: serializedRoom?.players || [],
                   room: serializedRoom,
                 });
               }
               console.log(
-                `⚔️ Match finished in Room ${room.id}. Winner: ${winnerEntry?.[1].name || "Draw"}`,
+                `⚔️ Match finished in Room ${room.id}. Winner: ${aliveCount === 1 ? lastAlivePlayer?.name : "Draw"}`,
               );
             }
           } else {
@@ -279,7 +353,7 @@ export class GameLoop {
           }
 
           if (allDead) {
-            room.status = "finished";
+            this.roomManager.setRoomStatus(room.id, "finished");
             const serializedRoom = this.roomManager.serializeRoom(room);
             if (this.io) {
               this.io.to(room.id).emit(GAME_EVENTS.GAME_OVER || "game_over", {
@@ -302,6 +376,9 @@ export class GameLoop {
         room.tickCount % snapshotInterval === 0 &&
         this.io
       ) {
+        if (!snapshotTimestamp) {
+          snapshotTimestamp = Date.now();
+        }
         const snapshot: Omit<WorldSnapshotPayload, "enemies"> & {
           roomId: string;
           tick: number;
@@ -361,5 +438,7 @@ export class GameLoop {
           );
       }
     }
+
+    this.recordTickDuration(performance.now() - tickStart);
   }
 }

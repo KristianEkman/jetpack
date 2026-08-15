@@ -59,13 +59,24 @@ export interface ServerRoom {
   competeEndTimer?: number;
 }
 
+export interface RoomManagerStats {
+  totalRooms: number;
+  lobbyRooms: number;
+  playingRooms: number;
+  finishedRooms: number;
+  totalPlayers: number;
+  inGamePlayers: number;
+}
+
 export class RoomManager {
   rooms: Map<string, ServerRoom>;
   socketToRoom: Map<string, string>;
+  playingRooms: Set<string>;
 
   constructor() {
     this.rooms = new Map();
     this.socketToRoom = new Map();
+    this.playingRooms = new Set();
   }
 
   generateRoomId(): string {
@@ -332,6 +343,7 @@ export class RoomManager {
 
     if (room.players.size === 0) {
       this.rooms.delete(roomId);
+      this.playingRooms.delete(roomId);
       roomDestroyed = true;
     } else if (room.hostSocketId === socketId) {
       newHostSocketId = room.players.keys().next().value || null;
@@ -349,6 +361,71 @@ export class RoomManager {
       newHostSocketId,
       leavingPlayer: leavingConfig,
       room: roomDestroyed ? null : this.serializeRoom(room),
+    };
+  }
+
+  setRoomStatus(
+    roomId: string,
+    status: "lobby" | "playing" | "finished",
+  ): void {
+    const code = roomId.toUpperCase();
+    const room = this.rooms.get(code);
+    if (!room) return;
+    room.status = status;
+    if (status === "playing") {
+      this.playingRooms.add(code);
+    } else {
+      this.playingRooms.delete(code);
+    }
+  }
+
+  getPlayingRooms(): ServerRoom[] {
+    const list: ServerRoom[] = [];
+    for (const roomId of this.playingRooms) {
+      const room = this.rooms.get(roomId);
+      if (room && room.status === "playing") {
+        list.push(room);
+      } else {
+        this.playingRooms.delete(roomId);
+      }
+    }
+    if (list.length === 0 && this.rooms.size > 0) {
+      for (const room of this.rooms.values()) {
+        if (room.status === "playing") {
+          this.playingRooms.add(room.id);
+          list.push(room);
+        }
+      }
+    }
+    return list;
+  }
+
+  getStats(): RoomManagerStats {
+    let lobbyCount = 0;
+    let playingCount = 0;
+    let finishedCount = 0;
+    let inGamePlayers = 0;
+    let totalPlayers = 0;
+
+    for (const room of this.rooms.values()) {
+      if (room.status === "playing") {
+        playingCount++;
+        inGamePlayers += room.players.size;
+      } else if (room.status === "lobby") {
+        lobbyCount++;
+      } else if (room.status === "finished") {
+        finishedCount++;
+      }
+      totalPlayers += room.players.size;
+    }
+
+    return {
+      totalRooms: this.rooms.size,
+      lobbyRooms: lobbyCount,
+      playingRooms: playingCount,
+      finishedRooms: finishedCount,
+      totalPlayers,
+      inGamePlayers,
     };
   }
 

@@ -277,14 +277,15 @@ export class EnemyManager {
     return closest;
   }
 
-  getLivingPlayers(players: Player[]): Player[] {
+  getLivingPlayers(players: Player[] | Iterable<Player>): Player[] {
     if (!players) return [];
-    if (Array.isArray(players)) {
-      return players.filter(
-        (p) => p && !p.isDead && (p.respawnInvulnerability || 0) <= 0,
-      );
+    const living: Player[] = [];
+    for (const p of players) {
+      if (p && !p.isDead && (p.respawnInvulnerability || 0) <= 0) {
+        living.push(p);
+      }
     }
-    return [];
+    return living;
   }
 
   serializeEnemies(): SerializedEnemyTuple[] {
@@ -457,7 +458,7 @@ export class EnemyManager {
     }
   }
 
-  update(dt: number, players: Player[]): void {
+  update(dt: number, players: Player[] | Iterable<Player>): void {
     const livingPlayers = this.getLivingPlayers(players);
 
     for (let enemy of this.enemies) {

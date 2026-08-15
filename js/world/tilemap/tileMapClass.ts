@@ -114,6 +114,35 @@ export class TileMap {
     this.collectedEmeralds = 0;
     this.countTotalEmeralds();
     this.rebuildTeleporters();
+    this.rebuildSpawnPoints(levelData);
+  }
+
+  rebuildSpawnPoints(levelData?: LevelData): void {
+    this.spawnPoints = [];
+    if (levelData && typeof levelData.spawnX === "number" && typeof levelData.spawnY === "number") {
+      this.spawnPoints.push({ x: levelData.spawnX, y: levelData.spawnY });
+    }
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        if (this.grid[r * this.cols + c] === TILES.SPAWN) {
+          const spX = c * TILE_SIZE + 4;
+          const spY = r * TILE_SIZE + 2;
+          if (!this.spawnPoints.some((p) => p.x === spX && p.y === spY)) {
+            this.spawnPoints.push({ x: spX, y: spY });
+          }
+        }
+      }
+    }
+    if (this.spawnPoints.length === 0) {
+      this.spawnPoints.push({ x: 128, y: 100 });
+    }
+  }
+
+  getPrimarySpawnPoint(): { x: number; y: number } {
+    if (!this.spawnPoints || this.spawnPoints.length === 0) {
+      this.rebuildSpawnPoints();
+    }
+    return this.spawnPoints[0] || { x: 128, y: 100 };
   }
 
   getTile(col: number, row: number): number {

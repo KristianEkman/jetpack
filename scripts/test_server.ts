@@ -27,7 +27,12 @@ try {
   assert.equal(res.status, 200);
   const health = await res.json();
   assert.equal(health.status, "ok");
-  console.log("   ✅ HTTP Health check endpoint responded correctly.\n");
+  assert.ok(typeof health.uptime === "number");
+  assert.ok(health.rooms && typeof health.rooms.totalRooms === "number");
+  assert.ok(health.players && typeof health.players.connectedSockets === "number");
+  assert.ok(health.gameLoop && typeof health.gameLoop.tickRate === "number");
+  assert.ok(health.memory && typeof health.memory.heapUsedMB === "number");
+  console.log("   ✅ HTTP Health check endpoint responded with comprehensive telemetry.\n");
 
   console.log("2️⃣.5️⃣  Testing GET /api/version Endpoint...");
   const versionRes = await fetch(`${SERVER_URL}/api/version`);

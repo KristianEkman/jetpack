@@ -99,6 +99,9 @@ const io = new Server(httpServer, {
   },
 });
 
+export const roomManager = new RoomManager();
+export const gameLoop = new GameLoop(roomManager, io, 60);
+
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
 }
@@ -112,10 +115,33 @@ app.get("/api/version", (req, res) => {
 });
 
 app.get("/health", (req, res) => {
+  const mem = process.memoryUsage();
+  const roomStats = roomManager.getStats();
+  const loopMetrics = gameLoop.getMetrics();
+  const connectedSockets = io.sockets.sockets.size;
+
   res.json({
     status: "ok",
-    uptime: process.uptime(),
-    activeRooms: roomManager.rooms.size,
+    uptime: Math.round(process.uptime() * 10) / 10,
+    timestamp: new Date().toISOString(),
+    version: {
+      commitHash: serverCommitHash,
+      deployedAt: deployedAt,
+    },
+    activeRooms: roomStats.totalRooms, // Backwards compatible with legacy check
+    rooms: roomStats,
+    players: {
+      connectedSockets,
+      totalInRooms: roomStats.totalPlayers,
+      inActiveGame: roomStats.inGamePlayers,
+    },
+    gameLoop: loopMetrics,
+    memory: {
+      heapUsedMB: Math.round((mem.heapUsed / 1024 / 1024) * 100) / 100,
+      heapTotalMB: Math.round((mem.heapTotal / 1024 / 1024) * 100) / 100,
+      rssMB: Math.round((mem.rss / 1024 / 1024) * 100) / 100,
+      externalMB: Math.round((mem.external / 1024 / 1024) * 100) / 100,
+    },
   });
 });
 
@@ -269,8 +295,6 @@ app.post("/api/levels/:id/highscore", async (req, res) => {
 });
 
 
-export const roomManager = new RoomManager();
-export const gameLoop = new GameLoop(roomManager, io, 60);
 const ROOM_LIST_CHANNEL = "__room_list_watchers__";
 
 function broadcastRoomList(): void {
@@ -520,7 +544,7 @@ io.on("connection", (socket: Socket) => {
         return;
       }
 
-      room.status = "playing";
+      roomManager.setRoomStatus(room.id, "playing");
       room.competeEndTimer = undefined;
       room.destroyedEnemyIds = new Set();
 
@@ -531,17 +555,9 @@ io.on("connection", (socket: Socket) => {
       room.tileMap.loadLevelData(levelData);
       initRoomEnemies(room, levelData);
 
-      let spawnX = 128;
-      let spawnY = 100;
-      for (let r = 0; r < room.tileMap.rows; r++) {
-        for (let c = 0; c < room.tileMap.cols; c++) {
-          if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
-            spawnX = c * 32 + 4;
-            spawnY = r * 32 + 2;
-            break;
-          }
-        }
-      }
+      const spawn = room.tileMap.getPrimarySpawnPoint();
+      const spawnX = spawn.x;
+      const spawnY = spawn.y;
 
       for (const [sId, playerEntity] of room.players.entries()) {
         playerEntity.spawn(spawnX, spawnY);
@@ -549,6 +565,8 @@ io.on("connection", (socket: Socket) => {
         playerEntity.score = 0;
         playerEntity.isDead = false;
       }
+
+      gameLoop.wake();
 
       const payload = {
         success: true,
@@ -665,7 +683,7 @@ io.on("connection", (socket: Socket) => {
         return;
       }
 
-      room.status = "finished";
+      roomManager.setRoomStatus(room.id, "finished");
       const playerConfig = room.playerConfigs.get(socket.id);
       const playerName = playerConfig ? playerConfig.name : "Player";
 
@@ -713,7 +731,7 @@ io.on("connection", (socket: Socket) => {
         room.levelIndex = (room.levelIndex + 1) % CAMPAIGN_LEVELS.length;
       }
 
-      room.status = "playing";
+      roomManager.setRoomStatus(room.id, "playing");
       room.competeEndTimer = undefined;
       room.destroyedEnemyIds = new Set();
 
@@ -724,17 +742,9 @@ io.on("connection", (socket: Socket) => {
       room.tileMap.loadLevelData(levelData);
       initRoomEnemies(room, levelData);
 
-      let spawnX = 128;
-      let spawnY = 100;
-      for (let r = 0; r < room.tileMap.rows; r++) {
-        for (let c = 0; c < room.tileMap.cols; c++) {
-          if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
-            spawnX = c * 32 + 4;
-            spawnY = r * 32 + 2;
-            break;
-          }
-        }
-      }
+      const spawn = room.tileMap.getPrimarySpawnPoint();
+      const spawnX = spawn.x;
+      const spawnY = spawn.y;
 
       for (const [sId, playerEntity] of room.players.entries()) {
         playerEntity.spawn(spawnX, spawnY);
@@ -742,6 +752,8 @@ io.on("connection", (socket: Socket) => {
         playerEntity.isDead = false;
         playerEntity.fuel = 100;
       }
+
+      gameLoop.wake();
 
       const payload = {
         success: true,

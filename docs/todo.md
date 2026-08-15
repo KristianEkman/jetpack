@@ -9,4 +9,4 @@
 - [ ] Place in game buttons better.
 - [ ] mobile controls more transparent and bigger.
 - [ ] During competetive games, each user should have their own spawning tile.
-- [ ] monitor server load during multiplayer game. We will see if there is need for optimization.
+- [x] monitor server load during multiplayer game. We will see if there is need for optimization.
