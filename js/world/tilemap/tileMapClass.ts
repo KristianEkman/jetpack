@@ -67,12 +67,12 @@ export class TileMap {
     this.effectsEnabled = options.effectsEnabled ?? true;
   }
 
-  on(event: string, callback: TileMapListener): void {
+  on<T = any>(event: string, callback: TileMapListener<T>): void {
     if (!this.listeners[event]) this.listeners[event] = [];
-    this.listeners[event].push(callback);
+    this.listeners[event].push(callback as TileMapListener);
   }
 
-  off(event: string, callback: TileMapListener): void {
+  off<T = any>(event: string, callback: TileMapListener<T>): void {
     if (!this.listeners[event]) return;
     this.listeners[event] = this.listeners[event].filter(
       (cb) => cb !== callback,
@@ -201,13 +201,13 @@ export class TileMap {
   // Check if tile is solid for collision
   isSolid(col: number, row: number): boolean {
     const tile = this.getTile(col, row);
-    return [
-      TILES.BRICK,
-      TILES.PHASE_BRICK,
-      TILES.ICE,
-      TILES.CONVEYOR_LEFT,
-      TILES.CONVEYOR_RIGHT,
-    ].includes(tile as any);
+    return (
+      tile === TILES.BRICK ||
+      tile === TILES.PHASE_BRICK ||
+      tile === TILES.ICE ||
+      tile === TILES.CONVEYOR_LEFT ||
+      tile === TILES.CONVEYOR_RIGHT
+    );
   }
 
   // Check climbable

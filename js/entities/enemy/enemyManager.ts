@@ -9,7 +9,8 @@ import { updateFlitzer, renderFlitzer } from "./flitzer.js";
 import { updateHomingMissile, renderHomingMissile } from "./homingMissile.js";
 import { updateTurret, renderTurret } from "./turret.js";
 import { updateBoss, renderBoss, hasBossTileCollision } from "./boss.js";
-import { AudioManager } from "../../audio/index.js";
+import { AudioLike, AudioManager } from "../../audio/index.js";
+import { EnemySnapshotTuple } from "../../shared/types.js";
 
 export type SerializedEnemyTuple = [
   id: string,
@@ -45,7 +46,7 @@ export interface BoundingBox {
 
 export class EnemyManager {
   tileMap: TileMap;
-  audio: AudioManager | null;
+  audio: AudioManager | AudioLike | null;
   enemies: Enemy[];
   projectiles: Projectile[];
   nextEnemyId: number;
@@ -53,7 +54,7 @@ export class EnemyManager {
     | ((data: { enemyId: string; playerId: string }) => void)
     | null;
 
-  constructor(tileMap: TileMap, audio: AudioManager | null = null) {
+  constructor(tileMap: TileMap, audio: AudioManager | AudioLike | null = null) {
     this.tileMap = tileMap;
     this.audio = audio;
     this.enemies = [];
@@ -315,7 +316,10 @@ export class EnemyManager {
     ]);
   }
 
-  applyEnemySnapshot(snapshotEnemies: any, snapshotProjectiles: any): void {
+  applyEnemySnapshot(
+    snapshotEnemies?: (SerializedEnemyTuple | EnemySnapshotTuple | Partial<Enemy>)[],
+    snapshotProjectiles?: (SerializedProjectileTuple | Partial<Projectile>)[],
+  ): void {
     if (!Array.isArray(snapshotEnemies)) return;
     const parsedEnemies = snapshotEnemies.map((e) =>
       Array.isArray(e)
@@ -342,24 +346,32 @@ export class EnemyManager {
     for (const sEnemy of parsedEnemies) {
       let localEnemy = this.enemies.find((e) => e.id === sEnemy.id);
       if (!localEnemy) {
-        if (sEnemy.type === ENEMY_TYPES.FLITZER) {
-          this.addFlitzer(sEnemy.x, sEnemy.y, sEnemy.vx, sEnemy.vy, sEnemy.id);
-        } else if (sEnemy.type === ENEMY_TYPES.HOMING_MISSILE) {
-          this.addHomingMissile(sEnemy.x, sEnemy.y, sEnemy.id);
-        } else if (sEnemy.type === ENEMY_TYPES.TURRET) {
-          this.addTurret(
-            sEnemy.x,
-            sEnemy.y,
-            sEnemy.fireInterval || 2.0,
-            sEnemy.id,
-          );
-        } else if (sEnemy.type === ENEMY_TYPES.BOSS) {
-          this.addBoss(
-            sEnemy.x,
-            sEnemy.y,
-            sEnemy.maxHp || 10,
-            sEnemy.id,
-          );
+        if (sEnemy.x !== undefined && sEnemy.y !== undefined) {
+          if (sEnemy.type === ENEMY_TYPES.FLITZER) {
+            this.addFlitzer(
+              sEnemy.x,
+              sEnemy.y,
+              sEnemy.vx ?? 100,
+              sEnemy.vy ?? 100,
+              sEnemy.id,
+            );
+          } else if (sEnemy.type === ENEMY_TYPES.HOMING_MISSILE) {
+            this.addHomingMissile(sEnemy.x, sEnemy.y, sEnemy.id);
+          } else if (sEnemy.type === ENEMY_TYPES.TURRET) {
+            this.addTurret(
+              sEnemy.x,
+              sEnemy.y,
+              sEnemy.fireInterval ?? 2.0,
+              sEnemy.id,
+            );
+          } else if (sEnemy.type === ENEMY_TYPES.BOSS) {
+            this.addBoss(
+              sEnemy.x,
+              sEnemy.y,
+              sEnemy.maxHp ?? 10,
+              sEnemy.id,
+            );
+          }
         }
         localEnemy = this.enemies.find((e) => e.id === sEnemy.id);
       }
@@ -376,10 +388,10 @@ export class EnemyManager {
             this.audio?.playExplosion?.();
           }
         }
-        localEnemy.targetX = sEnemy.x;
-        localEnemy.targetY = sEnemy.y;
-        localEnemy.vx = sEnemy.vx;
-        localEnemy.vy = sEnemy.vy;
+        if (sEnemy.x !== undefined) localEnemy.targetX = sEnemy.x;
+        if (sEnemy.y !== undefined) localEnemy.targetY = sEnemy.y;
+        if (sEnemy.vx !== undefined) localEnemy.vx = sEnemy.vx;
+        if (sEnemy.vy !== undefined) localEnemy.vy = sEnemy.vy;
         if (sEnemy.hp !== undefined) localEnemy.hp = sEnemy.hp;
         if (sEnemy.maxHp !== undefined) localEnemy.maxHp = sEnemy.maxHp;
         if (sEnemy.phase !== undefined) localEnemy.phase = sEnemy.phase;
@@ -416,7 +428,14 @@ export class EnemyManager {
               radius: p[4],
               life: p[5],
             }
-          : p,
+          : {
+              x: p.x ?? 0,
+              y: p.y ?? 0,
+              vx: p.vx ?? 0,
+              vy: p.vy ?? 0,
+              radius: p.radius ?? 2,
+              life: p.life ?? 1,
+            },
       );
     }
   }

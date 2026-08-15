@@ -35,7 +35,7 @@ console.log("   ✅ Boss creation verified.");
 
 // 3. Test Boss AI & Movement Updates
 console.log("3️⃣  Testing Boss AI & Movement Updates...");
-const player = new Player(null as any, tileMap);
+const player = new Player(null, tileMap);
 player.x = 200;
 player.y = 300;
 
@@ -63,7 +63,7 @@ console.log("   ✅ Damage handling and Phase 2 transition verified.");
 
 // 5. Test Boss Defeat / Destruction
 console.log("5️⃣  Testing Boss Defeat & Destruction...");
-let destroyedData: any = null;
+let destroyedData: { enemyId: string; playerId: string } | null = null;
 enemyManager.onEnemyDestroyed = (data) => {
   destroyedData = data;
 };
@@ -73,8 +73,9 @@ const wasDestroyed = enemyManager.damageEnemy(boss.id, 9, player.id);
 assert.equal(wasDestroyed, true, "damageEnemy should return true when HP reaches 0");
 assert.equal(enemyManager.enemies.length, 0, "Boss should be removed from enemyManager upon defeat");
 assert.ok(destroyedData, "onEnemyDestroyed callback should trigger");
-assert.equal(destroyedData.enemyId, "boss_alpha");
-assert.equal(destroyedData.playerId, player.id);
+const destroyed = destroyedData as { enemyId: string; playerId: string } | null;
+assert.equal(destroyed?.enemyId, "boss_alpha");
+assert.equal(destroyed?.playerId, player.id);
 console.log("   ✅ Boss defeat and destruction verified.");
 
 // 6. Test Multiplayer Serialization & Snapshot Application
@@ -212,7 +213,7 @@ p2EnemyManager.addBoss(100, 50, 10, "boss_p2_cap");
 const p2Boss = p2EnemyManager.enemies[0];
 p2Boss.hp = 5; // Set HP to <= 50% to trigger Phase 2
 
-const testPlayer = new Player(null as any, p2TileMap);
+const testPlayer = new Player(null, p2TileMap);
 testPlayer.x = 200;
 testPlayer.y = 300;
 

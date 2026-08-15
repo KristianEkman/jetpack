@@ -335,8 +335,8 @@ export function renderTile(
 
       ctx.fillStyle = bodyGrad;
       ctx.beginPath();
-      if ((ctx as any).roundRect) {
-        (ctx as any).roundRect(bx, by, w, h, 2);
+      if ("roundRect" in ctx && typeof ctx.roundRect === "function") {
+        ctx.roundRect(bx, by, w, h, 2);
       } else {
         ctx.rect(bx, by, w, h);
       }

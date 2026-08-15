@@ -129,7 +129,7 @@ console.log("🧪 Running Remote Sound Effects Test Suite...\n");
   console.log("\n4️⃣  Testing Enemy Hit Sound on Snapshot HP Drop...");
   const audio = new MockAudio();
   const tileMap = new TileMap();
-  const enemyMgr = new EnemyManager(tileMap, audio as any);
+  const enemyMgr = new EnemyManager(tileMap, audio);
 
   enemyMgr.addBoss(100, 100, 25, "boss_1");
   const initialImpacts = audio.phaseImpactsPlayed;

@@ -42,14 +42,16 @@ tileMap.rows = 18;
 tileMap.grid = new Array(30 * 18).fill(TILES.AIR);
 tileMap.grid[1 + 1 * 30] = TILES.EXTRA_LIFE;
 
-const player = new Player(null as any, tileMap);
+import { ItemCollectedPayload } from "../js/shared/payloads.js";
+
+const player = new Player(null, tileMap);
 player.x = 32;
 player.y = 32;
 player.lives = 3;
 player.score = 0;
 
-let itemCollectedPayload: any = null;
-tileMap.on(GAME_EVENTS.ITEM_COLLECTED, (payload: any) => {
+let itemCollectedPayload: ItemCollectedPayload | null = null;
+tileMap.on<ItemCollectedPayload>(GAME_EVENTS.ITEM_COLLECTED, (payload) => {
   itemCollectedPayload = payload;
 });
 
@@ -59,9 +61,10 @@ player.checkCollectibles();
 assert.equal(tileMap.getTile(1, 1), TILES.AIR, "Extra Life tile should be set to AIR upon pickup");
 assert.equal(player.lives, 4, "Player lives should increase from 3 to 4");
 assert.equal(player.score, 1000, "Player score should increase by 1000");
-assert.ok(itemCollectedPayload, "ITEM_COLLECTED event should be emitted");
-assert.equal(itemCollectedPayload.tileType, TILES.EXTRA_LIFE);
-assert.equal(itemCollectedPayload.lives, 4);
+const payload = itemCollectedPayload as ItemCollectedPayload | null;
+assert.ok(payload, "ITEM_COLLECTED event should be emitted");
+assert.equal(payload?.tileType, TILES.EXTRA_LIFE);
+assert.equal(payload?.lives, 4);
 console.log("   ✅ Player pickup logic verified.");
 
 // 5. Test Score Milestone Extra Life & Max Lives Cap

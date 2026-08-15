@@ -2,6 +2,11 @@ import assert from "node:assert";
 import { app, httpServer } from "../server/index.js";
 import { getFirebaseDatabase } from "../server/firebase.js";
 import { AddressInfo } from "node:net";
+import {
+  CustomLevelHeader,
+  CustomLevelRecord,
+  CustomLevelResult,
+} from "../js/shared/payloads.js";
 
 async function runTests(): Promise<void> {
   console.log("🧪 Starting Custom Levels REST API Automated Tests...");
@@ -62,7 +67,7 @@ async function runTests(): Promise<void> {
       }),
     });
     assert.strictEqual(createLevelRes.status, 201, "Expected 201 Created for level upload");
-    const createData = (await createLevelRes.json()) as { success: boolean; level?: any };
+    const createData = (await createLevelRes.json()) as CustomLevelResult & { level: CustomLevelRecord };
     assert.strictEqual(createData.success, true, "Level creation failed");
     levelId = createData.level.id;
     assert.strictEqual(createData.level.authorId, userA.id);
@@ -85,7 +90,7 @@ async function runTests(): Promise<void> {
       }),
     });
     assert.strictEqual(updateRes.status, 200);
-    const updateData = (await updateRes.json()) as { success: boolean; level?: any };
+    const updateData = (await updateRes.json()) as CustomLevelResult & { level: CustomLevelRecord };
     assert.strictEqual(updateData.success, true);
     assert.strictEqual(updateData.level.name, "User A Castle Updated");
     console.log(`✅ User A successfully edited own custom level`);
@@ -102,14 +107,14 @@ async function runTests(): Promise<void> {
       }),
     });
     assert.strictEqual(unreleaseRes.status, 200);
-    const unreleaseData = (await unreleaseRes.json()) as { success: boolean; level?: any };
+    const unreleaseData = (await unreleaseRes.json()) as CustomLevelResult & { level: CustomLevelRecord };
     assert.strictEqual(unreleaseData.level.isReleased, false);
     console.log(`✅ User A successfully unreleased level (isReleased=false)`);
 
     // 4c. Verify Public cannot see unreleased level in GET /api/levels
     const publicListRes = await fetch(`${baseUrl}/api/levels`);
-    const publicListData = (await publicListRes.json()) as { success: boolean; levels?: any[] };
-    const publicFound = publicListData.levels?.find((l: any) => l.id === levelId);
+    const publicListData = (await publicListRes.json()) as CustomLevelResult;
+    const publicFound = publicListData.levels?.find((l: CustomLevelHeader) => l.id === levelId);
     assert.strictEqual(publicFound, undefined, "Unreleased level must not be listed in public GET /api/levels");
     console.log(`✅ Unreleased level hidden from public GET /api/levels`);
 
@@ -117,8 +122,8 @@ async function runTests(): Promise<void> {
     const ownerListRes = await fetch(`${baseUrl}/api/levels`, {
       headers: { "Authorization": `Bearer ${userA.id}` },
     });
-    const ownerListData = (await ownerListRes.json()) as { success: boolean; levels?: any[] };
-    const ownerFound = ownerListData.levels?.find((l: any) => l.id === levelId);
+    const ownerListData = (await ownerListRes.json()) as CustomLevelResult;
+    const ownerFound = ownerListData.levels?.find((l: CustomLevelHeader) => l.id === levelId);
     assert.ok(ownerFound, "Unreleased level must be listed for owner in GET /api/levels");
     console.log(`✅ Unreleased level visible to owner in GET /api/levels`);
 
@@ -175,7 +180,7 @@ async function runTests(): Promise<void> {
       body: JSON.stringify({ rating: 5 }),
     });
     assert.strictEqual(rateRes.status, 200);
-    const rateData = (await rateRes.json()) as { success: boolean; level?: any };
+    const rateData = (await rateRes.json()) as CustomLevelResult & { level: CustomLevelRecord };
     assert.strictEqual(rateData.success, true);
     assert.strictEqual(rateData.level.ratingCount, 1);
     assert.strictEqual(rateData.level.averageRating, 5);
@@ -188,7 +193,7 @@ async function runTests(): Promise<void> {
       body: JSON.stringify({ score: 4500, userName: userB.name }),
     });
     assert.strictEqual(scoreRes.status, 200);
-    const scoreData = (await scoreRes.json()) as { success: boolean; level?: any };
+    const scoreData = (await scoreRes.json()) as CustomLevelResult & { level: CustomLevelRecord };
     assert.strictEqual(scoreData.success, true);
     assert.strictEqual(scoreData.level.highScore, 4500);
     assert.strictEqual(scoreData.level.highScoreUser, userB.name);
@@ -197,9 +202,9 @@ async function runTests(): Promise<void> {
     // 8. List custom levels (GET /api/levels)
     const listRes = await fetch(`${baseUrl}/api/levels`);
     assert.strictEqual(listRes.status, 200);
-    const listData = (await listRes.json()) as { success: boolean; levels?: any[] };
+    const listData = (await listRes.json()) as CustomLevelResult;
     assert.strictEqual(listData.success, true);
-    const foundHeader = listData.levels?.find((l: any) => l.id === levelId);
+    const foundHeader = listData.levels?.find((l: CustomLevelHeader) => l.id === levelId);
     assert.ok(foundHeader, "Created level header should be present in listing");
     assert.strictEqual(foundHeader.averageRating, 5);
     assert.strictEqual(foundHeader.highScore, 4500);

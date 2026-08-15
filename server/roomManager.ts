@@ -13,6 +13,7 @@ import {
   MultiplayerRoomInfo,
   MultiplayerPlayer,
   MultiplayerLevelData,
+  PublicRoomInfo,
 } from "../js/shared/payloads.js";
 import { AudioManager } from "../js/audio/audioManager.js";
 import { MULTIPLAYER_MODES } from "../js/shared/constants.js";
@@ -401,8 +402,8 @@ export class RoomManager {
     };
   }
 
-  listRooms(): any[] {
-    const list: any[] = [];
+  listRooms(): PublicRoomInfo[] {
+    const list: PublicRoomInfo[] = [];
     for (const room of this.rooms.values()) {
       if (room.status !== "lobby") continue;
       list.push({

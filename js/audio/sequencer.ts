@@ -12,18 +12,19 @@ import {
     BASS_PATTERN_L8, MELODY_PATTERN_L8,
     MENU_BASS_PATTERN, MENU_CHIME_PATTERN
 } from './patterns.js';
+import type { AudioManager } from './audioManager.js';
 
 export class MusicSequencer {
-    audio: any;
+    audio: AudioManager;
     bgmGain: GainNode | null;
     isPlayingMusic: boolean;
     currentTrack: string;
     currentLevel: number;
     currentStep: number;
     nextStepTime: number;
-    musicTimer: any;
+    musicTimer: ReturnType<typeof setInterval> | null;
 
-    constructor(audioManager: any) {
+    constructor(audioManager: AudioManager) {
         this.audio = audioManager;
         this.bgmGain = null;
         this.isPlayingMusic = false;

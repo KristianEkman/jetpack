@@ -1,6 +1,7 @@
 import { io, type Socket } from "socket.io-client";
 import { httpServer, gameLoop } from "../server/index.js";
 import { ROOM_EVENTS } from "../js/shared/constants.js";
+import { PublicRoomInfo, RoomActionResponse } from "../js/shared/payloads.js";
 
 const PORT = 3096;
 
@@ -15,10 +16,10 @@ socket.on("connect", () => {
   socket.emit(
     ROOM_EVENTS.CREATE_ROOM,
     { playerName: "TestHost", levelIndex: 0 },
-    (res: any) => {
+    (res: RoomActionResponse) => {
       console.log("Create room response:", JSON.stringify(res, null, 2));
 
-      socket.emit(ROOM_EVENTS.LIST_ROOMS, (list: any) => {
+      socket.emit(ROOM_EVENTS.LIST_ROOMS, (list: PublicRoomInfo[]) => {
         console.log("List rooms response:", JSON.stringify(list, null, 2));
         socket.disconnect();
         gameLoop.stop();

@@ -2,7 +2,7 @@
    PLAYER ENTITY CLASS
    ========================================================================== */
 
-import { AudioManager, SoundEffects } from "../../audio/index.js";
+import { AudioLike, AudioManager, SoundEffects } from "../../audio/index.js";
 import { PLAYER_PHYSICS } from "../../shared/constants.js";
 import { SerializedInputState } from "../../shared/types.js";
 import { TileMap } from "../../world/tilemap.js";
@@ -18,7 +18,7 @@ import { processLocalEffects } from "./playerEffects.js";
 import { renderPlayer } from "./playerRenderer.js";
 
 export class Player {
-  audio: AudioManager | SoundEffects;
+  audio: AudioManager | SoundEffects | AudioLike | null;
   tileMap: TileMap;
   id: string;
   color: string;
@@ -66,7 +66,7 @@ export class Player {
   deathTimer: number;
 
   constructor(
-    audioManager: AudioManager | SoundEffects,
+    audioManager: AudioManager | SoundEffects | AudioLike | null = null,
     tileMap: TileMap | null = null,
     options: PlayerOptions = {},
   ) {
@@ -183,7 +183,7 @@ export class Player {
   update(
     dt: number,
     input: SerializedInputState,
-    enemyManager: EnemyManager,
+    enemyManager: EnemyManager | null = null,
   ): void {
     if (this.respawnInvulnerability > 0) {
       this.respawnInvulnerability = Math.max(
@@ -298,7 +298,7 @@ export class Player {
     checkStuck(this, dt, enemyManager);
   }
 
-  applySnapshot(player: Player): void {
+  applySnapshot(player: Partial<Player> | UnpackedPlayerSnapshot): void {
     if (!player) return;
     if (player.x !== undefined) this.x = player.x;
     if (player.y !== undefined) this.y = player.y;

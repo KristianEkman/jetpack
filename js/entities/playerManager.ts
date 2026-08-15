@@ -1,9 +1,8 @@
 import { Player } from "./player.js";
 import { PLAYER_FLAGS } from "../shared/constants.js";
 import { TileMap } from "../world/tilemap.js";
-import { AudioManager } from "../audio/index.js";
+import { AudioLike, AudioManager, SoundEffects } from "../audio/index.js";
 import { PlayerSnapshotTuple, WorldSnapshotPayload } from "../shared/types.js";
-import { SoundEffects } from "../audio/index.js";
 
 export interface AddPlayerOptions {
   id?: string;
@@ -37,7 +36,9 @@ export interface UnpackedPlayerSnapshot {
   color?: string;
 }
 
-export function unpackPlayerSnapshot(p: PlayerSnapshotTuple | UnpackedPlayerSnapshot | any): UnpackedPlayerSnapshot {
+export function unpackPlayerSnapshot(
+  p: PlayerSnapshotTuple | UnpackedPlayerSnapshot,
+): UnpackedPlayerSnapshot {
   if (!Array.isArray(p)) return p;
   const flags = p[9] || 0;
   return {
@@ -72,14 +73,17 @@ export interface SnapshotBufferItem {
 }
 
 export class PlayerManager {
-  audio: any;
+  audio: AudioManager | SoundEffects | AudioLike | null;
   tileMap: TileMap;
   localSocketId: string | null;
   players: Map<string, Player>;
   snapshotBuffer: SnapshotBufferItem[];
   interpolationDelay: number;
 
-  constructor(audio: any = null, tileMap: TileMap) {
+  constructor(
+    audio: AudioManager | SoundEffects | AudioLike | null = null,
+    tileMap: TileMap,
+  ) {
     this.audio = audio;
     this.tileMap = tileMap;
     this.localSocketId = null;
@@ -100,7 +104,7 @@ export class PlayerManager {
       options.isLocal !== undefined
         ? options.isLocal
         : socketId === this.localSocketId;
-    const player = new Player(this.audio || (null as any), this.tileMap, {
+    const player = new Player(this.audio, this.tileMap, {
       id: options.id || socketId,
       name: options.name || "Player",
       color: options.color || "#00f0ff",
@@ -257,7 +261,7 @@ export class PlayerManager {
           if (!player.isDead && pNew.isDead) {
             player.takeDamage();
           } else if (dx * dx + dy * dy > 4096 || pOld.isDead !== pNew.isDead) {
-            player.applySnapshot(pNew as unknown as Player);
+            player.applySnapshot(pNew);
           } else {
             player.x = lerp(pOld.x, pNew.x, t);
             player.y = lerp(pOld.y, pNew.y, t);
@@ -278,7 +282,7 @@ export class PlayerManager {
           if (!player.isDead && pNew.isDead) {
             player.takeDamage();
           } else {
-            player.applySnapshot(pNew as unknown as Player);
+            player.applySnapshot(pNew);
           }
         }
       } else if (latestSnap) {

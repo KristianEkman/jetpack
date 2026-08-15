@@ -37,14 +37,16 @@ console.log("2️⃣  Testing TileMap, Event Dispatches, & Phase Bricks...");
 const tileMap = new TileMap();
 tileMap.loadLevelData(CAMPAIGN_LEVELS[0]);
 
-let phasedEventReceived: any = null;
-let restoredEventReceived: any = null;
+import { TilePositionPayload } from "../js/shared/payloads.js";
 
-tileMap.on(GAME_EVENTS.TILE_PHASED, (data: any) => {
+let phasedEventReceived: TilePositionPayload | null = null;
+let restoredEventReceived: TilePositionPayload | null = null;
+
+tileMap.on<TilePositionPayload>(GAME_EVENTS.TILE_PHASED, (data) => {
   phasedEventReceived = data;
 });
 
-tileMap.on(GAME_EVENTS.TILE_RESTORED, (data: any) => {
+tileMap.on<TilePositionPayload>(GAME_EVENTS.TILE_RESTORED, (data) => {
   restoredEventReceived = data;
 });
 
@@ -71,15 +73,17 @@ const phased = tileMap.phaseTile(targetCol, targetRow);
 assert.equal(phased, true);
 assert.equal(tileMap.getTile(targetCol, targetRow), TILES.AIR);
 assert.notEqual(phasedEventReceived, null);
-assert.equal(phasedEventReceived.col, targetCol);
-assert.equal(phasedEventReceived.row, targetRow);
+const phasedPayload = phasedEventReceived as TilePositionPayload | null;
+assert.equal(phasedPayload?.col, targetCol);
+assert.equal(phasedPayload?.row, targetRow);
 console.log("   ✅ Tile Phase event dispatched successfully.");
 
 tileMap.update(5.1);
 assert.equal(tileMap.getTile(targetCol, targetRow), TILES.PHASE_BRICK);
 assert.notEqual(restoredEventReceived, null);
-assert.equal(restoredEventReceived.col, targetCol);
-assert.equal(restoredEventReceived.row, targetRow);
+const restoredPayload = restoredEventReceived as TilePositionPayload | null;
+assert.equal(restoredPayload?.col, targetCol);
+assert.equal(restoredPayload?.row, targetRow);
 console.log("   ✅ Tile Restore event dispatched successfully.\n");
 
 // 3. Verify Headless Multi-Player Physics Simulation

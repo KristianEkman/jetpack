@@ -56,6 +56,31 @@ export type PlayerSnapshotTuple = [
   sequenceId: number,
 ];
 
+export type SerializedEnemyTuple = [
+  id: string,
+  type: string,
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  animTimer: number,
+  timer: number,
+  fireInterval: number | undefined,
+  hp: number | undefined,
+  maxHp: number | undefined,
+  phase: number | undefined,
+  hitFlashTimer: number,
+];
+
+export type SerializedProjectileTuple = [
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  radius: number,
+  life: number,
+];
+
 export type EnemySnapshotTuple = [
   id: string,
   type: string,
@@ -69,7 +94,8 @@ export type EnemySnapshotTuple = [
 export interface WorldSnapshotPayload {
   timestamp: number;
   players: PlayerSnapshotTuple[];
-  enemies?: EnemySnapshotTuple[];
+  enemies?: EnemySnapshotTuple[] | SerializedEnemyTuple[];
+  projectiles?: SerializedProjectileTuple[];
   levelIndex?: number | string;
 }
 

@@ -4,7 +4,7 @@
 
 import express from "express";
 import { createServer } from "node:http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,8 +32,15 @@ import {
 } from "../js/shared/constants.js";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
 import {
+  ChangeLevelOptions,
+  CreateRoomOptions,
+  EnemyDestroyedResponse,
+  GameStartedPayload,
   ItemCollectedPayload,
+  JoinRoomOptions,
+  LevelCompletePayload,
   MultiplayerLevelData,
+  PublicRoomInfo,
   RoomActionResponse,
   TilePositionPayload,
 } from "../js/shared/payloads.js";
@@ -277,22 +284,22 @@ function initRoomEnemies(
   if (!room.enemyManager) return;
   room.enemyManager.clear();
   if (levelData.flitzers) {
-    levelData.flitzers.forEach((f: any) =>
+    levelData.flitzers.forEach((f) =>
       room.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy),
     );
   }
   if (levelData.missiles) {
-    levelData.missiles.forEach((m: any) =>
+    levelData.missiles.forEach((m) =>
       room.enemyManager.addHomingMissile(m.x, m.y),
     );
   }
   if (levelData.turrets) {
-    levelData.turrets.forEach((t: any) =>
+    levelData.turrets.forEach((t) =>
       room.enemyManager.addTurret(t.x, t.y, t.fireInterval),
     );
   }
   if (levelData.bosses) {
-    levelData.bosses.forEach((b: any) =>
+    levelData.bosses.forEach((b) =>
       room.enemyManager.addBoss(b.x, b.y, b.hp || 10),
     );
   }
@@ -312,21 +319,37 @@ function initRoomEnemies(
   }
 }
 
-io.on("connection", (socket: any) => {
+io.on("connection", (socket: Socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
-  socket.on(ROOM_EVENTS.PING_HANDSHAKE, (callback: any) => {
-    const reply = { pong: true, serverTime: Date.now(), socketId: socket.id };
-    if (typeof callback === "function") {
-      callback(reply);
-    } else {
-      socket.emit(ROOM_EVENTS.PONG_HANDSHAKE, reply);
-    }
-  });
+  socket.on(
+    ROOM_EVENTS.PING_HANDSHAKE,
+    (
+      callback?: (reply: {
+        pong: boolean;
+        serverTime: number;
+        socketId: string;
+      }) => void,
+    ) => {
+      const reply = {
+        pong: true,
+        serverTime: Date.now(),
+        socketId: socket.id,
+      };
+      if (typeof callback === "function") {
+        callback(reply);
+      } else {
+        socket.emit(ROOM_EVENTS.PONG_HANDSHAKE, reply);
+      }
+    },
+  );
 
   socket.on(
     ROOM_EVENTS.CREATE_ROOM,
-    (data: any, callback: any) => {
+    (
+      data: CreateRoomOptions,
+      callback?: (res: RoomActionResponse) => void,
+    ) => {
       let room: ServerRoom;
       try {
         room = roomManager.createRoom(socket.id, data);
@@ -379,7 +402,10 @@ io.on("connection", (socket: any) => {
 
   socket.on(
     ROOM_EVENTS.JOIN_ROOM,
-    (data: any, callback: any) => {
+    (
+      data: JoinRoomOptions & { roomId?: string },
+      callback?: (res: RoomActionResponse) => void,
+    ) => {
       const roomId = data.roomId;
       if (!roomId) {
         const errResponse = { success: false, error: "Room ID required" };
@@ -411,114 +437,132 @@ io.on("connection", (socket: any) => {
     },
   );
 
-  socket.on(ROOM_EVENTS.LEAVE_ROOM, (callback: any) => {
-    const result = roomManager.leaveRoom(socket.id);
-    if (result) {
-      socket.leave(result.roomId);
-      const response = { success: true, roomId: result.roomId };
-      if (typeof callback === "function") callback(response);
-      socket.emit(ROOM_EVENTS.ROOM_LEFT, response);
+  socket.on(
+    ROOM_EVENTS.LEAVE_ROOM,
+    (callback?: (res: RoomActionResponse) => void) => {
+      const result = roomManager.leaveRoom(socket.id);
+      if (result) {
+        socket.leave(result.roomId);
+        const response = { success: true, roomId: result.roomId };
+        if (typeof callback === "function") callback(response);
+        socket.emit(ROOM_EVENTS.ROOM_LEFT, response);
 
-      if (!result.roomDestroyed && result.room) {
-        io.to(result.roomId).emit(ROOM_EVENTS.PLAYER_LEFT, {
-          socketId: socket.id,
-          leavingPlayer: result.leavingPlayer,
-          newHostSocketId: result.newHostSocketId,
-          room: result.room,
-        });
+        if (!result.roomDestroyed && result.room) {
+          io.to(result.roomId).emit(ROOM_EVENTS.PLAYER_LEFT, {
+            socketId: socket.id,
+            leavingPlayer: result.leavingPlayer,
+            newHostSocketId: result.newHostSocketId,
+            room: result.room,
+          });
+        }
+        broadcastRoomList();
+        console.log(`🚪 Client ${socket.id} left Room ${result.roomId}`);
       }
-      broadcastRoomList();
-      console.log(`🚪 Client ${socket.id} left Room ${result.roomId}`);
-    }
-  });
+    },
+  );
 
-  socket.on(ROOM_EVENTS.LIST_ROOMS, (callback: any) => {
-    socket.join(ROOM_LIST_CHANNEL);
-    const list = roomManager.listRooms();
-    if (typeof callback === "function") callback(list);
-    socket.emit(ROOM_EVENTS.ROOM_LIST, list);
-  });
+  socket.on(
+    ROOM_EVENTS.LIST_ROOMS,
+    (callback?: (list: PublicRoomInfo[]) => void) => {
+      socket.join(ROOM_LIST_CHANNEL);
+      const list = roomManager.listRooms();
+      if (typeof callback === "function") callback(list);
+      socket.emit(ROOM_EVENTS.ROOM_LIST, list);
+    },
+  );
 
-  socket.on(ROOM_EVENTS.CHANGE_LEVEL, (data: any, callback: any) => {
-    try {
-      const room = roomManager.changeRoomLevel(socket.id, data);
-      const serialized = roomManager.serializeRoom(room);
-      const response = { success: true, room: serialized };
-      if (typeof callback === "function") callback(response);
-      io.to(room.id).emit(ROOM_EVENTS.ROOM_UPDATED, { room: serialized });
-      broadcastRoomList();
-      console.log(
-        `🗺️ Room ${room.id} level changed to ${room.mapName} by Host ${socket.id}`,
-      );
-    } catch (error) {
-      const response = {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Unable to change level",
-      };
-      if (typeof callback === "function") callback(response);
-    }
-  });
+  socket.on(
+    ROOM_EVENTS.CHANGE_LEVEL,
+    (
+      data: ChangeLevelOptions,
+      callback?: (res: RoomActionResponse) => void,
+    ) => {
+      try {
+        const room = roomManager.changeRoomLevel(socket.id, data);
+        const serialized = roomManager.serializeRoom(room);
+        const response = { success: true, room: serialized };
+        if (typeof callback === "function") callback(response);
+        io.to(room.id).emit(ROOM_EVENTS.ROOM_UPDATED, { room: serialized });
+        broadcastRoomList();
+        console.log(
+          `🗺️ Room ${room.id} level changed to ${room.mapName} by Host ${socket.id}`,
+        );
+      } catch (error) {
+        const response = {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Unable to change level",
+        };
+        if (typeof callback === "function") callback(response);
+      }
+    },
+  );
 
-  socket.on(GAME_EVENTS.START_MATCH, (data: any = {}, callback: any) => {
-    const room = roomManager.getRoomBySocketId(socket.id);
-    if (!room) {
-      const errRes = { success: false, error: "Room not found" };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
+  socket.on(
+    GAME_EVENTS.START_MATCH,
+    (
+      data: Record<string, unknown> = {},
+      callback?: (res: GameStartedPayload) => void,
+    ) => {
+      const room = roomManager.getRoomBySocketId(socket.id);
+      if (!room) {
+        const errRes = { success: false, error: "Room not found" };
+        if (typeof callback === "function") callback(errRes);
+        return;
+      }
 
-    if (room.hostSocketId !== socket.id) {
-      const errRes = {
-        success: false,
-        error: "Only the room host can start the match",
-      };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
+      if (room.hostSocketId !== socket.id) {
+        const errRes = {
+          success: false,
+          error: "Only the room host can start the match",
+        };
+        if (typeof callback === "function") callback(errRes);
+        return;
+      }
 
-    room.status = "playing";
-    room.competeEndTimer = undefined;
-    room.destroyedEnemyIds = new Set();
+      room.status = "playing";
+      room.competeEndTimer = undefined;
+      room.destroyedEnemyIds = new Set();
 
-    const levelData =
-      room.customMapData ||
-      CAMPAIGN_LEVELS[room.levelIndex] ||
-      CAMPAIGN_LEVELS[0];
-    room.tileMap.loadLevelData(levelData);
-    initRoomEnemies(room, levelData);
+      const levelData =
+        room.customMapData ||
+        CAMPAIGN_LEVELS[room.levelIndex] ||
+        CAMPAIGN_LEVELS[0];
+      room.tileMap.loadLevelData(levelData);
+      initRoomEnemies(room, levelData);
 
-    let spawnX = 128;
-    let spawnY = 100;
-    for (let r = 0; r < room.tileMap.rows; r++) {
-      for (let c = 0; c < room.tileMap.cols; c++) {
-        if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
-          spawnX = c * 32 + 4;
-          spawnY = r * 32 + 2;
-          break;
+      let spawnX = 128;
+      let spawnY = 100;
+      for (let r = 0; r < room.tileMap.rows; r++) {
+        for (let c = 0; c < room.tileMap.cols; c++) {
+          if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
+            spawnX = c * 32 + 4;
+            spawnY = r * 32 + 2;
+            break;
+          }
         }
       }
-    }
 
-    for (const [sId, playerEntity] of room.players.entries()) {
-      playerEntity.spawn(spawnX, spawnY);
-      playerEntity.lives = 3;
-      playerEntity.score = 0;
-      playerEntity.isDead = false;
-    }
+      for (const [sId, playerEntity] of room.players.entries()) {
+        playerEntity.spawn(spawnX, spawnY);
+        playerEntity.lives = 3;
+        playerEntity.score = 0;
+        playerEntity.isDead = false;
+      }
 
-    const payload = {
-      success: true,
-      room: roomManager.serializeRoom(room),
-      levelIndex: room.levelIndex,
-      customMapData: room.customMapData,
-    };
+      const payload = {
+        success: true,
+        room: roomManager.serializeRoom(room),
+        levelIndex: room.levelIndex,
+        customMapData: room.customMapData,
+      };
 
-    if (typeof callback === "function") callback(payload);
-    io.to(room.id).emit(GAME_EVENTS.GAME_STARTED, payload);
-    broadcastRoomList();
-    console.log(`🚀 Match started in Room ${room.id} by Host ${socket.id}`);
-  });
+      if (typeof callback === "function") callback(payload);
+      io.to(room.id).emit(GAME_EVENTS.GAME_STARTED, payload);
+      broadcastRoomList();
+      console.log(`🚀 Match started in Room ${room.id} by Host ${socket.id}`);
+    },
+  );
 
   socket.on(GAME_EVENTS.PLAYER_INPUT, (inputState: SerializedInputState) => {
     const room = roomManager.getRoomBySocketId(socket.id);
@@ -555,7 +599,10 @@ io.on("connection", (socket: any) => {
 
   socket.on(
     GAME_EVENTS.ENEMY_DESTROYED,
-    ({ enemyId }: { enemyId?: string } = {}, callback: any) => {
+    (
+      { enemyId }: { enemyId?: string } = {},
+      callback?: (res: EnemyDestroyedResponse) => void,
+    ) => {
       const room = roomManager.getRoomBySocketId(socket.id);
 
       if (!room || room.status !== "playing" || !enemyId) {
@@ -591,114 +638,126 @@ io.on("connection", (socket: any) => {
     },
   );
 
-  socket.on(GAME_EVENTS.COMPLETE_LEVEL, (data: any = {}, callback: any) => {
-    const room = roomManager.getRoomBySocketId(socket.id);
-    if (!room || room.status !== "playing") {
-      const errRes = { success: false, error: "Room not in playing state" };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
+  socket.on(
+    GAME_EVENTS.COMPLETE_LEVEL,
+    (
+      data: Record<string, unknown> = {},
+      callback?: (res: LevelCompletePayload) => void,
+    ) => {
+      const room = roomManager.getRoomBySocketId(socket.id);
+      if (!room || room.status !== "playing") {
+        const errRes = { success: false, error: "Room not in playing state" };
+        if (typeof callback === "function") callback(errRes);
+        return;
+      }
 
-    if (
-      room.gameMode === MULTIPLAYER_MODES.COOP &&
-      room.tileMap &&
-      room.tileMap.totalEmeralds > 0 &&
-      room.tileMap.collectedEmeralds < room.tileMap.totalEmeralds
-    ) {
-      const errRes = {
-        success: false,
-        error: "Cannot complete level until all emeralds are collected",
+      if (
+        room.gameMode === MULTIPLAYER_MODES.COOP &&
+        room.tileMap &&
+        room.tileMap.totalEmeralds > 0 &&
+        room.tileMap.collectedEmeralds < room.tileMap.totalEmeralds
+      ) {
+        const errRes = {
+          success: false,
+          error: "Cannot complete level until all emeralds are collected",
+        };
+        if (typeof callback === "function") callback(errRes);
+        return;
+      }
+
+      room.status = "finished";
+      const playerConfig = room.playerConfigs.get(socket.id);
+      const playerName = playerConfig ? playerConfig.name : "Player";
+
+      const serializedRoom = roomManager.serializeRoom(room);
+      const payload = {
+        success: true,
+        clearedBy: playerName,
+        socketId: socket.id,
+        room: serializedRoom,
+        players: serializedRoom ? serializedRoom.players : [],
       };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
 
-    room.status = "finished";
-    const playerConfig = room.playerConfigs.get(socket.id);
-    const playerName = playerConfig ? playerConfig.name : "Player";
+      if (typeof callback === "function") callback(payload);
+      io.to(room.id).emit(
+        GAME_EVENTS.LEVEL_COMPLETE || "level_complete",
+        payload,
+      );
+      console.log(`🏆 Level completed in Room ${room.id} by ${playerName}`);
+    },
+  );
 
-    const serializedRoom = roomManager.serializeRoom(room);
-    const payload = {
-      success: true,
-      clearedBy: playerName,
-      socketId: socket.id,
-      room: serializedRoom,
-      players: serializedRoom ? serializedRoom.players : [],
-    };
+  socket.on(
+    GAME_EVENTS.NEXT_LEVEL,
+    (
+      data: Record<string, unknown> = {},
+      callback?: (res: GameStartedPayload) => void,
+    ) => {
+      const room = roomManager.getRoomBySocketId(socket.id);
+      if (!room) {
+        const errRes = { success: false, error: "Room not found" };
+        if (typeof callback === "function") callback(errRes);
+        return;
+      }
 
-    if (typeof callback === "function") callback(payload);
-    io.to(room.id).emit(
-      GAME_EVENTS.LEVEL_COMPLETE || "level_complete",
-      payload,
-    );
-    console.log(`🏆 Level completed in Room ${room.id} by ${playerName}`);
-  });
+      if (room.hostSocketId !== socket.id) {
+        const errRes = {
+          success: false,
+          error: "Only the room host can advance to the next level",
+        };
+        if (typeof callback === "function") callback(errRes);
+        return;
+      }
 
-  socket.on(GAME_EVENTS.NEXT_LEVEL, (data: any = {}, callback: any) => {
-    const room = roomManager.getRoomBySocketId(socket.id);
-    if (!room) {
-      const errRes = { success: false, error: "Room not found" };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
+      if (!room.customMapData) {
+        room.levelIndex = (room.levelIndex + 1) % CAMPAIGN_LEVELS.length;
+      }
 
-    if (room.hostSocketId !== socket.id) {
-      const errRes = {
-        success: false,
-        error: "Only the room host can advance to the next level",
-      };
-      if (typeof callback === "function") callback(errRes);
-      return;
-    }
+      room.status = "playing";
+      room.competeEndTimer = undefined;
+      room.destroyedEnemyIds = new Set();
 
-    if (!room.customMapData) {
-      room.levelIndex = (room.levelIndex + 1) % CAMPAIGN_LEVELS.length;
-    }
+      const levelData =
+        room.customMapData ||
+        CAMPAIGN_LEVELS[room.levelIndex] ||
+        CAMPAIGN_LEVELS[0];
+      room.tileMap.loadLevelData(levelData);
+      initRoomEnemies(room, levelData);
 
-    room.status = "playing";
-    room.competeEndTimer = undefined;
-    room.destroyedEnemyIds = new Set();
-
-    const levelData =
-      room.customMapData ||
-      CAMPAIGN_LEVELS[room.levelIndex] ||
-      CAMPAIGN_LEVELS[0];
-    room.tileMap.loadLevelData(levelData);
-    initRoomEnemies(room, levelData);
-
-    let spawnX = 128;
-    let spawnY = 100;
-    for (let r = 0; r < room.tileMap.rows; r++) {
-      for (let c = 0; c < room.tileMap.cols; c++) {
-        if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
-          spawnX = c * 32 + 4;
-          spawnY = r * 32 + 2;
-          break;
+      let spawnX = 128;
+      let spawnY = 100;
+      for (let r = 0; r < room.tileMap.rows; r++) {
+        for (let c = 0; c < room.tileMap.cols; c++) {
+          if (room.tileMap.getTile(c, r) === TILES.SPAWN) {
+            spawnX = c * 32 + 4;
+            spawnY = r * 32 + 2;
+            break;
+          }
         }
       }
-    }
 
-    for (const [sId, playerEntity] of room.players.entries()) {
-      playerEntity.spawn(spawnX, spawnY);
-      playerEntity.lives = 3;
-      playerEntity.isDead = false;
-      playerEntity.fuel = 100;
-    }
+      for (const [sId, playerEntity] of room.players.entries()) {
+        playerEntity.spawn(spawnX, spawnY);
+        playerEntity.lives = 3;
+        playerEntity.isDead = false;
+        playerEntity.fuel = 100;
+      }
 
-    const payload = {
-      success: true,
-      room: roomManager.serializeRoom(room),
-      levelIndex: room.levelIndex,
-      customMapData: room.customMapData,
-    };
+      const payload = {
+        success: true,
+        room: roomManager.serializeRoom(room),
+        levelIndex: room.levelIndex,
+        customMapData: room.customMapData,
+      };
 
-    if (typeof callback === "function") callback(payload);
-    io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || "game_started", payload);
-    broadcastRoomList();
-    console.log(
-      `🚀 Next level (${room.levelIndex}) started in Room ${room.id} by Host ${socket.id}`,
-    );
-  });
+      if (typeof callback === "function") callback(payload);
+      io.to(room.id).emit(GAME_EVENTS.GAME_STARTED || "game_started", payload);
+      broadcastRoomList();
+      console.log(
+        `🚀 Next level (${room.levelIndex}) started in Room ${room.id} by Host ${socket.id}`,
+      );
+    },
+  );
 
   socket.on("disconnect", () => {
     console.log(`❌ Client disconnected: ${socket.id}`);

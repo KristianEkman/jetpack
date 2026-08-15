@@ -13,11 +13,15 @@ import {
   MULTIPLAYER_MODES,
 } from "../js/shared/constants.js";
 import { RoomManager } from "./roomManager.js";
-import { WorldSnapshotPayload } from "../js/shared/types.js";
+import {
+  WorldSnapshotPayload,
+  SerializedEnemyTuple,
+  SerializedProjectileTuple,
+} from "../js/shared/types.js";
 
 export class GameLoop {
   roomManager: RoomManager;
-  io: Server | any;
+  io: Server | null;
   tickRate: number;
   dt: number;
   intervalMs: number;
@@ -302,8 +306,8 @@ export class GameLoop {
           roomId: string;
           tick: number;
           worldState: { collectedEmeralds: number; totalEmeralds: number } | null;
-          enemies?: unknown[];
-          projectiles?: unknown[];
+          enemies?: SerializedEnemyTuple[];
+          projectiles?: SerializedProjectileTuple[];
         } = {
           roomId: room.id,
           tick: room.tickCount,

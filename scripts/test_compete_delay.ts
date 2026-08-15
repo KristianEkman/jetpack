@@ -1,43 +1,48 @@
 import assert from "node:assert/strict";
-import { io as ioClient } from "socket.io-client";
+import { io as ioClient, Socket as ClientSocket } from "socket.io-client";
 import { httpServer, gameLoop, roomManager } from "../server/index.js";
 import { GAME_EVENTS, ROOM_EVENTS, MULTIPLAYER_MODES } from "../js/shared/constants.js";
+import { GameOverPayload, RoomActionResponse } from "../js/shared/payloads.js";
 
 console.log("🧪 Starting Compete Match Delay Test Suite...\n");
 
 const TEST_PORT = 3098;
 const SERVER_URL = `http://localhost:${TEST_PORT}`;
 
-await new Promise((resolve) =>
-  httpServer.listen(TEST_PORT, resolve as () => void),
-);
+await new Promise<void>((resolve) => {
+  httpServer.listen(TEST_PORT, () => resolve());
+});
 gameLoop.start();
 
-let client1: any = null;
-let client2: any = null;
+let client1: ClientSocket | null = null;
+let client2: ClientSocket | null = null;
 
 try {
   client1 = ioClient(SERVER_URL, { forceNew: true });
-  await new Promise((resolve) => client1.on("connect", resolve));
+  await new Promise<void>((resolve) => {
+    client1?.on("connect", () => resolve());
+  });
 
-  const createResult: any = await new Promise((resolve) => {
-    client1.emit(
+  const createResult = await new Promise<RoomActionResponse>((resolve) => {
+    client1?.emit(
       "create_room",
       { playerName: "Host Pilot", playerColor: "#ff0000", gameMode: MULTIPLAYER_MODES.COMPETE },
       resolve,
     );
   });
   assert.equal(createResult.success, true);
-  const roomId = createResult.roomId;
+  const roomId = createResult.roomId!;
 
   client2 = ioClient(SERVER_URL, { forceNew: true });
-  await new Promise((resolve) => client2.on("connect", resolve));
+  await new Promise<void>((resolve) => {
+    client2?.on("connect", () => resolve());
+  });
 
-  await new Promise((resolve) => {
-    client2.emit(
+  await new Promise<void>((resolve) => {
+    client2?.emit(
       ROOM_EVENTS.JOIN_ROOM,
       { roomId: roomId, playerName: "Rival Pilot", playerColor: "#00ff00" },
-      resolve,
+      () => resolve(),
     );
   });
 
@@ -45,8 +50,8 @@ try {
   room.status = "playing";
 
   let gameOverReceived = false;
-  let gameOverPayload: any = null;
-  client1.on(GAME_EVENTS.GAME_OVER, (data: any) => {
+  let gameOverPayload: GameOverPayload | null = null;
+  client1.on(GAME_EVENTS.GAME_OVER, (data: GameOverPayload) => {
     gameOverReceived = true;
     gameOverPayload = data;
   });
@@ -71,8 +76,9 @@ try {
   await new Promise((resolve) => setTimeout(resolve, 100));
 
   assert.equal(gameOverReceived, true, "Game over SHOULD be emitted after delay expires");
-  assert.equal(gameOverPayload.reason, "compete_match_complete");
-  assert.equal(gameOverPayload.winnerName, "Host Pilot");
+  const payload = gameOverPayload as GameOverPayload | null;
+  assert.equal(payload?.reason, "compete_match_complete");
+  assert.equal(payload?.winnerName, "Host Pilot");
   assert.equal(room.status, "finished");
 
   console.log("   ✅ Compete match end delay verified successfully!\n");

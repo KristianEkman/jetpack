@@ -14,7 +14,7 @@ try {
   // Git failed
 }
 
-let existingData: any = {};
+let existingData: Record<string, string> = {};
 if (fs.existsSync(versionFilePath)) {
   try {
     existingData = JSON.parse(fs.readFileSync(versionFilePath, 'utf8'));

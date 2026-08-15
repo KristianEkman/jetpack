@@ -1,4 +1,8 @@
-import { MultiplayerGameMode, WorldSnapshotPayload } from "./types";
+import {
+  MultiplayerGameMode,
+  SerializedProjectileTuple,
+  WorldSnapshotPayload,
+} from "./types";
 
 export interface LevelData {
   name: string;
@@ -133,7 +137,7 @@ export interface NetworkResponse {
 }
 
 export interface RoomActionResponse extends NetworkResponse {
-  room?: MultiplayerRoomInfo;
+  room?: MultiplayerRoomInfo | null;
   roomId?: string;
   socketId?: string;
   player?: MultiplayerPlayer;
@@ -151,12 +155,12 @@ export interface RoomJoinedPayload extends RoomActionResponse {
 }
 
 export interface PlayerJoinedPayload {
-  room?: MultiplayerRoomInfo;
+  room?: MultiplayerRoomInfo | null;
   player?: MultiplayerPlayer;
 }
 
 export interface PlayerLeftPayload {
-  room?: MultiplayerRoomInfo;
+  room?: MultiplayerRoomInfo | null;
   socketId?: string;
   leavingPlayer?: MultiplayerPlayer;
   newHostSocketId?: string | null;
@@ -173,7 +177,7 @@ export interface RoomUpdatedPayload {
 }
 
 export interface GameStartedPayload extends RoomActionResponse {
-  room?: MultiplayerRoomInfo;
+  room?: MultiplayerRoomInfo | null;
   levelIndex?: number;
   customMapData?: MultiplayerLevelData | null;
   destroyedEnemyIds?: string[];
@@ -188,6 +192,8 @@ export interface ItemCollectedPayload extends TilePositionPayload {
   tileType: number;
   collectedEmeralds: number;
   isAllCaught: boolean;
+  lives?: number;
+  rapidFireTimer?: number;
 }
 
 export interface EnemyDestroyedPayload {
@@ -210,7 +216,7 @@ export interface GameOverPayload extends Pick<RoomActionResponse, "room"> {
 }
 
 export interface NetworkWorldSnapshotPayload extends WorldSnapshotPayload {
-  projectiles?: unknown;
+  projectiles?: SerializedProjectileTuple[];
 }
 
 export interface EnemyDestroyedResponse extends NetworkResponse {

@@ -32,7 +32,7 @@ console.log("🧪 Testing Solo Player Laser Sound Effects...\n");
   console.log("1️⃣  Testing Solo Campaign Laser Fire Sound (playPhaseSound)...");
   const audio = new MockAudio();
   const tileMap = new TileMap();
-  const player = new Player(audio as any, tileMap);
+  const player = new Player(audio, tileMap);
 
   assert.equal(audio.phaseSoundsPlayed, 0, "No phase sounds played initially");
 
@@ -48,7 +48,7 @@ console.log("🧪 Testing Solo Player Laser Sound Effects...\n");
     sequenceId: 1,
   };
 
-  player.update(0.016, input, null as any);
+  player.update(0.016, input, null);
 
   assert.equal(
     audio.phaseSoundsPlayed,
@@ -57,7 +57,7 @@ console.log("🧪 Testing Solo Player Laser Sound Effects...\n");
   );
 
   // Subsequent frame while holding phase button shouldn't re-trigger sound due to cooldown
-  player.update(0.016, input, null as any);
+  player.update(0.016, input, null);
   assert.equal(
     audio.phaseSoundsPlayed,
     1,

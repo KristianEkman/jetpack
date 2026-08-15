@@ -11,7 +11,7 @@ export class SoundEffects {
     thrustNode: AudioBufferSourceNode | null;
     isThrusting: boolean;
     drainGain: GainNode | null;
-    drainNodes: any[] | null;
+    drainNodes: (AudioScheduledSourceNode | AudioNode)[] | null;
     isEnergyDraining: boolean;
 
     constructor(audioManager: AudioManager) {
@@ -633,7 +633,9 @@ export class SoundEffects {
                     if (nodesToStop) {
                         nodesToStop.forEach(node => {
                             try {
-                                if (node.stop) node.stop();
+                                if ('stop' in node && typeof (node as AudioScheduledSourceNode).stop === 'function') {
+                                    (node as AudioScheduledSourceNode).stop();
+                                }
                                 node.disconnect();
                             } catch (err) {}
                         });

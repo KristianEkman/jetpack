@@ -3,6 +3,12 @@ import { io, type Socket } from "socket.io-client";
 import { httpServer, gameLoop } from "../server/index.js";
 import { ROOM_EVENTS } from "../js/shared/constants.js";
 import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
+import {
+  RoomActionResponse,
+  RoomCreatedPayload,
+  RoomJoinedPayload,
+  RoomUpdatedPayload,
+} from "../js/shared/payloads.js";
 
 const PORT = 3097;
 
@@ -24,7 +30,7 @@ assert.strictEqual(CAMPAIGN_LEVELS.length, 8, "CAMPAIGN_LEVELS must contain 8 le
 console.log("1️⃣  Verified CAMPAIGN_LEVELS has 8 levels.");
 
 // 2. Host creates room with Stage 8 (levelIndex 7)
-const createRes = await new Promise<any>((resolve) => {
+const createRes = await new Promise<RoomCreatedPayload>((resolve) => {
   hostSocket.emit(
     ROOM_EVENTS.CREATE_ROOM,
     { playerName: "HostPilot", levelIndex: 7 },
@@ -39,7 +45,7 @@ const roomId = createRes.roomId;
 console.log(`2️⃣  Host created room ${roomId} with Stage 8 (${createRes.room.mapName}).`);
 
 // 3. Wingman joins room
-const joinRes = await new Promise<any>((resolve) => {
+const joinRes = await new Promise<RoomJoinedPayload>((resolve) => {
   clientSocket.emit(
     ROOM_EVENTS.JOIN_ROOM,
     { roomId, playerName: "WingmanPilot" },
@@ -53,13 +59,13 @@ console.log(`3️⃣  Wingman joined room ${roomId}.`);
 
 // 4. Host changes level to Stage 3 (levelIndex 2)
 let wingmanRoomUpdatedReceived = false;
-clientSocket.on(ROOM_EVENTS.ROOM_UPDATED, (payload: any) => {
+clientSocket.on(ROOM_EVENTS.ROOM_UPDATED, (payload: RoomUpdatedPayload) => {
   if (payload.room && payload.room.levelIndex === 2) {
     wingmanRoomUpdatedReceived = true;
   }
 });
 
-const changeLevelRes = await new Promise<any>((resolve) => {
+const changeLevelRes = await new Promise<RoomActionResponse & { room: { levelIndex: number; mapName?: string } }>((resolve) => {
   hostSocket.emit(
     ROOM_EVENTS.CHANGE_LEVEL,
     { levelIndex: 2 },
@@ -82,13 +88,13 @@ customGrid[0] = 13; // SPAWN tile
 customGrid[29] = 14; // EXIT tile
 
 let wingmanCustomUpdateReceived = false;
-clientSocket.on(ROOM_EVENTS.ROOM_UPDATED, (payload: any) => {
+clientSocket.on(ROOM_EVENTS.ROOM_UPDATED, (payload: RoomUpdatedPayload) => {
   if (payload.room && payload.room.mapName === "Test Custom Arena") {
     wingmanCustomUpdateReceived = true;
   }
 });
 
-const changeCustomRes = await new Promise<any>((resolve) => {
+const changeCustomRes = await new Promise<RoomActionResponse & { room: { mapName?: string; customMapData?: unknown } }>((resolve) => {
   hostSocket.emit(
     ROOM_EVENTS.CHANGE_LEVEL,
     {
@@ -111,7 +117,7 @@ assert.strictEqual(wingmanCustomUpdateReceived, true, "Wingman should receive ro
 console.log("5️⃣  Host changed room map to Custom Level and Wingman synced.");
 
 // 6. Non-host Wingman attempts to change level -> expect rejection
-const wingmanDeniedRes = await new Promise<any>((resolve) => {
+const wingmanDeniedRes = await new Promise<RoomActionResponse>((resolve) => {
   clientSocket.emit(
     ROOM_EVENTS.CHANGE_LEVEL,
     { levelIndex: 0 },

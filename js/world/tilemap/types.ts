@@ -30,4 +30,4 @@ export interface DebrisObject {
   speed?: number;
 }
 
-export type TileMapListener = (payload?: any) => void;
+export type TileMapListener<T = any> = (payload: T) => void;

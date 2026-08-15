@@ -26,7 +26,7 @@ const enemy = enemyManager.enemies[0];
 const enemyId = enemy.id;
 
 // 3. Setup Player in front of the wall (at x = 0, y = 32, facing right)
-const player = new Player(null as any, tileMap);
+const player = new Player(null, tileMap);
 player.x = 0;
 player.y = 32;
 player.facingRight = true;

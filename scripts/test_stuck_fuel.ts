@@ -18,7 +18,7 @@ const playerRow = 2;
 tileMap.grid[playerCol + playerRow * tileMap.cols] = TILES.AIR;
 tileMap.grid[playerCol + (playerRow + 1) * tileMap.cols] = TILES.BRICK; // Solid floor beneath
 
-const player = new Player(null as any, tileMap);
+const player = new Player(null, tileMap);
 player.x = playerCol * TILE_SIZE;
 player.y = playerRow * TILE_SIZE;
 player.fuel = 0; // Out of fuel!

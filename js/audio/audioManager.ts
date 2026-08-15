@@ -33,7 +33,7 @@ export class AudioManager {
     set currentStep(val: number) { this.sequencer.currentStep = val; }
     get nextStepTime(): number { return this.sequencer.nextStepTime; }
     set nextStepTime(val: number) { this.sequencer.nextStepTime = val; }
-    get musicTimer(): any { return this.sequencer.musicTimer; }
+    get musicTimer(): ReturnType<typeof setInterval> | null { return this.sequencer.musicTimer; }
 
     init(): void {
 
@@ -42,7 +42,7 @@ export class AudioManager {
             return;
         }
         if (!this.ctx) {
-            const AudioCtx = window?.AudioContext || (window as any).webkitAudioContext;
+            const AudioCtx = window?.AudioContext || window?.webkitAudioContext;
             this.ctx = new AudioCtx();
         }
         if (this.ctx && this.ctx.state === 'suspended') {
