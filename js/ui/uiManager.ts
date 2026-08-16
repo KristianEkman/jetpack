@@ -64,6 +64,33 @@ export class UIManager {
     this.initVersionBadge();
     serverHealthUI.init();
 
+    const btnHudToggle = document.getElementById("btnHudToggle");
+    const gameHud = document.getElementById("gameHud");
+
+    btnHudToggle?.addEventListener("click", (e: MouseEvent) => {
+      e.stopPropagation();
+      const isOpen = gameHud?.classList.toggle("hud-open");
+      if (btnHudToggle) {
+        btnHudToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        const toggleText = btnHudToggle.querySelector(".hud-toggle-text");
+        if (toggleText) {
+          toggleText.textContent = isOpen ? "HUD ▴" : "HUD ▾";
+        }
+      }
+    });
+
+    // Close HUD dropdown when clicking outside
+    window.addEventListener("click", (e: MouseEvent) => {
+      if (gameHud?.classList.contains("hud-open") && !(e.target as HTMLElement).closest("#gameHud")) {
+        gameHud.classList.remove("hud-open");
+        if (btnHudToggle) {
+          btnHudToggle.setAttribute("aria-expanded", "false");
+          const toggleText = btnHudToggle.querySelector(".hud-toggle-text");
+          if (toggleText) toggleText.textContent = "HUD ▾";
+        }
+      }
+    });
+
     document.getElementById("btnServerHealth")?.addEventListener("click", () => {
       serverHealthUI.openModal();
     });
@@ -441,6 +468,17 @@ export class UIManager {
   }
 
   closeAllDialogs(): void {
+    const gameHud = document.getElementById("gameHud");
+    if (gameHud?.classList.contains("hud-open")) {
+      gameHud.classList.remove("hud-open");
+      const btnHudToggle = document.getElementById("btnHudToggle");
+      if (btnHudToggle) {
+        btnHudToggle.setAttribute("aria-expanded", "false");
+        const toggleText = btnHudToggle.querySelector(".hud-toggle-text");
+        if (toggleText) toggleText.textContent = "HUD ▾";
+      }
+    }
+
     const badge = document.getElementById("gameVersionBadge");
     const logoItem = document.querySelector(".logo-item");
     const appContainer = document.getElementById("appContainer");

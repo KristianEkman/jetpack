@@ -26,34 +26,8 @@
 
         <!-- Header / HUD Bar -->
         <header id="gameHud" class="hud-bar">
-            <div class="hud-group">
-                <div class="hud-item logo-item">
-                    <span class="logo-text">JETPACK</span>
-                    <!-- Version & Build Info Badge (Top Left under Title) -->
-                    <div id="gameVersionBadge" class="game-version-badge" title="Git Commit Version & Deployed Date Time">
-                        <span class="version-label">v</span><span id="versionCommit">--</span> • <span id="versionDate">--</span>
-                        <!-- Error monitor badge (hidden by default) -->
-                        <div id="errorMonitorBadge" class="error-monitor-badge" title="Click to view errors">
-                            <span class="error-icon" style="color:red">⚠</span>
-                            <span id="errorMonitorCount">0</span>
-                        </div>
-
-                        <!-- Error monitor tooltip (hidden by default) -->
-                        <div id="errorMonitorTooltip" class="error-monitor-tooltip"></div>
-                    </div>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">LEVEL</span>
-                    <span id="hudLevel" class="hud-value">1</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">SCORE</span>
-                    <span id="hudScore" class="hud-value">000000</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">LIVES</span>
-                    <span id="hudLives" class="hud-value">❤️❤️❤️</span>
-                </div>
+            <!-- Mobile visible bar: Fuel gauge + Dropdown toggle button -->
+            <div class="hud-mobile-bar">
                 <div class="hud-item fuel-item">
                     <span class="hud-label">JETPACK FUEL</span>
                     <div class="fuel-bar-container">
@@ -61,35 +35,73 @@
                         <span id="fuelText" class="fuel-text">100%</span>
                     </div>
                 </div>
+
+                <button id="btnHudToggle" class="btn-icon hud-toggle-btn" aria-label="Toggle HUD details" aria-expanded="false" title="Toggle HUD details">
+                    <span class="hud-toggle-icon">📊</span>
+                    <span class="hud-toggle-text">HUD ▾</span>
+                </button>
             </div>
 
-            <div class="hud-group">
-                <div id="hudPowerup" class="hud-item powerup-item hidden">
-                    <span class="hud-label">POWERUP</span>
-                    <div class="powerup-value" style="display: flex; align-items: center; gap: 4px; color: #ff3300;">
-                        <span class="powerup-icon">⚡⚡</span>
-                        <span id="hudPowerupText" class="hud-value">15.0s</span>
+            <!-- Dropdown contents on small screens / inline groups on desktop -->
+            <div id="hudDropdown" class="hud-dropdown-content">
+                <div class="hud-group hud-stats-group">
+                    <div class="hud-item logo-item">
+                        <span class="logo-text">JETPACK</span>
+                        <!-- Version & Build Info Badge (Top Left under Title) -->
+                        <div id="gameVersionBadge" class="game-version-badge" title="Git Commit Version & Deployed Date Time">
+                            <span class="version-label">v</span><span id="versionCommit">--</span> • <span id="versionDate">--</span>
+                            <!-- Error monitor badge (hidden by default) -->
+                            <div id="errorMonitorBadge" class="error-monitor-badge" title="Click to view errors">
+                                <span class="error-icon" style="color:red">⚠</span>
+                                <span id="errorMonitorCount">0</span>
+                            </div>
+
+                            <!-- Error monitor tooltip (hidden by default) -->
+                            <div id="errorMonitorTooltip" class="error-monitor-tooltip"></div>
+                        </div>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">LEVEL</span>
+                        <span id="hudLevel" class="hud-value">1</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">SCORE</span>
+                        <span id="hudScore" class="hud-value">000000</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">LIVES</span>
+                        <span id="hudLives" class="hud-value">❤️❤️❤️</span>
                     </div>
                 </div>
 
-                <div class="hud-item emerald-item">
-                    <span class="hud-label">EMERALDS</span>
-                    <div class="emerald-counter">
-                        <span class="emerald-icon">💎</span>
-                        <span id="hudEmeralds" class="hud-value">0 / 0</span>
+                <div class="hud-group hud-actions-group">
+                    <div id="hudPowerup" class="hud-item powerup-item hidden">
+                        <span class="hud-label">POWERUP</span>
+                        <div class="powerup-value" style="display: flex; align-items: center; gap: 4px; color: #ff3300;">
+                            <span class="powerup-icon">⚡⚡</span>
+                            <span id="hudPowerupText" class="hud-value">15.0s</span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="hud-item user-item">
-                    <span class="hud-label">USER</span>
-                    <span id="userAccountBadge" class="hud-value">Guest</span>
-                </div>
+                    <div class="hud-item emerald-item">
+                        <span class="hud-label">EMERALDS</span>
+                        <div class="emerald-counter">
+                            <span class="emerald-icon">💎</span>
+                            <span id="hudEmeralds" class="hud-value">0 / 0</span>
+                        </div>
+                    </div>
 
-                <div class="hud-buttons-row">
-                    <button id="btnUserAuth" class="btn-icon" title="User Account">👤</button>
-                    <button id="btnPause" class="btn-icon" title="Pause Game (Esc)">⏸️</button>
-                    <button id="btnSound" class="btn-icon" title="Mute/Unmute Audio">🔊</button>
-                    <button id="btnCRT" class="btn-icon" title="Toggle CRT Retro Filter">📺</button>
+                    <div class="hud-item user-item">
+                        <span class="hud-label">USER</span>
+                        <span id="userAccountBadge" class="hud-value">Guest</span>
+                    </div>
+
+                    <div class="hud-buttons-row">
+                        <button id="btnUserAuth" class="btn-icon" title="User Account">👤</button>
+                        <button id="btnPause" class="btn-icon" title="Pause Game (Esc)">⏸️</button>
+                        <button id="btnSound" class="btn-icon" title="Mute/Unmute Audio">🔊</button>
+                        <button id="btnCRT" class="btn-icon" title="Toggle CRT Retro Filter">📺</button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -106,19 +118,19 @@
                 <div id="bannerNotification" class="banner-notification hidden">
                     <span id="bannerText">LEVEL COMPLETE!</span>
                 </div>
+            </div>
 
-                <!-- Touchscreen Virtual Gamepad (Mobile/Tablet fallback) -->
-                <div id="touchGamepad" class="touch-gamepad hidden">
-                    <div class="dpad">
-                        <button id="touchUp" class="dpad-btn up">▲</button>
-                        <button id="touchLeft" class="dpad-btn left">◄</button>
-                        <button id="touchRight" class="dpad-btn right">►</button>
-                        <button id="touchDown" class="dpad-btn down">▼</button>
-                    </div>
-                    <div class="action-buttons">
-                        <button id="touchJetpack" class="action-btn jetpack">🚀 FLY</button>
-                        <button id="touchPhase" class="action-btn phase">⚡ PHASE</button>
-                    </div>
+            <!-- Touchscreen Virtual Gamepad (Mobile/Tablet fallback) - Under the level -->
+            <div id="touchGamepad" class="touch-gamepad hidden">
+                <div class="dpad">
+                    <button id="touchUp" class="dpad-btn up" aria-label="Up">▲</button>
+                    <button id="touchLeft" class="dpad-btn left" aria-label="Left">◄</button>
+                    <button id="touchRight" class="dpad-btn right" aria-label="Right">►</button>
+                    <button id="touchDown" class="dpad-btn down" aria-label="Down">▼</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="touchJetpack" class="action-btn jetpack">🚀 FLY</button>
+                    <button id="touchPhase" class="action-btn phase">⚡ PHASE</button>
                 </div>
             </div>
         </main>

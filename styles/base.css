@@ -55,6 +55,7 @@ html {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   max-width: 1280px;
   max-height: 800px;
   background: radial-gradient(circle at center, #121829 0%, #05070c 100%);
@@ -62,3 +63,12 @@ html {
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
   position: relative;
 }
+
+@media (max-width: 768px) {
+  .app-container {
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}
+

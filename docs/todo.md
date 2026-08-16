@@ -6,7 +6,7 @@
 - [ ] improve sound effects and music..
 - [ ] gamepad support
       Native support for Xbox/PlayStation/Switch controllers with customizable stick sensitivity.
-- [ ] Place in game buttons better.
+- [x] Place in game buttons better (HUD collapsed into dropdown on small screens with fuel only; mobile touch controls placed under level).
 - [ ] mobile controls more transparent and bigger.
 - [ ] During competetive games, each user should have their own spawning tile.
 - [x] monitor server load during multiplayer game. We will see if there is need for optimization.

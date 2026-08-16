@@ -147,8 +147,12 @@ export class InputHandler {
         const touchGamepad = document.getElementById('touchGamepad');
         if (!touchGamepad) return;
 
-        // Auto-show touch controls on touch devices
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        // Auto-show touch controls on touch devices or coarse pointer viewports
+        if (
+            'ontouchstart' in window ||
+            (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+            (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+        ) {
             touchGamepad.classList.remove('hidden');
         }
 
@@ -165,10 +169,12 @@ export class InputHandler {
                 this.keys[keyName] = false;
             };
 
-            btn.addEventListener('touchstart', start);
-            btn.addEventListener('touchend', end);
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('touchcancel', end, { passive: false });
             btn.addEventListener('mousedown', start);
             btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
         };
 
         bindBtn('touchUp', 'up');

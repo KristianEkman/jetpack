@@ -5,13 +5,15 @@
 .game-viewport {
   flex: 1;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   position: relative;
-  padding: 10px;
+  padding: 8px 12px;
   overflow: hidden;
   min-height: 0;
   min-width: 0;
+  gap: 8px;
 }
 
 .canvas-wrapper {
@@ -28,9 +30,10 @@
   overflow: hidden;
   aspect-ratio: 5 / 3;
   width: 100%;
-  height: 100%;
   max-width: min(100%, 960px);
   max-height: min(100%, 576px);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 #gameCanvas {
@@ -103,21 +106,28 @@
   }
 }
 
-/* Touch Gamepad */
+/* Touch Gamepad (Positioned Under the Level) */
 .touch-gamepad {
-  position: absolute;
-  bottom: 15px;
-  left: 15px;
-  right: 15px;
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 960px);
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  pointer-events: none;
-  z-index: 8;
+  align-items: center;
+  padding: 6px 14px;
+  background: rgba(10, 15, 26, 0.85);
+  border: 1.5px solid rgba(0, 255, 204, 0.3);
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  flex-shrink: 0;
+  touch-action: none;
 }
 
 .touch-gamepad.hidden {
-  display: none;
+  display: none !important;
 }
 
 .dpad,
@@ -127,18 +137,32 @@
 
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, 45px);
-  grid-template-rows: repeat(3, 45px);
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 40px);
   gap: 4px;
 }
 
 .dpad-btn {
-  background: rgba(16, 22, 36, 0.85);
-  border: 1px solid var(--color-primary);
+  background: rgba(16, 22, 36, 0.9);
+  border: 1.5px solid var(--color-primary);
   color: var(--color-primary);
   border-radius: 8px;
   font-size: 1.2rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, transform 0.1s, box-shadow 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.dpad-btn:active {
+  background: rgba(0, 255, 204, 0.45);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 255, 204, 0.8);
+  transform: scale(0.95);
 }
 
 .dpad-btn.up {
@@ -163,16 +187,82 @@
 
 .action-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: center;
 }
 
 .action-btn {
   padding: 12px 18px;
-  background: rgba(0, 255, 204, 0.25);
-  border: 1.5px solid var(--color-primary);
+  background: rgba(0, 255, 204, 0.2);
+  border: 2px solid var(--color-primary);
   color: #fff;
   font-family: var(--font-display);
+  font-size: 0.9rem;
   font-weight: bold;
-  border-radius: 8px;
+  letter-spacing: 1px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+.action-btn.jetpack {
+  border-color: #00ffcc;
+  background: rgba(0, 255, 204, 0.25);
+  color: #00ffcc;
+}
+
+.action-btn.jetpack:active {
+  background: rgba(0, 255, 204, 0.6);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.8);
+  transform: scale(0.95);
+}
+
+.action-btn.phase {
+  border-color: #ffcc00;
+  background: rgba(255, 204, 0, 0.2);
+  color: #ffcc00;
+}
+
+.action-btn.phase:active {
+  background: rgba(255, 204, 0, 0.6);
+  color: #000;
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.8);
+  transform: scale(0.95);
+}
+
+@media (max-width: 480px) {
+  .game-viewport {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .touch-gamepad {
+    padding: 4px 8px;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 38px);
+    grid-template-rows: repeat(3, 34px);
+    gap: 3px;
+  }
+
+  .dpad-btn {
+    font-size: 1rem;
+    border-radius: 6px;
+  }
+
+  .action-buttons {
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
 }
