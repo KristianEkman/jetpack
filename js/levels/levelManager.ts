@@ -29,17 +29,8 @@ export class LevelManager {
         game.enemyManager.clear();
 
         // Spawn player at SPAWN tile
-        let spawnFound = false;
-        for (let r = 0; r < game.tileMap.rows; r++) {
-            for (let c = 0; c < game.tileMap.cols; c++) {
-                if (game.tileMap.getTile(c, r) === TILES.SPAWN) {
-                    game.player.spawn(c * TILE_SIZE + 4, r * TILE_SIZE + 2);
-                    spawnFound = true;
-                    break;
-                }
-            }
-        }
-        if (!spawnFound) game.player.spawn(100, 100);
+        const spawn = game.tileMap.getPrimarySpawnPoint();
+        game.player.spawn(spawn.x, spawn.y);
 
         // Spawn Enemies from level data arrays
         if (levelData.flitzers) {
@@ -75,19 +66,8 @@ export class LevelManager {
         game.tileMap.loadLevelData(record, isRestart);
         game.enemyManager.clear();
 
-        let spawnFound = false;
-        for (let r = 0; r < game.tileMap.rows; r++) {
-            for (let c = 0; c < game.tileMap.cols; c++) {
-                if (game.tileMap.getTile(c, r) === TILES.SPAWN) {
-                    game.player.spawn(c * TILE_SIZE + 4, r * TILE_SIZE + 2);
-                    spawnFound = true;
-                    break;
-                }
-            }
-        }
-        if (!spawnFound) {
-            game.player.spawn(record.spawnX ?? 100, record.spawnY ?? 100);
-        }
+        const spawn = game.tileMap.getPrimarySpawnPoint();
+        game.player.spawn(spawn.x, spawn.y);
 
         if (record.flitzers) {
             record.flitzers.forEach(f => game.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
@@ -160,19 +140,16 @@ export class LevelManager {
         }
 
         let total = 0;
-        let spawnX = 100, spawnY = 100;
         for (let r = 0; r < game.tileMap.rows; r++) {
             for (let c = 0; c < game.tileMap.cols; c++) {
                 const t = game.tileMap.getTile(c, r);
                 if (t === TILES.EMERALD) total++;
-                if (t === TILES.SPAWN) {
-                    spawnX = c * TILE_SIZE + 4;
-                    spawnY = r * TILE_SIZE + 2;
-                }
             }
         }
         game.tileMap.totalEmeralds = total;
-        game.player.spawn(spawnX, spawnY);
+        game.tileMap.rebuildSpawnPoints();
+        const spawn = game.tileMap.getPrimarySpawnPoint();
+        game.player.spawn(spawn.x, spawn.y);
         this.spawnEnemiesFromGrid();
 
         game.gameState = GAME_STATES.PLAYING;

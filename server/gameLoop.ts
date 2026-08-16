@@ -240,11 +240,9 @@ export class GameLoop {
             const spawns =
               room.tileMap?.spawnPoints && room.tileMap.spawnPoints.length > 0
                 ? room.tileMap.spawnPoints
-                : (room.tileMap?.getPrimarySpawnPoint
-                  ? [room.tileMap.getPrimarySpawnPoint()]
-                  : [{ x: 128, y: 100 }]);
+                : [room.tileMap.getPrimarySpawnPoint()];
             const spawn =
-              spawns[pIdx % spawns.length] || spawns[0] || { x: 128, y: 100 };
+              spawns[pIdx % spawns.length] || spawns[0];
             playerEntity.spawn(spawn.x, spawn.y);
             playerEntity.vx = 0;
             playerEntity.vy = 0;

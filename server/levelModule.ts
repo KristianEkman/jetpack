@@ -10,7 +10,7 @@ import {
  * Ensures a level object does not contain undefined fields when saving to Firebase RTDB.
  */
 function sanitizeRecord(record: CustomLevelRecord): CustomLevelRecord {
-  return {
+  const result: CustomLevelRecord = {
     id: record.id,
     name: record.name,
     authorId: record.authorId,
@@ -18,8 +18,6 @@ function sanitizeRecord(record: CustomLevelRecord): CustomLevelRecord {
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     grid: record.grid,
-    spawnX: record.spawnX ?? 100,
-    spawnY: record.spawnY ?? 100,
     flitzers: record.flitzers || [],
     missiles: record.missiles || [],
     turrets: record.turrets || [],
@@ -32,6 +30,13 @@ function sanitizeRecord(record: CustomLevelRecord): CustomLevelRecord {
     ratings: record.ratings || {},
     isReleased: record.isReleased !== undefined ? Boolean(record.isReleased) : true,
   };
+  if (typeof record.spawnX === "number") {
+    result.spawnX = record.spawnX;
+  }
+  if (typeof record.spawnY === "number") {
+    result.spawnY = record.spawnY;
+  }
+  return result;
 }
 
 /**

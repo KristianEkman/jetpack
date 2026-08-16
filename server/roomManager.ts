@@ -229,6 +229,18 @@ export class RoomManager {
     room.tileMap.loadLevelData(levelData);
     room.enemyManager = new EnemyManager(room.tileMap);
 
+    const spawns =
+      room.tileMap.spawnPoints && room.tileMap.spawnPoints.length > 0
+        ? room.tileMap.spawnPoints
+        : [room.tileMap.getPrimarySpawnPoint()];
+    let pIdx = 0;
+    for (const playerEntity of room.players.values()) {
+      playerEntity.tileMap = room.tileMap;
+      const spawn = spawns[pIdx % spawns.length] || spawns[0];
+      playerEntity.spawn(spawn.x, spawn.y);
+      pIdx++;
+    }
+
     return room;
   }
 
@@ -255,9 +267,11 @@ export class RoomManager {
       isLocal: false,
     });
 
-    const spawns = room.tileMap.spawnPoints || [{ x: 128, y: 100 }];
-    const spawn = spawns[playerIndex % spawns.length] ||
-      spawns[0] || { x: 128, y: 100 };
+    const spawns =
+      room.tileMap.spawnPoints && room.tileMap.spawnPoints.length > 0
+        ? room.tileMap.spawnPoints
+        : [room.tileMap.getPrimarySpawnPoint()];
+    const spawn = spawns[playerIndex % spawns.length] || spawns[0];
     playerEntity.spawn(spawn.x, spawn.y);
 
     const playerConfig: PlayerConfig = {

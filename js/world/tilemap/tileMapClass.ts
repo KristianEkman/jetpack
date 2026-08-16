@@ -117,11 +117,23 @@ export class TileMap {
     this.rebuildSpawnPoints(levelData);
   }
 
+  isAreaSolid(x: number, y: number, width: number = 22, height: number = 28): boolean {
+    const minCol = Math.floor(x / TILE_SIZE);
+    const maxCol = Math.floor((x + width - 1) / TILE_SIZE);
+    const minRow = Math.floor(y / TILE_SIZE);
+    const maxRow = Math.floor((y + height - 1) / TILE_SIZE);
+    for (let r = minRow; r <= maxRow; r++) {
+      for (let c = minCol; c <= maxCol; c++) {
+        if (this.isSolid(c, r)) return true;
+      }
+    }
+    return false;
+  }
+
   rebuildSpawnPoints(levelData?: LevelData): void {
     this.spawnPoints = [];
-    if (levelData && typeof levelData.spawnX === "number" && typeof levelData.spawnY === "number") {
-      this.spawnPoints.push({ x: levelData.spawnX, y: levelData.spawnY });
-    }
+
+    // 1. Grid SPAWN tiles always take primary precedence
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         if (this.grid[r * this.cols + c] === TILES.SPAWN) {
@@ -133,8 +145,39 @@ export class TileMap {
         }
       }
     }
+
+    // 2. If no SPAWN tiles exist in the grid, check if valid explicit coordinates were provided
+    if (
+      this.spawnPoints.length === 0 &&
+      levelData &&
+      typeof levelData.spawnX === "number" &&
+      typeof levelData.spawnY === "number"
+    ) {
+      if (!this.isAreaSolid(levelData.spawnX, levelData.spawnY)) {
+        this.spawnPoints.push({ x: levelData.spawnX, y: levelData.spawnY });
+      }
+    }
+
+    // 3. Fallback: search for the first open, non-solid tile in the interior of the map
     if (this.spawnPoints.length === 0) {
-      this.spawnPoints.push({ x: 128, y: 100 });
+      let foundSafeSpot = false;
+      for (let r = 1; r < this.rows - 1; r++) {
+        for (let c = 1; c < this.cols - 1; c++) {
+          const spX = c * TILE_SIZE + 4;
+          const spY = r * TILE_SIZE + 2;
+          if (!this.isAreaSolid(spX, spY)) {
+            this.spawnPoints.push({ x: spX, y: spY });
+            foundSafeSpot = true;
+            break;
+          }
+        }
+        if (foundSafeSpot) break;
+      }
+
+      // Final ultimate fallback
+      if (this.spawnPoints.length === 0) {
+        this.spawnPoints.push({ x: 1 * TILE_SIZE + 4, y: 1 * TILE_SIZE + 2 });
+      }
     }
   }
 
@@ -142,7 +185,7 @@ export class TileMap {
     if (!this.spawnPoints || this.spawnPoints.length === 0) {
       this.rebuildSpawnPoints();
     }
-    return this.spawnPoints[0] || { x: 128, y: 100 };
+    return this.spawnPoints[0] || { x: 1 * TILE_SIZE + 4, y: 1 * TILE_SIZE + 2 };
   }
 
   getTile(col: number, row: number): number {

@@ -559,14 +559,12 @@ io.on("connection", (socket: Socket) => {
       const spawns =
         room.tileMap?.spawnPoints && room.tileMap.spawnPoints.length > 0
           ? room.tileMap.spawnPoints
-          : (room.tileMap?.getPrimarySpawnPoint
-            ? [room.tileMap.getPrimarySpawnPoint()]
-            : [{ x: 128, y: 100 }]);
+          : [room.tileMap.getPrimarySpawnPoint()];
 
       let pIdx = 0;
       for (const [sId, playerEntity] of room.players.entries()) {
         const spawn =
-          spawns[pIdx % spawns.length] || spawns[0] || { x: 128, y: 100 };
+          spawns[pIdx % spawns.length] || spawns[0];
         playerEntity.spawn(spawn.x, spawn.y);
         playerEntity.lives = 3;
         playerEntity.score = 0;
@@ -766,14 +764,12 @@ io.on("connection", (socket: Socket) => {
       const spawns =
         room.tileMap?.spawnPoints && room.tileMap.spawnPoints.length > 0
           ? room.tileMap.spawnPoints
-          : (room.tileMap?.getPrimarySpawnPoint
-            ? [room.tileMap.getPrimarySpawnPoint()]
-            : [{ x: 128, y: 100 }]);
+          : [room.tileMap.getPrimarySpawnPoint()];
 
       let pIdx = 0;
       for (const [sId, playerEntity] of room.players.entries()) {
         const spawn =
-          spawns[pIdx % spawns.length] || spawns[0] || { x: 128, y: 100 };
+          spawns[pIdx % spawns.length] || spawns[0];
         playerEntity.spawn(spawn.x, spawn.y);
         playerEntity.lives = 3;
         playerEntity.isDead = false;

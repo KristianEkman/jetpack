@@ -708,16 +708,24 @@ export class MultiplayerController {
 
     game.playerManager.clear();
     game.playerManager.setLocalSocketId(game.network.socketId!);
+    const spawns =
+      game.tileMap.spawnPoints && game.tileMap.spawnPoints.length > 0
+        ? game.tileMap.spawnPoints
+        : [game.tileMap.getPrimarySpawnPoint()];
+
+    let pIdx = 0;
     room?.players.forEach((player) => {
+      const defaultSpawn = spawns[pIdx % spawns.length] || spawns[0];
       game.playerManager.addPlayer(player.socketId, {
         id: player.id,
         name: player.name,
         color: player.color,
         isLocal: player.socketId === game.network.socketId,
         showNameTag: true,
-        x: player.x ?? 128,
-        y: player.y ?? 100,
+        x: player.x ?? defaultSpawn.x,
+        y: player.y ?? defaultSpawn.y,
       });
+      pIdx++;
     });
 
     const localPlayer = game.playerManager.getLocalPlayer();

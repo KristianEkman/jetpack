@@ -18,7 +18,7 @@ export class UserService {
 
   private constructor() {
     const savedId = this.getLoggedInUserId();
-    const savedName = localStorage.getItem(USER_NAME_KEY);
+    const savedName = typeof localStorage !== "undefined" ? localStorage.getItem(USER_NAME_KEY) : null;
     if (savedId && savedName) {
       this.currentUser = { id: savedId, name: savedName };
     }
@@ -32,7 +32,7 @@ export class UserService {
   }
 
   public getLoggedInUserId(): string | null {
-    return localStorage.getItem(USER_ID_KEY);
+    return typeof localStorage !== "undefined" ? localStorage.getItem(USER_ID_KEY) : null;
   }
 
   public getLoggedInUser(): UserProfile | null {
