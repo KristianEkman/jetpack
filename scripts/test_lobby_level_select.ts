@@ -26,8 +26,8 @@ await new Promise<void>((resolve) => clientSocket.on("connect", resolve));
 console.log("🔌 Host and Wingman connected to test server.");
 
 // 1. Verify CAMPAIGN_LEVELS count
-assert.strictEqual(CAMPAIGN_LEVELS.length, 8, "CAMPAIGN_LEVELS must contain 8 levels");
-console.log("1️⃣  Verified CAMPAIGN_LEVELS has 8 levels.");
+assert.ok(CAMPAIGN_LEVELS.length >= 8, "CAMPAIGN_LEVELS must contain at least 8 levels");
+console.log(`1️⃣  Verified CAMPAIGN_LEVELS has ${CAMPAIGN_LEVELS.length} levels.`);
 
 // 2. Host creates room with Stage 8 (levelIndex 7)
 const createRes = await new Promise<RoomCreatedPayload>((resolve) => {

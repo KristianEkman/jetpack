@@ -3,9 +3,9 @@ import { CAMPAIGN_LEVELS } from "../js/levels/campaign.js";
 
 console.log("🧪 Running Level 8 Menu Selection Verification Suite...\n");
 
-// 1. Verify CAMPAIGN_LEVELS contains 8 campaign levels
-assert.equal(CAMPAIGN_LEVELS.length, 8, "CAMPAIGN_LEVELS must contain 8 levels");
-console.log("1️⃣  CAMPAIGN_LEVELS contains 8 levels.");
+// 1. Verify CAMPAIGN_LEVELS contains campaign levels including Stage 8
+assert.ok(CAMPAIGN_LEVELS.length >= 8, "CAMPAIGN_LEVELS must contain at least 8 levels");
+console.log(`1️⃣  CAMPAIGN_LEVELS contains ${CAMPAIGN_LEVELS.length} levels.`);
 
 // 2. Verify Level 8 metadata
 const level8 = CAMPAIGN_LEVELS[7];
@@ -23,7 +23,7 @@ const cards = CAMPAIGN_LEVELS.map((level, idx) => {
   };
 });
 
-assert.equal(cards.length, 8, "Single-player level grid should produce 8 cards");
+assert.ok(cards.length >= 8, "Single-player level grid should produce at least 8 cards");
 assert.equal(cards[7].className, "level-card bonus-card", "Level 8 card must have bonus-card styling class");
 assert.equal(cards[7].label, "BONUS 8", "Level 8 card must display BONUS 8 label");
 console.log("3️⃣  Single-player level selection grid cards verified with Level 8 bonus card.");
@@ -35,7 +35,7 @@ const dropdownOptions = CAMPAIGN_LEVELS.map((level, idx) => ({
 }));
 dropdownOptions.push({ value: "custom", text: "🛠️ Custom Map (Uploaded / Saved)" });
 
-assert.equal(dropdownOptions.length, 9, "Multiplayer room level select dropdown should have 9 options (8 levels + 1 custom)");
+assert.ok(dropdownOptions.length >= 9, "Multiplayer room level select dropdown should have at least 9 options");
 assert.equal(dropdownOptions[7].value, "7", "Level 8 option value must be '7'");
 assert.equal(dropdownOptions[7].text, "Level 8 - Stage 8: Bonus Treasure Vault", "Level 8 option text must be 'Level 8 - Stage 8: Bonus Treasure Vault'");
 // 5. Verify local server level select button visibility logic

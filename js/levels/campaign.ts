@@ -233,6 +233,30 @@ const LEVEL_8_STR = `
 ##############################
 `;
 
+// Level 9: Quantum Citadel
+// Advanced citadel featuring multi-tier phase corridors, teleporter routing,
+// conveyor acceleration chutes, ice platforms, laser energy drains, and balanced enemy artillery.
+const LEVEL_9_STR = `
+##############################
+#S....E......PPP..E..PPP.....#
+#.######.....P....R....P.###.#
+#...F..#.....PPPPPPPPPPP.#.T.#
+#####..#.................#.###
+#......V..>>>>>>>>>>>>>..#...#
+#.######.................#.E.#
+#......#...E.............#####
+#.####.#..IIIIIIIIIIIII......#
+#.#..#.#.................###.#
+#.#E.#.#####...DDDD...#####..#
+#.##.#.#.......E..........#..#
+#....#.#.................#.###
+#.<<.#.#########H#########...#
+#.##.#.#........H........#.L.#
+#.G..#.#...E....H....E...#####
+#.T..#.F........H........F.O.#
+##############################
+`;
+
 export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
     {
         name: "Stage 1: Genesis Caverns",
@@ -313,6 +337,20 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
         flitzers: [
             { x: 300, y: 150, vx: 120, vy: 0 },
             { x: 600, y: 320, vx: -120, vy: 0 }
+        ]
+    },
+    {
+        name: "Stage 9: Quantum Citadel",
+        grid: parseLevelString(LEVEL_9_STR),
+        flitzers: [
+            { x: 380, y: 160, vx: 120, vy: 0 },
+            { x: 600, y: 380, vx: -120, vy: 0 }
+        ],
+        missiles: [
+            { x: 840, y: 100 }
+        ],
+        turrets: [
+            { x: 740, y: 160, fireInterval: 2.8 }
         ]
     }
 ];

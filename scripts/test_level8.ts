@@ -6,7 +6,7 @@ import { EnemyManager } from "../js/entities/enemy/index.js";
 console.log("🧪 Running Stage 8 Bonus Level Validation Suite...\n");
 
 // 1. Check CAMPAIGN_LEVELS count and metadata
-assert.equal(CAMPAIGN_LEVELS.length, 8, "CAMPAIGN_LEVELS should now contain 8 levels");
+assert.ok(CAMPAIGN_LEVELS.length >= 8, "CAMPAIGN_LEVELS should contain at least 8 levels");
 
 const stage8 = CAMPAIGN_LEVELS[7];
 assert.equal(stage8.name, "Stage 8: Bonus Treasure Vault");

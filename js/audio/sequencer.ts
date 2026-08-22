@@ -116,7 +116,7 @@ export class MusicSequencer {
             this.nextStepTime = this.ctx.currentTime + 0.05;
         }
 
-        const gameBpms = [112, 132, 110, 96, 120, 115, 75, 140];
+        const gameBpms = [112, 132, 110, 96, 120, 115, 75, 140, 100];
         const bpm = this.currentTrack === 'menu' ? 100 : (gameBpms[this.currentLevel] ?? 112);
         const maxSteps = 192;
         const stepDuration = (60 / bpm) / 4;
@@ -237,6 +237,7 @@ export class MusicSequencer {
         const isLevel6 = this.currentLevel === 5;
         const isLevel7 = this.currentLevel === 6;
         const isLevel8 = this.currentLevel === 7;
+        const isLevel9 = this.currentLevel === 8;
 
         let bassPattern = BASS_PATTERN;
         if (isLevel2) bassPattern = BASS_PATTERN_L2;
@@ -246,6 +247,7 @@ export class MusicSequencer {
         if (isLevel6) bassPattern = BASS_PATTERN_L3;
         if (isLevel7) bassPattern = BASS_PATTERN_L7;
         if (isLevel8) bassPattern = BASS_PATTERN_L8;
+        if (isLevel9) bassPattern = BASS_PATTERN_L5;
 
         let bassTied = 1;
         if (isLevel7) {
@@ -312,6 +314,7 @@ export class MusicSequencer {
         if (isLevel6) melodyPattern = MELODY_PATTERN_L3;
         if (isLevel7) melodyPattern = MELODY_PATTERN_L7;
         if (isLevel8) melodyPattern = MELODY_PATTERN_L8;
+        if (isLevel9) melodyPattern = MELODY_PATTERN_L5;
 
         const leadFreq = melodyPattern[step];
         if (leadFreq) {
