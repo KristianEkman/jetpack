@@ -211,6 +211,7 @@ const elementMap = new Map<string, MockElement>();
   "btnUserAuth",
   "btnPause",
   "btnSound",
+  "btnMusic",
   "btnCRT",
   "gameVersionBadge",
   "versionCommit",
@@ -240,7 +241,7 @@ const elementMap = new Map<string, MockElement>();
 const toggleTextEl = createMockElement("toggleText", "span");
 toggleTextEl.className = "hud-toggle-text";
 toggleTextEl.textContent = "HUD ▾";
-elementMap.get("btnHudToggle")!.appendChild(toggleTextEl);
+elementMap.get("btnHudToggle")?.appendChild(toggleTextEl);
 
 const windowListeners: Record<string, ((e?: any) => void)[]> = {};
 (globalThis as any).window = {
@@ -278,6 +279,10 @@ const mockGame: any = {
     onPausePress: null,
   },
   audio: {
+    isSfxMuted: false,
+    isMusicMuted: false,
+    toggleSfx: () => false,
+    toggleMusic: () => false,
     toggleMute: () => false,
     startMenuMusic: () => {},
     stopThrust: () => {},

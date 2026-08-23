@@ -9,6 +9,14 @@ export { NOTES } from './notes.js';
 export * from './patterns.js';
 
 export interface AudioLike {
+  isMuted?: boolean;
+  isSfxMuted?: boolean;
+  isMusicMuted?: boolean;
+  toggleSfx?: () => boolean;
+  toggleMusic?: () => boolean;
+  toggleMute?: () => boolean;
+  setSfxMuted?: (muted: boolean) => void;
+  setMusicMuted?: (muted: boolean) => void;
   startThrust?: () => void;
   stopThrust?: () => void;
   playPhaseSound?: () => void;

@@ -7,18 +7,143 @@ import { MusicSequencer } from './sequencer.js';
 
 export class AudioManager {
     ctx: AudioContext | null;
-    isMuted: boolean;
+    isSfxMuted: boolean;
+    isMusicMuted: boolean;
     noiseBuffer: AudioBuffer | null;
     sfx: SoundEffects;
     sequencer: MusicSequencer;
 
     constructor() {
         this.ctx = null;
-        this.isMuted = false;
+        this.isSfxMuted = false;
+        this.isMusicMuted = false;
         this.noiseBuffer = null;
+
+        // Load persisted audio preferences if available
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const savedSfx = localStorage.getItem('jetpack_sfx_muted');
+                if (savedSfx !== null) {
+                    this.isSfxMuted = savedSfx === 'true';
+                }
+                const savedMusic = localStorage.getItem('jetpack_music_muted');
+                if (savedMusic !== null) {
+                    this.isMusicMuted = savedMusic === 'true';
+                }
+            } catch (e) {
+                // Ignore localStorage errors (e.g. security / sandboxed iframes)
+            }
+        }
 
         this.sfx = new SoundEffects(this);
         this.sequencer = new MusicSequencer(this);
+    }
+
+    get isMuted(): boolean {
+        return this.isSfxMuted && this.isMusicMuted;
+    }
+
+    set isMuted(val: boolean) {
+        this.isSfxMuted = val;
+        this.isMusicMuted = val;
+        this.persistAudioPreferences();
+        this.applyMuteState();
+    }
+
+    private persistAudioPreferences(): void {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('jetpack_sfx_muted', String(this.isSfxMuted));
+                localStorage.setItem('jetpack_music_muted', String(this.isMusicMuted));
+            } catch (e) {
+                // Ignore
+            }
+        }
+    }
+
+    private applyMuteState(): void {
+        if (this.sequencer.bgmGain && this.ctx) {
+            this.sequencer.bgmGain.gain.setValueAtTime(this.isMusicMuted ? 0 : 0.2, this.ctx.currentTime);
+        }
+        if (this.isSfxMuted) {
+            if (this.sfx.thrustGain) {
+                this.sfx.thrustGain.gain.value = 0;
+            }
+            if (this.sfx.drainGain) {
+                this.sfx.drainGain.gain.value = 0;
+            }
+            if (this.sfx.isThrusting) {
+                this.sfx.stopThrust();
+            }
+            if (this.sfx.isEnergyDraining) {
+                this.sfx.stopEnergyDrain();
+            }
+        }
+    }
+
+    toggleSfx(): boolean {
+        this.isSfxMuted = !this.isSfxMuted;
+        this.persistAudioPreferences();
+        if (this.isSfxMuted) {
+            if (this.sfx.thrustGain) {
+                this.sfx.thrustGain.gain.value = 0;
+            }
+            if (this.sfx.drainGain) {
+                this.sfx.drainGain.gain.value = 0;
+            }
+            if (this.sfx.isThrusting) {
+                this.sfx.stopThrust();
+            }
+            if (this.sfx.isEnergyDraining) {
+                this.sfx.stopEnergyDrain();
+            }
+        }
+        return this.isSfxMuted;
+    }
+
+    toggleMusic(): boolean {
+        this.isMusicMuted = !this.isMusicMuted;
+        this.persistAudioPreferences();
+        if (this.sequencer.bgmGain && this.ctx) {
+            this.sequencer.bgmGain.gain.setValueAtTime(this.isMusicMuted ? 0 : 0.2, this.ctx.currentTime);
+        }
+        return this.isMusicMuted;
+    }
+
+    setSfxMuted(muted: boolean): void {
+        this.isSfxMuted = muted;
+        this.persistAudioPreferences();
+        if (this.isSfxMuted) {
+            if (this.sfx.thrustGain) {
+                this.sfx.thrustGain.gain.value = 0;
+            }
+            if (this.sfx.drainGain) {
+                this.sfx.drainGain.gain.value = 0;
+            }
+            if (this.sfx.isThrusting) {
+                this.sfx.stopThrust();
+            }
+            if (this.sfx.isEnergyDraining) {
+                this.sfx.stopEnergyDrain();
+            }
+        }
+    }
+
+    setMusicMuted(muted: boolean): void {
+        this.isMusicMuted = muted;
+        this.persistAudioPreferences();
+        if (this.sequencer.bgmGain && this.ctx) {
+            this.sequencer.bgmGain.gain.setValueAtTime(this.isMusicMuted ? 0 : 0.2, this.ctx.currentTime);
+        }
+    }
+
+    toggleMute(): boolean {
+        const newMuteState = !(this.isSfxMuted && this.isMusicMuted);
+        this.isSfxMuted = newMuteState;
+        this.isMusicMuted = newMuteState;
+        this.persistAudioPreferences();
+        this.applyMuteState();
+        return newMuteState;
     }
 
     get thrustGain(): GainNode | null { return this.sfx.thrustGain; }
@@ -102,20 +227,6 @@ export class AudioManager {
             window.addEventListener('keydown', unlock, { capture: true });
             window.addEventListener('click', unlock, { capture: true });
         }
-    }
-
-    toggleMute(): boolean {
-        this.isMuted = !this.isMuted;
-        if (this.sequencer.bgmGain && this.ctx) {
-            this.sequencer.bgmGain.gain.setValueAtTime(this.isMuted ? 0 : 0.2, this.ctx.currentTime);
-        }
-        if (this.isMuted && this.sfx.thrustGain) {
-            this.sfx.thrustGain.gain.value = 0;
-        }
-        if (this.isMuted && this.sfx.drainGain) {
-            this.sfx.drainGain.gain.value = 0;
-        }
-        return this.isMuted;
     }
 
     // Sequencer Methods

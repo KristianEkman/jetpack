@@ -29,7 +29,7 @@ export class SoundEffects {
     }
 
     get isMuted(): boolean {
-        return this.audio.isMuted;
+        return this.audio.isSfxMuted;
     }
 
     // Play thrust noise

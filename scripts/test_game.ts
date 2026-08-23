@@ -18,6 +18,9 @@ interface MockElement {
   };
   style: Record<string, string>;
   dataset: Record<string, string>;
+  attributes?: Record<string, string>;
+  setAttribute?: (name: string, val: string) => void;
+  getAttribute?: (name: string) => string | null;
   textContent: string;
   innerHTML: string;
   value: string;
@@ -168,6 +171,13 @@ function createMockElement(id: string = "", tagName: string = "div"): MockElemen
     },
     style: {},
     dataset: {},
+    attributes: {} as Record<string, string>,
+    setAttribute(name: string, val: string): void {
+      (this as any).attributes[name] = val;
+    },
+    getAttribute(name: string): string | null {
+      return (this as any).attributes[name] ?? null;
+    },
     textContent: "",
     innerHTML: "",
     value: "",

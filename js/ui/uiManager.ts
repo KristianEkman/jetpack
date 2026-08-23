@@ -99,10 +99,20 @@ export class UIManager {
       .getElementById("btnPause")
       ?.addEventListener("click", () => game.togglePause());
     document.getElementById("btnSound")?.addEventListener("click", () => {
-      const muted = game.audio.toggleMute();
-      const soundBtn = document.getElementById("btnSound");
-      if (soundBtn) soundBtn.textContent = muted ? "🔇" : "🔊";
+      if (typeof game.audio.toggleSfx === "function") {
+        game.audio.toggleSfx();
+      } else if (typeof game.audio.toggleMute === "function") {
+        game.audio.toggleMute();
+      }
+      this.updateAudioButtons();
     });
+    document.getElementById("btnMusic")?.addEventListener("click", () => {
+      if (typeof game.audio.toggleMusic === "function") {
+        game.audio.toggleMusic();
+      }
+      this.updateAudioButtons();
+    });
+    this.updateAudioButtons();
     document.getElementById("btnCRT")?.addEventListener("click", () => {
       document.getElementById("crtOverlay")?.classList.toggle("active");
     });
@@ -596,5 +606,25 @@ export class UIManager {
       .catch(() => {
         // Ignore errors when running without server
       });
+  }
+
+  updateAudioButtons(): void {
+    const soundBtn = document.getElementById("btnSound");
+    if (soundBtn) {
+      const isSfxMuted = this.game.audio.isSfxMuted ?? false;
+      soundBtn.textContent = isSfxMuted ? "🔇" : "🔊";
+      soundBtn.title = isSfxMuted ? "Unmute Sound FX" : "Mute Sound FX";
+      soundBtn.setAttribute?.("aria-label", soundBtn.title);
+      soundBtn.classList?.toggle?.("muted", isSfxMuted);
+    }
+
+    const musicBtn = document.getElementById("btnMusic");
+    if (musicBtn) {
+      const isMusicMuted = this.game.audio.isMusicMuted ?? false;
+      musicBtn.textContent = isMusicMuted ? "🔕" : "🎵";
+      musicBtn.title = isMusicMuted ? "Unmute Music" : "Mute Music";
+      musicBtn.setAttribute?.("aria-label", musicBtn.title);
+      musicBtn.classList?.toggle?.("muted", isMusicMuted);
+    }
   }
 }

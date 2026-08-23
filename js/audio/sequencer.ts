@@ -40,7 +40,7 @@ export class MusicSequencer {
     }
 
     get isMuted(): boolean {
-        return this.audio.isMuted;
+        return this.audio.isMusicMuted;
     }
 
     get noiseBuffer(): AudioBuffer | null {
