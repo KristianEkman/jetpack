@@ -114,13 +114,13 @@ export function renderTile(
       );
       outerGlow.addColorStop(
         0,
-        `rgba(0, 255, 136, ${0.5 + pulseGlow * 0.25})`,
+        `rgba(0, 255, 136, ${0.55 + pulseGlow * 0.25})`,
       );
       outerGlow.addColorStop(
         0.5,
-        `rgba(0, 255, 204, ${0.2 + pulseGlow * 0.15})`,
+        `rgba(16, 185, 129, ${0.25 + pulseGlow * 0.15})`,
       );
-      outerGlow.addColorStop(1, "rgba(0, 255, 136, 0)");
+      outerGlow.addColorStop(1, "rgba(5, 150, 105, 0)");
       ctx.fillStyle = outerGlow;
       ctx.beginPath();
       ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
@@ -136,7 +136,7 @@ export function renderTile(
       const pCrownL = { x: cx - 3.5, y: cy - 3 };
       const pCrownR = { x: cx + 3.5, y: cy - 3 };
 
-      ctx.fillStyle = "#003c73";
+      ctx.fillStyle = "#024220";
       ctx.beginPath();
       ctx.moveTo(pML.x, pML.y);
       ctx.lineTo(pCrownL.x, pCrownL.y);
@@ -144,7 +144,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#00549e";
+      ctx.fillStyle = "#046633";
       ctx.beginPath();
       ctx.moveTo(pCrownL.x, pCrownL.y);
       ctx.lineTo(pC.x, pC.y);
@@ -152,7 +152,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#006ec7";
+      ctx.fillStyle = "#058744";
       ctx.beginPath();
       ctx.moveTo(pCrownR.x, pCrownR.y);
       ctx.lineTo(pC.x, pC.y);
@@ -160,7 +160,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#0085ed";
+      ctx.fillStyle = "#0a9b4f";
       ctx.beginPath();
       ctx.moveTo(pMR.x, pMR.y);
       ctx.lineTo(pCrownR.x, pCrownR.y);
@@ -168,7 +168,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#009ee3";
+      ctx.fillStyle = "#0eab58";
       ctx.beginPath();
       ctx.moveTo(pTL.x, pTL.y);
       ctx.lineTo(pML.x, pML.y);
@@ -176,7 +176,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#1ad1ff";
+      ctx.fillStyle = "#10b981";
       ctx.beginPath();
       ctx.moveTo(pTL.x, pTL.y);
       ctx.lineTo(pCrownL.x, pCrownL.y);
@@ -184,7 +184,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#4de1ff";
+      ctx.fillStyle = "#34d399";
       ctx.beginPath();
       ctx.moveTo(pTR.x, pTR.y);
       ctx.lineTo(pC.x, pC.y);
@@ -192,7 +192,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#00c3ff";
+      ctx.fillStyle = "#22c55e";
       ctx.beginPath();
       ctx.moveTo(pTR.x, pTR.y);
       ctx.lineTo(pCrownR.x, pCrownR.y);
@@ -202,9 +202,9 @@ export function renderTile(
 
       const tableGrad = ctx.createLinearGradient(pTL.x, pTL.y, pTR.x, pC.y);
       tableGrad.addColorStop(0, "#ffffff");
-      tableGrad.addColorStop(0.35, "#cceeff");
-      tableGrad.addColorStop(0.7, "#80dfff");
-      tableGrad.addColorStop(1, "#33ccff");
+      tableGrad.addColorStop(0.3, "#d1fae5");
+      tableGrad.addColorStop(0.65, "#6ee7b7");
+      tableGrad.addColorStop(1, "#10b981");
       ctx.fillStyle = tableGrad;
       ctx.beginPath();
       ctx.moveTo(pTL.x, pTL.y);
@@ -213,7 +213,7 @@ export function renderTile(
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.strokeStyle = "rgba(230, 255, 240, 0.9)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(pTL.x, pTL.y);
@@ -248,7 +248,7 @@ export function renderTile(
       const fx = pTL.x + 1;
       const fy = pTL.y + 1;
 
-      ctx.strokeStyle = `rgba(255, 255, 255, ${flareAlpha})`;
+      ctx.strokeStyle = `rgba(235, 255, 245, ${flareAlpha})`;
       ctx.lineWidth = 1.3;
       ctx.beginPath();
       ctx.moveTo(fx - flareSize, fy);
@@ -266,6 +266,15 @@ export function renderTile(
       ctx.beginPath();
       ctx.arc(fx, fy, 1.5, 0, Math.PI * 2);
       ctx.fill();
+
+      // Subtle crystal glimmer
+      const glimmerAlpha = (Math.sin(flareTime + 2.0) + 1) * 0.35;
+      if (glimmerAlpha > 0.35) {
+        ctx.fillStyle = `rgba(209, 250, 229, ${glimmerAlpha})`;
+        ctx.beginPath();
+        ctx.arc(pCrownR.x, pCrownR.y, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       break;
     }
 

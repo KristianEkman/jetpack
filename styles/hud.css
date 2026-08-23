@@ -87,19 +87,22 @@
 
 .emerald-icon {
   font-size: 1.15rem;
+  display: inline-block;
+  filter: hue-rotate(285deg) saturate(1.8) drop-shadow(0 0 6px #00ffaa);
   animation: emeraldGlowPulse 2.5s infinite ease-in-out;
 }
 
 @keyframes emeraldGlowPulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 6px #00ffaa)
+    filter: hue-rotate(285deg) saturate(1.8) drop-shadow(0 0 6px #00ffaa)
       drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
     transform: scale(1);
   }
 
   50% {
-    filter: drop-shadow(0 0 14px #00ffaa) drop-shadow(0 0 20px #7effc5);
+    filter: hue-rotate(285deg) saturate(2.2) drop-shadow(0 0 14px #00ffaa)
+      drop-shadow(0 0 20px #7effc5);
     transform: scale(1.15);
   }
 }

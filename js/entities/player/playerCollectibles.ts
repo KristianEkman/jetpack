@@ -34,19 +34,19 @@ export function checkCollectibles(player: Player): void {
           player.tileMap.addSparkles(
             col * TILE_SIZE + 16,
             row * TILE_SIZE + 16,
-            "#00e5ff",
+            "#00ff88",
             25,
           );
           player.tileMap.addSparkles(
             col * TILE_SIZE + 16,
             row * TILE_SIZE + 16,
-            "#00ff77",
+            "#10b981",
             25,
           );
           player.tileMap.addSparkles(
             col * TILE_SIZE + 16,
             row * TILE_SIZE + 16,
-            "#ffd700",
+            "#6ee7b7",
             20,
           );
         } else {
@@ -54,13 +54,13 @@ export function checkCollectibles(player: Player): void {
           player.tileMap.addSparkles(
             col * TILE_SIZE + 16,
             row * TILE_SIZE + 16,
-            "#00e5ff",
+            "#00ff88",
             12,
           );
           player.tileMap.addSparkles(
             col * TILE_SIZE + 16,
             row * TILE_SIZE + 16,
-            "#00ff77",
+            "#34d399",
             10,
           );
         }
