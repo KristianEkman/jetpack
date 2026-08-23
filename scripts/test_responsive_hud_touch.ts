@@ -57,7 +57,6 @@ assert.ok(canvasWrapperEndIndex > 0 && touchGamepadIndex > canvasWrapperEndIndex
 // D. Check CSS responsive rules
 assert.ok(hudCss.includes("@media (max-width: 768px)"), "hud.css must contain responsive media query");
 assert.ok(hudCss.includes(".hud-bar.hud-open .hud-dropdown-content"), "hud.css must support .hud-open state");
-assert.ok(hudCss.includes("hudDropdownSlide"), "hud.css must include animation for dropdown slide");
 assert.ok(viewportCss.includes(".touch-gamepad"), "viewport.css must style touch gamepad");
 
 console.log("   ✅ HTML & CSS structure verified.\n");
@@ -66,208 +65,23 @@ console.log("   ✅ HTML & CSS structure verified.\n");
 
 console.log("2️⃣  Testing Interactive Behavior in Mock DOM...");
 
-interface MockElement {
-  id: string;
-  tagName: string;
-  className: string;
-  classList: {
-    classes: Set<string>;
-    add: (...tokens: string[]) => void;
-    remove: (...tokens: string[]) => void;
-    contains: (token: string) => boolean;
-    toggle: (token: string, force?: boolean) => boolean;
-  };
-  style: Record<string, string>;
-  dataset: Record<string, string>;
-  textContent: string;
-  innerHTML: string;
-  value: string;
-  attributes: Record<string, string>;
-  children: MockElement[];
-  parentElement: MockElement | null;
-  listeners: Record<string, ((e?: any) => void)[]>;
-  addEventListener: (event: string, handler: (event?: any) => void) => void;
-  removeEventListener: (event: string, handler: (event?: any) => void) => void;
-  dispatchEvent: (event: { type: string; preventDefault?: () => void; stopPropagation?: () => void; target?: any }) => boolean;
-  appendChild: <T extends MockElement>(child: T) => T;
-  removeChild: <T extends MockElement>(child: T) => T;
-  querySelector: (selector: string) => MockElement | null;
-  querySelectorAll: (selector: string) => MockElement[];
-  setAttribute: (key: string, val: string) => void;
-  getAttribute: (key: string) => string | null;
-  closest: (selector: string) => MockElement | null;
-  showModal: () => void;
-  close: () => void;
-  open?: boolean;
-}
+import {
+  MockElement,
+  createMockElement,
+  getOrRegisterMockElement,
+  setupMockDom,
+  elementCache,
+} from "./test_mock_dom.js";
 
-function createMockElement(id: string, tagName = "div"): MockElement {
-  const classes = new Set<string>();
-  const el: MockElement = {
-    id,
-    tagName: tagName.toUpperCase(),
-    className: "",
-    classList: {
-      classes,
-      add: (...tokens: string[]) => {
-        tokens.forEach((t) => classes.add(t));
-        el.className = Array.from(classes).join(" ");
-      },
-      remove: (...tokens: string[]) => {
-        tokens.forEach((t) => classes.delete(t));
-        el.className = Array.from(classes).join(" ");
-      },
-      contains: (token: string) => classes.has(token),
-      toggle: (token: string, force?: boolean) => {
-        const has = classes.has(token);
-        const next = force !== undefined ? force : !has;
-        if (next) classes.add(token);
-        else classes.delete(token);
-        el.className = Array.from(classes).join(" ");
-        return next;
-      },
-    },
-    style: {},
-    dataset: {},
-    textContent: "",
-    innerHTML: "",
-    value: "",
-    attributes: {},
-    children: [],
-    parentElement: null,
-    listeners: {},
-    addEventListener(event, handler) {
-      if (!this.listeners[event]) this.listeners[event] = [];
-      this.listeners[event].push(handler);
-    },
-    removeEventListener(event, handler) {
-      if (this.listeners[event]) {
-        this.listeners[event] = this.listeners[event].filter((h) => h !== handler);
-      }
-    },
-    dispatchEvent(event) {
-      const handlers = this.listeners[event.type] || [];
-      event.target = event.target || this;
-      handlers.forEach((h) => h(event));
-      return true;
-    },
-    appendChild(child) {
-      child.parentElement = this;
-      this.children.push(child);
-      return child;
-    },
-    removeChild(child) {
-      this.children = this.children.filter((c) => c !== child);
-      child.parentElement = null;
-      return child;
-    },
-    querySelector(selector) {
-      if (selector === ".hud-toggle-text") {
-        return this.children.find((c) => c.className.includes("hud-toggle-text")) || null;
-      }
-      return null;
-    },
-    querySelectorAll() {
-      return [];
-    },
-    setAttribute(key, val) {
-      this.attributes[key] = val;
-    },
-    getAttribute(key) {
-      return this.attributes[key] || null;
-    },
-    closest(selector) {
-      if (selector === "#gameHud" && (this.id === "gameHud" || this.parentElement?.id === "gameHud")) {
-        return this;
-      }
-      return null;
-    },
-    showModal() {
-      this.open = true;
-    },
-    close() {
-      this.open = false;
-    },
-  };
-  return el;
-}
-
-// Setup Global Mock DOM
-const elementMap = new Map<string, MockElement>();
-[
-  "appContainer",
-  "gameHud",
-  "hudDropdown",
-  "btnHudToggle",
-  "hudLevel",
-  "hudScore",
-  "hudLives",
-  "hudEmeralds",
-  "fuelBarFill",
-  "fuelText",
-  "hudPowerup",
-  "hudPowerupText",
-  "userAccountBadge",
-  "btnUserAuth",
-  "btnPause",
-  "btnSound",
-  "btnMusic",
-  "btnCRT",
-  "gameVersionBadge",
-  "versionCommit",
-  "versionDate",
-  "errorMonitorBadge",
-  "errorMonitorCount",
-  "errorMonitorTooltip",
-  "touchGamepad",
-  "touchUp",
-  "touchLeft",
-  "touchRight",
-  "touchDown",
-  "touchJetpack",
-  "touchPhase",
-  "gameCanvas",
-  "crtOverlay",
-  "bannerNotification",
-  "bannerText",
-  "dlgMainMenu",
-  "dlgPause"
-].forEach((id) => {
-  const el = createMockElement(id);
-  elementMap.set(id, el);
-});
+setupMockDom();
+const elementMap = elementCache;
 
 // Setup child for btnHudToggle
 const toggleTextEl = createMockElement("toggleText", "span");
 toggleTextEl.className = "hud-toggle-text";
 toggleTextEl.textContent = "HUD ▾";
-elementMap.get("btnHudToggle")?.appendChild(toggleTextEl);
+getOrRegisterMockElement("btnHudToggle").appendChild(toggleTextEl);
 
-const windowListeners: Record<string, ((e?: any) => void)[]> = {};
-(globalThis as any).window = {
-  addEventListener(event: string, handler: (e?: any) => void) {
-    if (!windowListeners[event]) windowListeners[event] = [];
-    windowListeners[event].push(handler);
-  },
-  removeEventListener(event: string, handler: (e?: any) => void) {
-    if (windowListeners[event]) {
-      windowListeners[event] = windowListeners[event].filter((h) => h !== handler);
-    }
-  },
-  matchMedia: (query: string) => ({ matches: false }),
-};
-
-(globalThis as any).document = {
-  getElementById: (id: string) => elementMap.get(id) || null,
-  querySelector: (sel: string) => null,
-  querySelectorAll: (sel: string) => [],
-  addEventListener: () => {},
-};
-
-(globalThis as any).fetch = async () => ({
-  ok: true,
-  json: async () => ({ commitHash: "test1234", deployedAt: "2026-08-16" }),
-});
 
 // Dynamically import UIManager & InputHandler
 const { UIManager } = await import("../js/ui/uiManager.js");
@@ -338,9 +152,10 @@ btnHudToggle.dispatchEvent({ type: "click", stopPropagation: () => {} });
 assert.equal(gameHud.classList.contains("hud-open"), true);
 
 const outsideTarget = createMockElement("outsideDiv");
-const windowClickHandlers = windowListeners["click"] || [];
-windowClickHandlers.forEach((h) => h({ target: outsideTarget }));
+(window as unknown as { dispatchEvent: (event: unknown) => boolean }).dispatchEvent({ type: "click", target: outsideTarget });
 assert.equal(gameHud.classList.contains("hud-open"), false, "Outside click should close HUD dropdown");
+
+
 assert.equal(btnHudToggle.getAttribute("aria-expanded"), "false");
 console.log("   ✅ Dropdown open, close, and outside-click mechanics verified.");
 

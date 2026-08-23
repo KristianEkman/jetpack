@@ -8,6 +8,7 @@ import {
   PLAYER_PHYSICS,
   COMPETE_SCORE_PER_HIT,
 } from "../../shared/constants.js";
+import { isPointInBox, getCenterTile } from "../../shared/collision.js";
 import { EnemyManager, ENEMY_TYPES } from "../enemy/index.js";
 import type { Player } from "./playerClass.js";
 
@@ -25,8 +26,7 @@ export function performPhaseBeam(
       ? PLAYER_PHYSICS.RAPID_FIRE_COOLDOWN
       : PLAYER_PHYSICS.PHASE_COOLDOWN_TIME;
 
-  const playerCol = Math.floor((player.x + player.width / 2) / TILE_SIZE);
-  const playerRow = Math.floor((player.y + player.height / 2) / TILE_SIZE);
+  const { col: playerCol, row: playerRow } = getCenterTile(player);
   if (player.tileMap.getTile(playerCol, playerRow) === TILES.PHASE_BRICK) {
     player.tileMap.phaseTile(playerCol, playerRow);
   }
@@ -42,8 +42,7 @@ export function performPhaseBeam(
     const targetCol = Math.floor(targetX / TILE_SIZE);
     const targetRow = Math.floor(startY / TILE_SIZE);
 
-    const t = player.tileMap.getTile(targetCol, targetRow);
-    if (t === TILES.PHASE_BRICK) {
+    if (player.tileMap.getTile(targetCol, targetRow) === TILES.PHASE_BRICK) {
       if (player.audio?.playPhaseImpact) {
         player.audio.playPhaseImpact();
       } else {
@@ -66,12 +65,7 @@ export function performPhaseBeam(
         ) {
           continue;
         }
-        if (
-          targetX >= target.x &&
-          targetX <= target.x + target.width &&
-          startY >= target.y &&
-          startY <= target.y + target.height
-        ) {
+        if (isPointInBox(targetX, startY, target)) {
           const livesBeforeHit = target.lives;
           target.takeDamage();
           if (target.lives < livesBeforeHit) {
@@ -87,12 +81,7 @@ export function performPhaseBeam(
       let hitEnemyIndex = -1;
       for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
         const enemy = enemyManager.enemies[i];
-        if (
-          targetX >= enemy.x &&
-          targetX <= enemy.x + enemy.width &&
-          startY >= enemy.y &&
-          startY <= enemy.y + enemy.height
-        ) {
+        if (isPointInBox(targetX, startY, enemy)) {
           hitEnemyIndex = i;
           break;
         }

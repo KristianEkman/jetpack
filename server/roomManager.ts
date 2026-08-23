@@ -16,16 +16,8 @@ import {
   PublicRoomInfo,
 } from "../js/shared/payloads.js";
 import { AudioManager } from "../js/audio/audioManager.js";
-import { MULTIPLAYER_MODES } from "../js/shared/constants.js";
+import { MULTIPLAYER_MODES, PLAYER_COLORS, DEFAULT_PLAYER_COLOR } from "../js/shared/constants.js";
 
-const PLAYER_COLORS = [
-  "#ff4444",
-  "#44ff44",
-  "#4488ff",
-  "#ffff44",
-  "#ff44ff",
-  "#00ffff",
-];
 
 export interface PlayerConfig {
   socketId: string;

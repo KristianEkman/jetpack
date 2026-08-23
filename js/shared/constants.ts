@@ -119,3 +119,15 @@ export const NETWORK_SETTINGS = {
   SNAP_THRESHOLD_SQ: 64 * 64, // 4096 sq px max error distance before hard snap
   INPUT_HEARTBEAT_INTERVAL: 50, // ms heartbeat rate when input unchanged
 } as const;
+
+export const PLAYER_COLORS = [
+  "#ff4444",
+  "#44ff44",
+  "#4488ff",
+  "#ffff44",
+  "#ff44ff",
+  "#00ffff",
+] as const;
+
+export const DEFAULT_PLAYER_COLOR = PLAYER_COLORS[0];
+

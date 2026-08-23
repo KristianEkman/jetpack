@@ -157,84 +157,76 @@ export class SoundEffects {
         highOsc.stop(now + 0.1);
     }
 
-    // Emerald Chime
-    playEmeraldPickup(): void {
+    // Helper: Schedule an arpeggiated melodic tone sequence
+    scheduleArpeggio(
+        notes: number[],
+        options: {
+            stepTime?: number;
+            duration?: number;
+            type?: OscillatorType;
+            peakGain?: number;
+            getType?: (idx: number, total: number) => OscillatorType;
+            startTimeOffset?: number;
+        } = {},
+    ): void {
         if (this.isMuted) return;
         this.audio.init();
         if (!this.ctx) return;
 
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        const now = this.ctx.currentTime + (options.startTimeOffset || 0);
+        const stepTime = options.stepTime ?? 0.04;
+        const duration = options.duration ?? 0.12;
+        const peakGain = options.peakGain ?? 0.15;
+        const defaultType = options.type ?? 'sine';
+
         notes.forEach((freq, idx) => {
             if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
 
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.04);
+            osc.type = options.getType ? options.getType(idx, notes.length) : defaultType;
+            const startTime = now + idx * stepTime;
+            osc.frequency.setValueAtTime(freq, startTime);
 
-            gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.04);
-            gain.gain.linearRampToValueAtTime(0.15, this.ctx.currentTime + idx * 0.04 + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.04 + 0.12);
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
             osc.connect(gain);
             gain.connect(this.ctx.destination);
 
-            osc.start(this.ctx.currentTime + idx * 0.04);
-            osc.stop(this.ctx.currentTime + idx * 0.04 + 0.12);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        });
+    }
+
+    // Emerald Chime
+    playEmeraldPickup(): void {
+        this.scheduleArpeggio([523.25, 659.25, 783.99, 1046.50], {
+            stepTime: 0.04,
+            duration: 0.12,
+            peakGain: 0.15,
+            type: 'sine',
         });
     }
 
     // Extra Life 1UP Chime
     playExtraLifePickup(): void {
-        if (this.isMuted) return;
-        this.audio.init();
-        if (!this.ctx) return;
-
-        const notes = [NOTES.Fs5, NOTES.As5, NOTES.Cs6, NOTES.Fs6, NOTES.As6]; // Fs5, As5, Cs6, Fs6, As6 (F# Major arpeggio, 6 notes up from C5)
-        notes.forEach((freq, idx) => {
-            if (!this.ctx) return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-
-            osc.type = idx === notes.length - 1 ? 'triangle' : 'sine';
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.05);
-
-            gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.05);
-            gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + idx * 0.05 + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.05 + 0.18);
-
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-
-            osc.start(this.ctx.currentTime + idx * 0.05);
-            osc.stop(this.ctx.currentTime + idx * 0.05 + 0.18);
+        this.scheduleArpeggio([NOTES.Fs5, NOTES.As5, NOTES.Cs6, NOTES.Fs6, NOTES.As6], {
+            stepTime: 0.05,
+            duration: 0.18,
+            peakGain: 0.2,
+            getType: (idx, len) => (idx === len - 1 ? 'triangle' : 'sine'),
         });
     }
 
     // Rapid Fire Power-Up Pickup Synth Chime
     playRapidFirePickup(): void {
-        if (this.isMuted) return;
-        this.audio.init();
-        if (!this.ctx) return;
-
-        const notes = [NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.E6, NOTES.G6];
-        notes.forEach((freq, idx) => {
-            if (!this.ctx) return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.035);
-
-            gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.035);
-            gain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + idx * 0.035 + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.035 + 0.15);
-
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-
-            osc.start(this.ctx.currentTime + idx * 0.035);
-            osc.stop(this.ctx.currentTime + idx * 0.035 + 0.15);
+        this.scheduleArpeggio([NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.E6, NOTES.G6], {
+            stepTime: 0.035,
+            duration: 0.15,
+            peakGain: 0.18,
+            type: 'sawtooth',
         });
     }
 
@@ -245,28 +237,14 @@ export class SoundEffects {
         if (!this.ctx) return;
 
         const now = this.ctx.currentTime;
-
         const arpNotes = [523.25, 659.25, 783.99, 987.77, 1046.50, 1318.51, 1567.98, 2093.00];
-
-        arpNotes.forEach((freq, idx) => {
-            if (!this.ctx) return;
-            const startTime = now + idx * 0.04;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, startTime);
-
-            gain.gain.setValueAtTime(0, startTime);
-            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18);
-
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-
-            osc.start(startTime);
-            osc.stop(startTime + 0.18);
+        this.scheduleArpeggio(arpNotes, {
+            stepTime: 0.04,
+            duration: 0.18,
+            peakGain: 0.2,
+            type: 'triangle',
         });
+
 
         const chordTime = now + 0.24;
         const chordFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];

@@ -10,39 +10,15 @@ import { updateHomingMissile, renderHomingMissile } from "./homingMissile.js";
 import { updateTurret, renderTurret } from "./turret.js";
 import { updateBoss, renderBoss, hasBossTileCollision } from "./boss.js";
 import { AudioLike, AudioManager } from "../../audio/index.js";
-import { EnemySnapshotTuple } from "../../shared/types.js";
+import {
+  EnemySnapshotTuple,
+  SerializedEnemyTuple,
+  SerializedProjectileTuple,
+} from "../../shared/types.js";
+import { BoundingBox, checkAABB as checkAABBHelper } from "../../shared/collision.js";
+export type { BoundingBox, SerializedEnemyTuple, SerializedProjectileTuple };
 
-export type SerializedEnemyTuple = [
-  id: string,
-  type: string,
-  x: number,
-  y: number,
-  vx: number,
-  vy: number,
-  animTimer: number,
-  timer: number,
-  fireInterval: number | undefined,
-  hp: number | undefined,
-  maxHp: number | undefined,
-  phase: number | undefined,
-  hitFlashTimer: number,
-];
 
-export type SerializedProjectileTuple = [
-  x: number,
-  y: number,
-  vx: number,
-  vy: number,
-  radius: number,
-  life: number,
-];
-
-export interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 
 export class EnemyManager {
   tileMap: TileMap;
@@ -160,7 +136,50 @@ export class EnemyManager {
     });
   }
 
+  spawnEnemiesFromLevelData(levelData?: {
+    flitzers?: { x: number; y: number; vx?: number; vy?: number }[];
+    missiles?: { x: number; y: number }[];
+    turrets?: { x: number; y: number; fireInterval?: number }[];
+    bosses?: {
+      x: number;
+      y: number;
+      hp?: number;
+      bossName?: string;
+      width?: number;
+      height?: number;
+    }[];
+  }): void {
+    if (!levelData) return;
+    if (levelData.flitzers) {
+      levelData.flitzers.forEach((f) =>
+        this.addFlitzer(f.x, f.y, f.vx, f.vy),
+      );
+    }
+    if (levelData.missiles) {
+      levelData.missiles.forEach((m) => this.addHomingMissile(m.x, m.y));
+    }
+    if (levelData.turrets) {
+      levelData.turrets.forEach((t) =>
+        this.addTurret(t.x, t.y, t.fireInterval),
+      );
+    }
+    if (levelData.bosses) {
+      levelData.bosses.forEach((b) =>
+        this.addBoss(
+          b.x,
+          b.y,
+          b.hp || 10,
+          null,
+          b.bossName,
+          b.width,
+          b.height,
+        ),
+      );
+    }
+  }
+
   hasAliveBoss(): boolean {
+
     return this.enemies.some(
       (e) =>
         e.type === ENEMY_TYPES.BOSS &&
@@ -660,12 +679,7 @@ export class EnemyManager {
   }
 
   checkAABB(rect1: BoundingBox, rect2: BoundingBox): boolean {
-    return (
-      rect1.x < rect2.x + rect2.width &&
-      rect1.x + rect1.width > rect2.x &&
-      rect1.y < rect2.y + rect2.height &&
-      rect1.y + rect1.height > rect2.y
-    );
+    return checkAABBHelper(rect1, rect2);
   }
 
   hasTileCollision(

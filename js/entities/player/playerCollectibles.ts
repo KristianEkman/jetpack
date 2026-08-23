@@ -8,16 +8,15 @@ import {
   GAME_EVENTS,
   PLAYER_PHYSICS,
 } from "../../shared/constants.js";
+import { getTileBounds } from "../../shared/collision.js";
 import { TeleporterPad } from "../../world/tilemap.js";
 import type { Player } from "./playerClass.js";
 
 export function checkCollectibles(player: Player): void {
-  const leftCol = Math.floor(player.x / TILE_SIZE);
-  const rightCol = Math.floor((player.x + player.width) / TILE_SIZE);
-  const topRow = Math.floor(player.y / TILE_SIZE);
-  const bottomRow = Math.floor((player.y + player.height - 1) / TILE_SIZE);
+  const { leftCol, rightCol, topRow, bottomRow } = getTileBounds(player);
 
   for (let col = leftCol; col <= rightCol; col++) {
+
     for (let row = topRow; row <= bottomRow; row++) {
       const tile = player.tileMap.getTile(col, row);
 

@@ -32,19 +32,8 @@ export class LevelManager {
         const spawn = game.tileMap.getPrimarySpawnPoint();
         game.player.spawn(spawn.x, spawn.y);
 
-        // Spawn Enemies from level data arrays
-        if (levelData.flitzers) {
-            levelData.flitzers.forEach(f => game.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
-        }
-        if (levelData.missiles) {
-            levelData.missiles.forEach(m => game.enemyManager.addHomingMissile(m.x, m.y));
-        }
-        if (levelData.turrets) {
-            levelData.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
-        }
-        if (levelData.bosses) {
-            levelData.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10, null, b.bossName, b.width, b.height));
-        }
+        // Spawn Enemies from level data
+        game.enemyManager.spawnEnemiesFromLevelData(levelData);
         this.spawnEnemiesFromGrid();
 
         game.gameState = GAME_STATES.PLAYING;
@@ -69,18 +58,7 @@ export class LevelManager {
         const spawn = game.tileMap.getPrimarySpawnPoint();
         game.player.spawn(spawn.x, spawn.y);
 
-        if (record.flitzers) {
-            record.flitzers.forEach(f => game.enemyManager.addFlitzer(f.x, f.y, f.vx, f.vy));
-        }
-        if (record.missiles) {
-            record.missiles.forEach(m => game.enemyManager.addHomingMissile(m.x, m.y));
-        }
-        if (record.turrets) {
-            record.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
-        }
-        if (record.bosses) {
-            record.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10, null, b.bossName, b.width, b.height));
-        }
+        game.enemyManager.spawnEnemiesFromLevelData(record);
         this.spawnEnemiesFromGrid();
 
         game.gameState = GAME_STATES.PLAYING;
