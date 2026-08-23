@@ -130,16 +130,22 @@ export class EnemyManager {
     y: number,
     maxHp: number = 10,
     id: string | null = null,
+    bossName?: string,
+    width: number = 80,
+    height: number = 64,
   ): void {
+    const isOmega = width >= 100 || (bossName !== undefined && bossName.includes("OMEGA"));
+    const finalBossName = bossName || (isOmega ? "MECHA CORE OMEGA" : "MECHA CORE ALPHA");
+
     this.enemies.push({
       id: this.allocateEnemyId(id),
       type: ENEMY_TYPES.BOSS,
       x,
       y,
-      width: 80,
-      height: 64,
-      vx: 90,
-      vy: 60,
+      width,
+      height,
+      vx: isOmega ? 95 : 90,
+      vy: isOmega ? 65 : 60,
       hp: maxHp,
       maxHp: maxHp,
       phase: 1,
@@ -148,7 +154,7 @@ export class EnemyManager {
       laserCharging: false,
       laserChargeTimer: 0,
       laserActiveTimer: 0,
-      bossName: "MECHA CORE ALPHA",
+      bossName: finalBossName,
       animTimer: 0,
       startY: y,
     });

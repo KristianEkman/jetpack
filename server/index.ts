@@ -325,7 +325,7 @@ function initRoomEnemies(
   }
   if (levelData.bosses) {
     levelData.bosses.forEach((b) =>
-      room.enemyManager.addBoss(b.x, b.y, b.hp || 10),
+      room.enemyManager.addBoss(b.x, b.y, b.hp || 10, null, b.bossName, b.width, b.height),
     );
   }
   for (let r = 0; r < room.tileMap.rows; r++) {

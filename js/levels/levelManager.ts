@@ -43,7 +43,7 @@ export class LevelManager {
             levelData.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
         }
         if (levelData.bosses) {
-            levelData.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10));
+            levelData.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10, null, b.bossName, b.width, b.height));
         }
         this.spawnEnemiesFromGrid();
 
@@ -79,7 +79,7 @@ export class LevelManager {
             record.turrets.forEach(t => game.enemyManager.addTurret(t.x, t.y, t.fireInterval));
         }
         if (record.bosses) {
-            record.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10));
+            record.bosses.forEach(b => game.enemyManager.addBoss(b.x, b.y, b.hp || 10, null, b.bossName, b.width, b.height));
         }
         this.spawnEnemiesFromGrid();
 

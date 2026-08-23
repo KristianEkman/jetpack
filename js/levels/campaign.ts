@@ -10,7 +10,7 @@ export interface CampaignLevelConfig {
     flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
     missiles?: Array<{ x: number; y: number }>;
     turrets?: Array<{ x: number; y: number; fireInterval: number }>;
-    bosses?: Array<{ x: number; y: number; hp?: number }>;
+    bosses?: Array<{ x: number; y: number; hp?: number; bossName?: string; width?: number; height?: number }>;
 }
 
 const CHAR_TO_TILE: Record<string, number> = {
@@ -257,6 +257,31 @@ const LEVEL_9_STR = `
 ##############################
 `;
 
+// Level 10: Cyber Omega Core
+// The grand finale boss arena. Features a massive open gladiatorial airspace flanked by
+// floating phase platforms, acceleration chutes, central ice slides, dual teleporters,
+// and tactical ladder/vine columns, headlined by the colossal titan MECHA CORE OMEGA.
+const LEVEL_10_STR = `
+##############################
+#S....E......PPPP.....E....L.#
+#####........PPPP........#####
+#...F...V............V...F...#
+#.T.###.V............V.###.T.#
+#...#...V............V...#...#
+#...#.>>>>..........<<<<.#...#
+#R..#....................#..R#
+#####...DDDD......DDDD...#####
+#............................#
+#.>>>>>>>>..IIIIII..<<<<<<<<.#
+#...........IIIIII...........#
+#.####.H..............H.####.#
+#......H.PPPP....PPPP.H......#
+#.####.H..............H.####.#
+#..G.E.H....G.E..E.G..H.E.G..#
+#.####.#..F........F..#.####O#
+##############################
+`;
+
 export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
     {
         name: "Stage 1: Genesis Caverns",
@@ -328,7 +353,7 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
             { x: 220, y: 420, fireInterval: 1.9 }
         ],
         bosses: [
-            { x: 440, y: 180, hp: 10 }
+            { x: 440, y: 180, hp: 10, bossName: "MECHA CORE ALPHA", width: 80, height: 64 }
         ]
     },
     {
@@ -351,6 +376,24 @@ export const CAMPAIGN_LEVELS: CampaignLevelConfig[] = [
         ],
         turrets: [
             { x: 740, y: 160, fireInterval: 2.8 }
+        ]
+    },
+    {
+        name: "Stage 10: Cyber Omega Core",
+        grid: parseLevelString(LEVEL_10_STR),
+        flitzers: [
+            { x: 320, y: 180, vx: 140, vy: 0 },
+            { x: 620, y: 340, vx: -140, vy: 0 }
+        ],
+        missiles: [
+            { x: 800, y: 96 }
+        ],
+        turrets: [
+            { x: 160, y: 224, fireInterval: 2.2 },
+            { x: 768, y: 224, fireInterval: 2.2 }
+        ],
+        bosses: [
+            { x: 416, y: 120, hp: 25, bossName: "MECHA CORE OMEGA", width: 128, height: 96 }
         ]
     }
 ];

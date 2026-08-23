@@ -34,7 +34,7 @@ export type MultiplayerLevelData = Omit<LevelData, "name"> & {
   flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
   missiles?: Array<{ x: number; y: number }>;
   turrets?: Array<{ x: number; y: number; fireInterval: number }>;
-  bosses?: Array<{ x: number; y: number; hp?: number }>;
+  bosses?: Array<{ x: number; y: number; hp?: number; bossName?: string; width?: number; height?: number }>;
 };
 
 export interface CustomLevelRecord {
@@ -50,7 +50,7 @@ export interface CustomLevelRecord {
   flitzers?: Array<{ x: number; y: number; vx: number; vy: number }>;
   missiles?: Array<{ x: number; y: number }>;
   turrets?: Array<{ x: number; y: number; fireInterval: number }>;
-  bosses?: Array<{ x: number; y: number; hp?: number }>;
+  bosses?: Array<{ x: number; y: number; hp?: number; bossName?: string; width?: number; height?: number }>;
   highScore: number;
   highScoreUser: string;
   ratingSum: number;
