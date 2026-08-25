@@ -229,42 +229,6 @@ export class MultiplayerController {
 
   bindMultiplayerUI(): void {
     const game = this.game;
-    const tabCreate = document.getElementById("tabCreateRoom");
-    const tabPublic = document.getElementById("tabPublicRooms");
-    const viewCreate = document.getElementById("viewCreateRoom");
-    const viewPublic = document.getElementById("viewPublicRooms");
-    const viewLobby = document.getElementById("viewRoomLobby");
-
-    const switchTab = (
-      activeTab: HTMLElement | null,
-      activeView: HTMLElement | null,
-    ): void => {
-      [tabCreate, tabPublic].forEach((tab) => {
-        if (tab) {
-          tab.classList.remove("active");
-          tab.setAttribute("aria-selected", "false");
-        }
-      });
-      [viewCreate, viewPublic, viewLobby].forEach((view) =>
-        view?.classList.add("hidden"),
-      );
-
-      if (activeTab) {
-        activeTab.classList.add("active");
-        activeTab.setAttribute("aria-selected", "true");
-      }
-      activeView?.classList.remove("hidden");
-      document.getElementById("mpTabs")?.classList.remove("hidden");
-      document.getElementById("mpProfileSetup")?.classList.remove("hidden");
-    };
-
-    tabCreate?.addEventListener("click", () =>
-      switchTab(tabCreate, viewCreate),
-    );
-    tabPublic?.addEventListener("click", () => {
-      switchTab(tabPublic, viewPublic);
-      game.network.listRooms();
-    });
 
     const selectLevel = document.getElementById(
       "selectRoomLevel",
@@ -302,11 +266,6 @@ export class MultiplayerController {
         }
       });
     }
-
-    tabCreate?.addEventListener("click", () => {
-      switchTab(tabCreate, viewCreate);
-      if (selectLevel) this.populateLevelDropdown(selectLevel);
-    });
 
     const hostNameInput = document.getElementById(
       "inputHostName",
@@ -402,7 +361,8 @@ export class MultiplayerController {
 
     document.getElementById("btnLeaveRoom")?.addEventListener("click", () => {
       game.network.leaveRoom(() => {
-        switchTab(tabCreate, viewCreate);
+        this.showHubView();
+        game.network.listRooms();
         game.uiManager.showBanner("LEFT ROOM");
       });
     });
@@ -426,14 +386,40 @@ export class MultiplayerController {
       });
   }
 
-  showLobbyView(): void {
-    const viewCreate = document.getElementById("viewCreateRoom");
-    const viewPublic = document.getElementById("viewPublicRooms");
+  showHubView(): void {
     const viewLobby = document.getElementById("viewRoomLobby");
-    [viewCreate, viewPublic].forEach((view) => view?.classList.add("hidden"));
+    const mainHub = document.getElementById("mpMainHub");
+    const profileSetup = document.getElementById("mpProfileSetup");
+
+    viewLobby?.classList.add("hidden");
+    mainHub?.classList.remove("hidden");
+    profileSetup?.classList.remove("hidden");
+
+    // Legacy support if elements exist
+    document.getElementById("mpTabs")?.classList.remove("hidden");
+    document.getElementById("viewCreateRoom")?.classList.remove("hidden");
+
+    const selectLevel = document.getElementById(
+      "selectRoomLevel",
+    ) as HTMLSelectElement | null;
+    if (selectLevel) {
+      this.populateLevelDropdown(selectLevel);
+    }
+  }
+
+  showLobbyView(): void {
+    const viewLobby = document.getElementById("viewRoomLobby");
+    const mainHub = document.getElementById("mpMainHub");
+    const profileSetup = document.getElementById("mpProfileSetup");
+
+    mainHub?.classList.add("hidden");
+    profileSetup?.classList.add("hidden");
     viewLobby?.classList.remove("hidden");
+
+    // Legacy support if elements exist
     document.getElementById("mpTabs")?.classList.add("hidden");
-    document.getElementById("mpProfileSetup")?.classList.add("hidden");
+    document.getElementById("viewCreateRoom")?.classList.add("hidden");
+    document.getElementById("viewPublicRooms")?.classList.add("hidden");
   }
 
   async populateLevelDropdown(selectElement: HTMLSelectElement): Promise<void> {
@@ -608,7 +594,7 @@ export class MultiplayerController {
 
       if (list.length === 0) {
         container.innerHTML =
-          '<p class="empty-list-note">No active public rooms found. Create one!</p>';
+          '<p class="empty-list-note">No active public rooms found. Create one below to start!</p>';
         return;
       }
 

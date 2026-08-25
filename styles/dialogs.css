@@ -14,6 +14,10 @@
   margin: auto;
   max-width: 520px;
   width: 90%;
+  max-height: 94vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .retro-dialog:has(.wide),

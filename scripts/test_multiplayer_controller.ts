@@ -277,17 +277,19 @@ console.log("3️⃣  Testing Lobby View & Dropdown Management...");
 
 // showLobbyView
 controller.showLobbyView();
-const viewCreate = mockDocument.getElementById("viewCreateRoom");
-const viewPublic = mockDocument.getElementById("viewPublicRooms");
 const viewLobby = mockDocument.getElementById("viewRoomLobby");
-const mpTabs = mockDocument.getElementById("mpTabs");
+const mpMainHub = mockDocument.getElementById("mpMainHub");
 const mpProfileSetup = mockDocument.getElementById("mpProfileSetup");
 
-assert.strictEqual(viewCreate?.classList.contains("hidden"), true, "viewCreateRoom must be hidden");
-assert.strictEqual(viewPublic?.classList.contains("hidden"), true, "viewPublicRooms must be hidden");
-assert.strictEqual(viewLobby?.classList.contains("hidden"), false, "viewRoomLobby must be visible");
-assert.strictEqual(mpTabs?.classList.contains("hidden"), true, "mpTabs must be hidden in lobby");
+assert.strictEqual(viewLobby?.classList.contains("hidden"), false, "viewRoomLobby must be visible in lobby");
+assert.strictEqual(mpMainHub?.classList.contains("hidden"), true, "mpMainHub must be hidden in lobby");
 assert.strictEqual(mpProfileSetup?.classList.contains("hidden"), true, "mpProfileSetup must be hidden in lobby");
+
+// showHubView
+controller.showHubView();
+assert.strictEqual(viewLobby?.classList.contains("hidden"), true, "viewRoomLobby must be hidden in hub view");
+assert.strictEqual(mpMainHub?.classList.contains("hidden"), false, "mpMainHub must be visible in hub view");
+assert.strictEqual(mpProfileSetup?.classList.contains("hidden"), false, "mpProfileSetup must be visible in hub view");
 
 // populateLevelDropdown
 const mockSelect = createMockElement("testSelectLevel", "select");
@@ -418,7 +420,7 @@ const publicRoomsList = mockDocument.getElementById("publicRoomsList");
 controller.renderPublicRoomsList([]);
 assert.strictEqual(
   publicRoomsList?.innerHTML,
-  '<p class="empty-list-note">No active public rooms found. Create one!</p>',
+  '<p class="empty-list-note">No active public rooms found. Create one below to start!</p>',
   "Empty list note must be rendered when 0 rooms",
 );
 
@@ -661,20 +663,15 @@ chipRed.click();
 assert.strictEqual(game.selectedColor, "#ff4444", "selectedColor must update to #ff4444 on chip click");
 assert.strictEqual(mockLocalStorage.getItem("jetpack_player_color"), "#ff4444", "Player color must persist to localStorage");
 
-// Test Tab Switching (Create vs Public)
-const tabCreate = mockDocument.getElementById("tabCreateRoom");
-const tabPublic = mockDocument.getElementById("tabPublicRooms");
+// Test Refresh Rooms button
 let listRoomsCalled = false;
 game.network.listRooms = (): void => {
   listRoomsCalled = true;
 };
 
-tabPublic?.click();
-assert.strictEqual(tabPublic?.classList.contains("active"), true, "Public tab must be active after click");
-assert.strictEqual(listRoomsCalled, true, "Switching to Public tab must call listRooms");
-
-tabCreate?.click();
-assert.strictEqual(tabCreate?.classList.contains("active"), true, "Create tab must be active after click");
+const btnRefreshRooms = mockDocument.getElementById("btnRefreshRooms");
+btnRefreshRooms?.click();
+assert.strictEqual(listRoomsCalled, true, "Clicking btnRefreshRooms must call network.listRooms");
 
 // Test Create Room Submission
 let createRoomOptions: unknown = null;

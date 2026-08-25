@@ -363,45 +363,55 @@
                 </div>
             </div>
 
-            <div id="mpTabs" class="mp-tabs" role="tablist">
-                <button id="tabCreateRoom" class="mp-tab-btn active" role="tab" aria-selected="true" aria-controls="viewCreateRoom">CREATE ROOM</button>
-                <button id="tabPublicRooms" class="mp-tab-btn" role="tab" aria-selected="false" aria-controls="viewPublicRooms">JOIN</button>
-            </div>
-
-            <!-- Create Room View -->
-            <div id="viewCreateRoom" class="mp-view-section">
-                <fieldset class="game-mode-selector">
-                    <legend>Game Mode</legend>
-                    <label class="game-mode-option">
-                        <input type="radio" name="mpGameMode" value="coop" checked>
-                        <span>
-                            <strong>🤝 CO-OP</strong>
-                            <small>Work together to clear the level.</small>
-                        </span>
-                    </label>
-                    <label class="game-mode-option compete-option">
-                        <input type="radio" name="mpGameMode" value="compete">
-                        <span>
-                            <strong>⚔️ Compete</strong>
-                            <small>Phase-beam opponents. Last pilot standing wins.</small>
-                        </span>
-                    </label>
-                </fieldset>
-                <div class="form-group">
-                    <label for="selectRoomLevel">Select Level / Map:</label>
-                    <select id="selectRoomLevel" class="retro-input">
-                        <!-- Populated dynamically with Campaign & Custom levels -->
-                    </select>
+            <!-- Unified Multiplayer Hub (Available Rooms & Host Section) -->
+            <div id="mpMainHub" class="mp-main-hub">
+                <!-- Available Rooms Section -->
+                <div class="mp-hub-card" id="sectionAvailableRooms">
+                    <div class="mp-hub-card-header">
+                        <div class="mp-hub-title-group">
+                            <span class="mp-hub-icon">📡</span>
+                            <h3>AVAILABLE ROOMS</h3>
+                        </div>
+                        <button id="btnRefreshRooms" class="btn-refresh-pill" title="Refresh Room List">🔄 REFRESH</button>
+                    </div>
+                    <div id="publicRoomsList" class="public-rooms-list">
+                        <p class="empty-list-note">No active public rooms found. Create one below to start!</p>
+                    </div>
                 </div>
-                <button id="btnCreateRoomSubmit" class="btn-menu primary">🏠 CREATE ROOM</button>
-            </div>
 
-            <!-- Public Rooms View -->
-            <div id="viewPublicRooms" class="mp-view-section hidden">
-                <div id="publicRoomsList" class="public-rooms-list">
-                    <p class="empty-list-note">No active public rooms found. Create one!</p>
+                <!-- Create / Host Room Section -->
+                <div class="mp-hub-card" id="sectionCreateRoom">
+                    <div class="mp-hub-card-header">
+                        <div class="mp-hub-title-group">
+                            <span class="mp-hub-icon">⚡</span>
+                            <h3>HOST NEW ROOM</h3>
+                        </div>
+                    </div>
+                    <fieldset class="game-mode-selector">
+                        <legend>Game Mode</legend>
+                        <label class="game-mode-option">
+                            <input type="radio" name="mpGameMode" value="coop" checked>
+                            <span>
+                                <strong>🤝 CO-OP</strong>
+                                <small>Work together to clear the level.</small>
+                            </span>
+                        </label>
+                        <label class="game-mode-option compete-option">
+                            <input type="radio" name="mpGameMode" value="compete">
+                            <span>
+                                <strong>⚔️ COMPETE</strong>
+                                <small>Phase-beam opponents. Last pilot standing wins.</small>
+                            </span>
+                        </label>
+                    </fieldset>
+                    <div class="form-group">
+                        <label for="selectRoomLevel">Select Level / Map:</label>
+                        <select id="selectRoomLevel" class="retro-input">
+                            <!-- Populated dynamically with Campaign & Custom levels -->
+                        </select>
+                    </div>
+                    <button id="btnCreateRoomSubmit" class="btn-menu primary">🏠 CREATE ROOM</button>
                 </div>
-                <button id="btnRefreshRooms" class="btn-menu">🔄 REFRESH ROOM LIST</button>
             </div>
 
             <!-- Active Room Lobby View -->

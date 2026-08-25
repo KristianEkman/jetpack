@@ -127,7 +127,7 @@ export class UIManager {
 
     document.getElementById("btnMultiplayer")?.addEventListener("click", () => {
       this.showDialog("dlgMultiplayer");
-      document.getElementById("tabCreateRoom")?.click();
+      game.multiplayerController.showHubView();
       game.network.connect();
       game.network.listRooms();
     });
