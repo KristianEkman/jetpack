@@ -17,6 +17,10 @@ export interface HUDState {
   emeralds: string | null;
   fuel: number | null;
   powerupTime: string | null;
+  activeWeapon: string | null;
+  ammoSpread: number | null;
+  ammoGrenade: number | null;
+  ammoMissile: number | null;
 }
 
 export class UIManager {
@@ -30,6 +34,14 @@ export class UIManager {
   fuelTextEl: HTMLElement | null;
   hudPowerupEl: HTMLElement | null;
   hudPowerupTextEl: HTMLElement | null;
+
+  slotPhaseEl: HTMLElement | null;
+  slotSpreadEl: HTMLElement | null;
+  slotGrenadeEl: HTMLElement | null;
+  slotMissileEl: HTMLElement | null;
+  ammoSpreadEl: HTMLElement | null;
+  ammoGrenadeEl: HTMLElement | null;
+  ammoMissileEl: HTMLElement | null;
 
   hudState: HUDState;
 
@@ -45,6 +57,14 @@ export class UIManager {
     this.hudPowerupEl = document.getElementById("hudPowerup");
     this.hudPowerupTextEl = document.getElementById("hudPowerupText");
 
+    this.slotPhaseEl = document.getElementById("weaponSlotPhase");
+    this.slotSpreadEl = document.getElementById("weaponSlotSpread");
+    this.slotGrenadeEl = document.getElementById("weaponSlotGrenade");
+    this.slotMissileEl = document.getElementById("weaponSlotMissile");
+    this.ammoSpreadEl = document.getElementById("ammoSpread");
+    this.ammoGrenadeEl = document.getElementById("ammoGrenade");
+    this.ammoMissileEl = document.getElementById("ammoMissile");
+
     this.hudState = {
       level: null,
       score: null,
@@ -52,6 +72,10 @@ export class UIManager {
       emeralds: null,
       fuel: null,
       powerupTime: null,
+      activeWeapon: null,
+      ammoSpread: null,
+      ammoGrenade: null,
+      ammoMissile: null,
     };
 
     this.setupVisibilityHandler();
@@ -113,6 +137,23 @@ export class UIManager {
       this.updateAudioButtons();
     });
     this.updateAudioButtons();
+    this.slotPhaseEl?.addEventListener("click", () => {
+      game.player.setWeapon("phase_beam");
+      this.updateHUD();
+    });
+    this.slotSpreadEl?.addEventListener("click", () => {
+      game.player.setWeapon("spread_cannon");
+      this.updateHUD();
+    });
+    this.slotGrenadeEl?.addEventListener("click", () => {
+      game.player.setWeapon("plasma_grenade");
+      this.updateHUD();
+    });
+    this.slotMissileEl?.addEventListener("click", () => {
+      game.player.setWeapon("seeker_missile");
+      this.updateHUD();
+    });
+
     document.getElementById("btnCRT")?.addEventListener("click", () => {
       document.getElementById("crtOverlay")?.classList.toggle("active");
     });
@@ -576,6 +617,38 @@ export class UIManager {
     } else {
       if (this.hudPowerupEl) this.hudPowerupEl.classList.add("hidden");
       this.hudState.powerupTime = null;
+    }
+
+    const player = game.player;
+    const activeWep = player.activeWeapon || "phase_beam";
+    const spreadAmmo = player.weaponAmmo?.spread_cannon ?? 0;
+    const grenadeAmmo = player.weaponAmmo?.plasma_grenade ?? 0;
+    const missileAmmo = player.weaponAmmo?.seeker_missile ?? 0;
+
+    if (this.hudState.activeWeapon !== activeWep) {
+      this.hudState.activeWeapon = activeWep;
+      this.slotPhaseEl?.classList.toggle("active", activeWep === "phase_beam");
+      this.slotSpreadEl?.classList.toggle("active", activeWep === "spread_cannon");
+      this.slotGrenadeEl?.classList.toggle("active", activeWep === "plasma_grenade");
+      this.slotMissileEl?.classList.toggle("active", activeWep === "seeker_missile");
+    }
+
+    if (this.hudState.ammoSpread !== spreadAmmo) {
+      this.hudState.ammoSpread = spreadAmmo;
+      if (this.ammoSpreadEl) this.ammoSpreadEl.textContent = String(spreadAmmo);
+      this.slotSpreadEl?.classList.toggle("empty", spreadAmmo <= 0);
+    }
+
+    if (this.hudState.ammoGrenade !== grenadeAmmo) {
+      this.hudState.ammoGrenade = grenadeAmmo;
+      if (this.ammoGrenadeEl) this.ammoGrenadeEl.textContent = String(grenadeAmmo);
+      this.slotGrenadeEl?.classList.toggle("empty", grenadeAmmo <= 0);
+    }
+
+    if (this.hudState.ammoMissile !== missileAmmo) {
+      this.hudState.ammoMissile = missileAmmo;
+      if (this.ammoMissileEl) this.ammoMissileEl.textContent = String(missileAmmo);
+      this.slotMissileEl?.classList.toggle("empty", missileAmmo <= 0);
     }
   }
 

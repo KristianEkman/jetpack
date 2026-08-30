@@ -60,10 +60,10 @@ config.lastInput = {
 };
 
 let phaseBeams = 0;
-const originalPerformPhaseBeam = player.performPhaseBeam.bind(player);
-player.performPhaseBeam = (...args) => {
+const originalFireWeapon = player.fireWeapon.bind(player);
+player.fireWeapon = (...args) => {
   phaseBeams++;
-  return originalPerformPhaseBeam(...args);
+  return originalFireWeapon(...args);
 };
 
 for (let i = 0; i < 60; i++) gameLoop.tick();

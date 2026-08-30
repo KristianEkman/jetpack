@@ -3,6 +3,35 @@
    ========================================================================== */
 
 import { LevelData } from "./payloads";
+import { WeaponTypeValue } from "./constants.js";
+
+export type WeaponType = WeaponTypeValue;
+
+export interface PlayerWeaponAmmo {
+  phase_beam: number;
+  spread_cannon: number;
+  plasma_grenade: number;
+  seeker_missile: number;
+}
+
+export interface PlayerProjectile {
+  id: string;
+  ownerId: string;
+  type: WeaponType;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  damage: number;
+  blastRadius?: number;
+  bounces?: number;
+  targetId?: string | null;
+  rotation?: number;
+  trailTimer?: number;
+}
 
 export interface InputState {
   left?: boolean;

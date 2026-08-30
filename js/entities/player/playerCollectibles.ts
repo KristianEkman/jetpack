@@ -189,6 +189,78 @@ export function checkCollectibles(player: Player): void {
           score: player.score,
           rapidFireTimer: player.rapidFireTimer,
         });
+      } else if (tile === TILES.WEAPON_SPREAD) {
+        player.tileMap.setTile(col, row, TILES.AIR);
+        player.addWeaponAmmo("spread_cannon", 25);
+        player.setWeapon("spread_cannon");
+        player.addScore(300);
+        if (player.audio?.playWeaponPickupSound) {
+          player.audio.playWeaponPickupSound();
+        } else {
+          player.audio?.playRapidFirePickup?.();
+        }
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ff00dd", 18);
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#00f0ff", 14);
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ffffff", 8);
+        player.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+          col,
+          row,
+          tileType: tile,
+          playerId: player.id,
+          collectedEmeralds: player.tileMap.collectedEmeralds,
+          totalEmeralds: player.tileMap.totalEmeralds,
+          score: player.score,
+          activeWeapon: player.activeWeapon,
+          ammo: player.weaponAmmo.spread_cannon,
+        });
+      } else if (tile === TILES.WEAPON_GRENADE) {
+        player.tileMap.setTile(col, row, TILES.AIR);
+        player.addWeaponAmmo("plasma_grenade", 10);
+        player.setWeapon("plasma_grenade");
+        player.addScore(350);
+        if (player.audio?.playWeaponPickupSound) {
+          player.audio.playWeaponPickupSound();
+        } else {
+          player.audio?.playRapidFirePickup?.();
+        }
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#00ff66", 18);
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ffff00", 14);
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ffffff", 8);
+        player.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+          col,
+          row,
+          tileType: tile,
+          playerId: player.id,
+          collectedEmeralds: player.tileMap.collectedEmeralds,
+          totalEmeralds: player.tileMap.totalEmeralds,
+          score: player.score,
+          activeWeapon: player.activeWeapon,
+          ammo: player.weaponAmmo.plasma_grenade,
+        });
+      } else if (tile === TILES.WEAPON_MISSILE) {
+        player.tileMap.setTile(col, row, TILES.AIR);
+        player.addWeaponAmmo("seeker_missile", 8);
+        player.setWeapon("seeker_missile");
+        player.addScore(400);
+        if (player.audio?.playWeaponPickupSound) {
+          player.audio.playWeaponPickupSound();
+        } else {
+          player.audio?.playRapidFirePickup?.();
+        }
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ff6600", 18);
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ffcc00", 14);
+        player.tileMap.addSparkles(col * TILE_SIZE + 16, row * TILE_SIZE + 16, "#ffffff", 8);
+        player.tileMap.emit(GAME_EVENTS.ITEM_COLLECTED, {
+          col,
+          row,
+          tileType: tile,
+          playerId: player.id,
+          collectedEmeralds: player.tileMap.collectedEmeralds,
+          totalEmeralds: player.tileMap.totalEmeralds,
+          score: player.score,
+          activeWeapon: player.activeWeapon,
+          ammo: player.weaponAmmo.seeker_missile,
+        });
       }
     }
   }

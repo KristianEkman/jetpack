@@ -36,6 +36,8 @@ export class InputHandler {
     keys: KeyState;
     sequenceCounter: number;
     onPausePress: (() => void) | null;
+    onWeaponSelect: ((slotIndex: number) => void) | null;
+    onWeaponCycle: ((direction: 1 | -1) => void) | null;
 
     constructor() {
         this.keys = {
@@ -51,6 +53,8 @@ export class InputHandler {
 
         this.sequenceCounter = 0;
         this.onPausePress = null;
+        this.onWeaponSelect = null;
+        this.onWeaponCycle = null;
 
         if (typeof window !== 'undefined') {
             this.setupKeyboard();
@@ -66,6 +70,28 @@ export class InputHandler {
             }
 
             switch (e.code) {
+                case 'Digit1':
+                case 'Numpad1':
+                    if (this.onWeaponSelect) this.onWeaponSelect(0);
+                    break;
+                case 'Digit2':
+                case 'Numpad2':
+                    if (this.onWeaponSelect) this.onWeaponSelect(1);
+                    break;
+                case 'Digit3':
+                case 'Numpad3':
+                    if (this.onWeaponSelect) this.onWeaponSelect(2);
+                    break;
+                case 'Digit4':
+                case 'Numpad4':
+                    if (this.onWeaponSelect) this.onWeaponSelect(3);
+                    break;
+                case 'KeyQ':
+                    if (this.onWeaponCycle) this.onWeaponCycle(-1);
+                    break;
+                case 'KeyE':
+                    if (this.onWeaponCycle) this.onWeaponCycle(1);
+                    break;
                 case 'ArrowLeft':
                 case 'KeyA':
                     this.keys.left = true;
@@ -183,6 +209,16 @@ export class InputHandler {
         bindBtn('touchDown', 'down');
         bindBtn('touchJetpack', 'thrust');
         bindBtn('touchPhase', 'phase');
+
+        const cycleBtn = document.getElementById('touchWeapon');
+        if (cycleBtn) {
+            const triggerCycle = (e: Event) => {
+                e.preventDefault();
+                if (this.onWeaponCycle) this.onWeaponCycle(1);
+            };
+            cycleBtn.addEventListener('touchstart', triggerCycle, { passive: false });
+            cycleBtn.addEventListener('click', triggerCycle);
+        }
     }
 
     reset(): void {

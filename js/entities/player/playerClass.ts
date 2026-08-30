@@ -3,15 +3,25 @@
    ========================================================================== */
 
 import { AudioLike, AudioManager, SoundEffects } from "../../audio/index.js";
-import { PLAYER_PHYSICS } from "../../shared/constants.js";
-import { SerializedInputState } from "../../shared/types.js";
+import { PLAYER_PHYSICS, WEAPON_TYPES, WEAPON_SPECS } from "../../shared/constants.js";
+import {
+  SerializedInputState,
+  WeaponType,
+  PlayerWeaponAmmo,
+  PlayerProjectile,
+} from "../../shared/types.js";
 import { TileMap } from "../../world/tilemap.js";
 import { EnemyManager } from "../enemy/index.js";
 import { UnpackedPlayerSnapshot } from "../playerManager.js";
 import { PlayerOptions } from "./types.js";
 
 import { simulateMovement, moveAndCollide } from "./playerPhysics.js";
-import { performPhaseBeam, setPhasing } from "./playerCombat.js";
+import {
+  performPhaseBeam,
+  setPhasing,
+  fireActiveWeapon,
+  updatePlayerProjectiles,
+} from "./playerCombat.js";
 import { checkCollectibles, addScore, checkTeleporter } from "./playerCollectibles.js";
 import { checkStuck } from "./playerStuck.js";
 import { processLocalEffects } from "./playerEffects.js";
@@ -54,6 +64,11 @@ export class Player {
   phaseBeamTimer: number;
   phaseBeamLength: number;
   rapidFireTimer: number;
+
+  activeWeapon: WeaponType;
+  weaponAmmo: PlayerWeaponAmmo;
+  projectiles: PlayerProjectile[];
+  weaponCooldown: number;
 
   animTimer: number;
   walkPhase: number;
@@ -110,6 +125,16 @@ export class Player {
     this.phaseBeamLength = PLAYER_PHYSICS.PHASE_BEAM_LENGTH;
     this.rapidFireTimer = 0;
 
+    this.activeWeapon = WEAPON_TYPES.PHASE_BEAM;
+    this.weaponAmmo = {
+      phase_beam: Infinity,
+      spread_cannon: 0,
+      plasma_grenade: 0,
+      seeker_missile: 0,
+    };
+    this.projectiles = [];
+    this.weaponCooldown = 0;
+
     this.animTimer = 0;
     this.walkPhase = 0;
     this.stuckTimer = 0;
@@ -126,6 +151,67 @@ export class Player {
     return this.rapidFireTimer > 0;
   }
 
+  setWeapon(type: WeaponType): boolean {
+    if (type === WEAPON_TYPES.PHASE_BEAM) {
+      this.activeWeapon = type;
+      return true;
+    }
+    if (this.weaponAmmo[type] > 0) {
+      this.activeWeapon = type;
+      return true;
+    }
+    return false;
+  }
+
+  cycleWeapon(direction: 1 | -1 = 1): WeaponType {
+    const list: WeaponType[] = [
+      WEAPON_TYPES.PHASE_BEAM,
+      WEAPON_TYPES.SPREAD_CANNON,
+      WEAPON_TYPES.PLASMA_GRENADE,
+      WEAPON_TYPES.SEEKER_MISSILE,
+    ];
+
+    const currentIdx = list.indexOf(this.activeWeapon);
+    const count = list.length;
+
+    for (let i = 1; i <= count; i++) {
+      const nextIdx = (currentIdx + i * direction + count * 10) % count;
+      const candidate = list[nextIdx];
+      if (candidate === WEAPON_TYPES.PHASE_BEAM || this.weaponAmmo[candidate] > 0) {
+        this.activeWeapon = candidate;
+        return candidate;
+      }
+    }
+    this.activeWeapon = WEAPON_TYPES.PHASE_BEAM;
+    return this.activeWeapon;
+  }
+
+  addWeaponAmmo(type: WeaponType, count: number): void {
+    if (type === WEAPON_TYPES.PHASE_BEAM) return;
+    const spec = WEAPON_SPECS[type];
+    const max = spec ? spec.maxAmmo : 99;
+    this.weaponAmmo[type] = Math.min(max, (this.weaponAmmo[type] || 0) + count);
+  }
+
+  getWeaponAmmo(type: WeaponType): number {
+    return this.weaponAmmo[type] ?? 0;
+  }
+
+  fireWeapon(
+    enemyManager: EnemyManager | null = null,
+    playerTargets: Iterable<Player> | null = null,
+  ): Player | null {
+    return fireActiveWeapon(this, enemyManager, playerTargets);
+  }
+
+  updateProjectiles(
+    dt: number,
+    enemyManager: EnemyManager | null = null,
+    playerTargets: Iterable<Player> | null = null,
+  ): void {
+    updatePlayerProjectiles(this, dt, enemyManager, playerTargets);
+  }
+
   spawn(x: number, y: number): void {
     this.x = x;
     this.y = y;
@@ -140,7 +226,9 @@ export class Player {
     this.isPhasing = false;
     this.phaseBeamTimer = 0;
     this.phaseCooldown = 0;
+    this.weaponCooldown = 0;
     this.rapidFireTimer = 0;
+    this.projectiles = [];
     this.stuckTimer = 0;
     this.isStuck = false;
     this.teleportCooldown = 0;

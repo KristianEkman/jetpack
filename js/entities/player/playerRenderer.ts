@@ -347,5 +347,130 @@ export function renderPlayer(player: Player, ctx: CanvasRenderingContext2D): voi
     ctx.restore();
   }
 
+  renderPlayerProjectiles(player, ctx);
+
   ctx.restore();
+}
+
+export function renderPlayerProjectiles(
+  player: Player,
+  ctx: CanvasRenderingContext2D,
+): void {
+  if (!player.projectiles || player.projectiles.length === 0) return;
+
+  for (const proj of player.projectiles) {
+    ctx.save();
+    ctx.translate(proj.x, proj.y);
+
+    if (proj.type === "spread_cannon") {
+      const angle = proj.rotation || Math.atan2(proj.vy, proj.vx);
+      ctx.rotate(angle);
+
+      // Glow halo
+      ctx.fillStyle = "rgba(255, 0, 221, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 9, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Main beam bolt
+      ctx.fillStyle = "#ff00dd";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 7, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bright core
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 4, 1.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (proj.type === "plasma_grenade") {
+      const pulse = (Math.sin(Date.now() / 80) + 1) * 0.5;
+      const radius = proj.radius || 6;
+
+      // Outer radial aura
+      const auraGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, radius + 4 + pulse * 2);
+      auraGrad.addColorStop(0, "rgba(0, 255, 102, 0.8)");
+      auraGrad.addColorStop(0.6, "rgba(0, 255, 102, 0.3)");
+      auraGrad.addColorStop(1, "rgba(0, 255, 102, 0)");
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius + 4 + pulse * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Grenade shell
+      ctx.fillStyle = "#00ff66";
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rotating core ring
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Core hot center
+      ctx.fillStyle = "#ffff00";
+      ctx.beginPath();
+      ctx.arc(0, 0, 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (proj.type === "seeker_missile") {
+      const angle = proj.rotation || Math.atan2(proj.vy, proj.vx);
+      ctx.rotate(angle);
+
+      // Rocket engine exhaust flame
+      const flameLen = 6 + Math.random() * 5;
+      ctx.fillStyle = "#ff6600";
+      ctx.beginPath();
+      ctx.moveTo(-6, -2);
+      ctx.lineTo(-6, 2);
+      ctx.lineTo(-6 - flameLen, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#ffff00";
+      ctx.beginPath();
+      ctx.moveTo(-6, -1);
+      ctx.lineTo(-6, 1);
+      ctx.lineTo(-6 - flameLen * 0.6, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // Rocket fuselage body
+      ctx.fillStyle = "#2c3e50";
+      ctx.fillRect(-6, -2.5, 10, 5);
+
+      // Tail fins
+      ctx.fillStyle = "#ff6600";
+      ctx.beginPath();
+      ctx.moveTo(-6, -5);
+      ctx.lineTo(-3, -2.5);
+      ctx.lineTo(-6, -2.5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-6, 5);
+      ctx.lineTo(-3, 2.5);
+      ctx.lineTo(-6, 2.5);
+      ctx.closePath();
+      ctx.fill();
+
+      // Nose cone
+      ctx.fillStyle = "#ff2200";
+      ctx.beginPath();
+      ctx.moveTo(4, -2.5);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(4, 2.5);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sensor tip
+      ctx.fillStyle = "#00f0ff";
+      ctx.fillRect(7, -0.75, 1.5, 1.5);
+    }
+
+    ctx.restore();
+  }
 }

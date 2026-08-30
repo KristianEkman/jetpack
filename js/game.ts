@@ -6,7 +6,7 @@
 import { GameLoop } from "./engine/loop.js";
 import { InputHandler } from "./engine/input.js";
 import { AudioManager } from "./audio/index.js";
-import { TileMap, TILE_SIZE, TILES } from "./world/tilemap.js";
+import { TileMap, TILE_SIZE, TILES, WEAPON_TYPES } from "./world/tilemap.js";
 import { Player } from "./entities/player.js";
 import { EnemyManager } from "./entities/enemy/index.js";
 import { LevelEditor } from "./editor/level_editor.js";
@@ -26,7 +26,7 @@ import {
   GameOverPayload,
   CustomLevelRecord,
 } from "./shared/payloads.js";
-import { SerializedInputState } from "./shared/types.js";
+import { SerializedInputState, WeaponType } from "./shared/types.js";
 
 export const GAME_STATES = {
   MENU: "menu",
@@ -82,6 +82,26 @@ export class Game {
     this.tileMap = new TileMap();
     this.player = new Player(this.audio, this.tileMap, { showNameTag: false });
     this.enemyManager = new EnemyManager(this.tileMap, this.audio);
+
+    const weaponSlots: WeaponType[] = [
+      WEAPON_TYPES.PHASE_BEAM,
+      WEAPON_TYPES.SPREAD_CANNON,
+      WEAPON_TYPES.PLASMA_GRENADE,
+      WEAPON_TYPES.SEEKER_MISSILE,
+    ];
+
+    this.input.onWeaponSelect = (index: number) => {
+      const weapon = weaponSlots[index];
+      if (weapon) {
+        this.player.setWeapon(weapon);
+        this.uiManager?.updateHUD();
+      }
+    };
+
+    this.input.onWeaponCycle = (direction: 1 | -1) => {
+      this.player.cycleWeapon(direction);
+      this.uiManager?.updateHUD();
+    };
 
     this.playerManager = new PlayerManager(this.audio, this.tileMap);
     this.network = new NetworkManager();

@@ -937,6 +937,221 @@ export function renderTile(
       ctx.restore();
       break;
     }
+
+    case TILES.WEAPON_SPREAD: {
+      const now = Date.now();
+      const hoverY = Math.sin(now / 150 + c) * 2.5;
+      const pulse = (Math.sin(now / 110) + 1) * 0.5;
+      const cx = x + 16;
+      const cy = y + 16 + hoverY;
+
+      ctx.save();
+
+      // Neon Magenta & Cyan radiant aura
+      const glowRadius = 18 + pulse * 4.0;
+      const plasmaGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+      plasmaGlow.addColorStop(0, `rgba(255, 0, 221, ${0.7 + pulse * 0.25})`);
+      plasmaGlow.addColorStop(0.5, `rgba(0, 240, 255, ${0.35 + pulse * 0.2})`);
+      plasmaGlow.addColorStop(1, "rgba(255, 0, 221, 0)");
+      ctx.fillStyle = plasmaGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ground shadow
+      const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.beginPath();
+      ctx.ellipse(cx, y + 29, 8 * shadowScale, 2.5 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Orbiting cyan spark nodes
+      const orbitAngle = now / 180;
+      for (let i = 0; i < 3; i++) {
+        const angle = orbitAngle + (i * Math.PI * 2) / 3;
+        const ox = cx + Math.cos(angle) * 14;
+        const oy = cy + Math.sin(angle) * 6;
+
+        ctx.fillStyle = i === 0 ? "#00f0ff" : "#ff00dd";
+        ctx.beginPath();
+        ctx.arc(ox, oy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Diamond Badge
+      const w = 11;
+      const h = 12;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - h);
+      ctx.lineTo(cx + w, cy);
+      ctx.lineTo(cx, cy + h);
+      ctx.lineTo(cx - w, cy);
+      ctx.closePath();
+
+      const badgeGrad = ctx.createLinearGradient(cx - w, cy - h, cx + w, cy + h);
+      badgeGrad.addColorStop(0, "#ff00dd");
+      badgeGrad.addColorStop(0.5, "#9900ff");
+      badgeGrad.addColorStop(1, "#00f0ff");
+      ctx.fillStyle = badgeGrad;
+      ctx.fill();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.font = "900 11px Orbitron, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#ff00dd";
+      ctx.shadowBlur = 8;
+      ctx.fillText("🔱", cx, cy + 0.5);
+
+      ctx.restore();
+      break;
+    }
+
+    case TILES.WEAPON_GRENADE: {
+      const now = Date.now();
+      const hoverY = Math.sin(now / 170 + c) * 2.5;
+      const pulse = (Math.sin(now / 130) + 1) * 0.5;
+      const cx = x + 16;
+      const cy = y + 16 + hoverY;
+
+      ctx.save();
+
+      // Lime & Emerald radiant aura
+      const glowRadius = 18 + pulse * 4.0;
+      const plasmaGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+      plasmaGlow.addColorStop(0, `rgba(0, 255, 102, ${0.7 + pulse * 0.25})`);
+      plasmaGlow.addColorStop(0.5, `rgba(255, 230, 0, ${0.35 + pulse * 0.2})`);
+      plasmaGlow.addColorStop(1, "rgba(0, 255, 102, 0)");
+      ctx.fillStyle = plasmaGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ground shadow
+      const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.beginPath();
+      ctx.ellipse(cx, y + 29, 8 * shadowScale, 2.5 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Orbiting lime spark nodes
+      const orbitAngle = now / 210;
+      for (let i = 0; i < 2; i++) {
+        const angle = orbitAngle + i * Math.PI;
+        const ox = cx + Math.cos(angle) * 14;
+        const oy = cy + Math.sin(angle) * 6;
+
+        ctx.fillStyle = i === 0 ? "#ffff00" : "#00ff66";
+        ctx.beginPath();
+        ctx.arc(ox, oy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Rounded Capsule Badge
+      ctx.beginPath();
+      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+
+      const badgeGrad = ctx.createLinearGradient(cx - 10, cy - 10, cx + 10, cy + 10);
+      badgeGrad.addColorStop(0, "#00ff66");
+      badgeGrad.addColorStop(0.5, "#00aa44");
+      badgeGrad.addColorStop(1, "#ffff00");
+      ctx.fillStyle = badgeGrad;
+      ctx.fill();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.font = "900 11px Orbitron, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#00ff66";
+      ctx.shadowBlur = 8;
+      ctx.fillText("💣", cx, cy + 0.5);
+
+      ctx.restore();
+      break;
+    }
+
+    case TILES.WEAPON_MISSILE: {
+      const now = Date.now();
+      const hoverY = Math.sin(now / 160 + c) * 2.5;
+      const pulse = (Math.sin(now / 100) + 1) * 0.5;
+      const cx = x + 16;
+      const cy = y + 16 + hoverY;
+
+      ctx.save();
+
+      // Fiery Orange & Red radiant aura
+      const glowRadius = 18 + pulse * 4.0;
+      const plasmaGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius);
+      plasmaGlow.addColorStop(0, `rgba(255, 102, 0, ${0.75 + pulse * 0.25})`);
+      plasmaGlow.addColorStop(0.5, `rgba(255, 0, 51, ${0.4 + pulse * 0.2})`);
+      plasmaGlow.addColorStop(1, "rgba(255, 102, 0, 0)");
+      ctx.fillStyle = plasmaGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ground shadow
+      const shadowScale = Math.max(0.6, 1 - hoverY * 0.12);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.beginPath();
+      ctx.ellipse(cx, y + 29, 8 * shadowScale, 2.5 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Orbiting fiery spark nodes
+      const orbitAngle = now / 190;
+      for (let i = 0; i < 2; i++) {
+        const angle = orbitAngle + i * Math.PI;
+        const ox = cx + Math.cos(angle) * 14;
+        const oy = cy + Math.sin(angle) * 6;
+
+        ctx.fillStyle = i === 0 ? "#ffcc00" : "#ff3300";
+        ctx.beginPath();
+        ctx.arc(ox, oy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Angular Rocket Pod Hex Badge
+      const w = 11;
+      const h = 12;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - h);
+      ctx.lineTo(cx + w, cy - h * 0.5);
+      ctx.lineTo(cx + w, cy + h * 0.5);
+      ctx.lineTo(cx, cy + h);
+      ctx.lineTo(cx - w, cy + h * 0.5);
+      ctx.lineTo(cx - w, cy - h * 0.5);
+      ctx.closePath();
+
+      const badgeGrad = ctx.createLinearGradient(cx - w, cy - h, cx + w, cy + h);
+      badgeGrad.addColorStop(0, "#ff6600");
+      badgeGrad.addColorStop(0.5, "#cc2200");
+      badgeGrad.addColorStop(1, "#ffcc00");
+      ctx.fillStyle = badgeGrad;
+      ctx.fill();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.font = "900 11px Orbitron, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#ff6600";
+      ctx.shadowBlur = 8;
+      ctx.fillText("🎯", cx, cy + 0.5);
+
+      ctx.restore();
+      break;
+    }
   }
 }
 

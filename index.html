@@ -74,6 +74,38 @@
                     </div>
                 </div>
 
+                <div class="hud-group hud-weapon-group">
+                    <div class="hud-item weapon-item">
+                        <span class="hud-label">ARSENAL (1-4 / Q,E)</span>
+                        <div class="weapon-slots-container" id="hudWeaponSlots">
+                            <button id="weaponSlotPhase" class="weapon-slot-btn active" data-weapon="phase_beam" title="Phase Beam (Key 1)">
+                                <span class="weapon-slot-key">1</span>
+                                <span class="weapon-slot-icon">⚡</span>
+                                <span class="weapon-slot-name">PHASE</span>
+                                <span class="weapon-slot-ammo">∞</span>
+                            </button>
+                            <button id="weaponSlotSpread" class="weapon-slot-btn empty" data-weapon="spread_cannon" title="Spread Cannon (Key 2)">
+                                <span class="weapon-slot-key">2</span>
+                                <span class="weapon-slot-icon">🔱</span>
+                                <span class="weapon-slot-name">SPREAD</span>
+                                <span id="ammoSpread" class="weapon-slot-ammo">0</span>
+                            </button>
+                            <button id="weaponSlotGrenade" class="weapon-slot-btn empty" data-weapon="plasma_grenade" title="Plasma Grenade (Key 3)">
+                                <span class="weapon-slot-key">3</span>
+                                <span class="weapon-slot-icon">💣</span>
+                                <span class="weapon-slot-name">GRENADE</span>
+                                <span id="ammoGrenade" class="weapon-slot-ammo">0</span>
+                            </button>
+                            <button id="weaponSlotMissile" class="weapon-slot-btn empty" data-weapon="seeker_missile" title="Seeker Missile (Key 4)">
+                                <span class="weapon-slot-key">4</span>
+                                <span class="weapon-slot-icon">🎯</span>
+                                <span class="weapon-slot-name">SEEKER</span>
+                                <span id="ammoMissile" class="weapon-slot-ammo">0</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="hud-group hud-actions-group">
                     <div id="hudPowerup" class="hud-item powerup-item hidden">
                         <span class="hud-label">POWERUP</span>
@@ -131,7 +163,8 @@
                 </div>
                 <div class="action-buttons">
                     <button id="touchJetpack" class="action-btn jetpack">🚀 FLY</button>
-                    <button id="touchPhase" class="action-btn phase">⚡ PHASE</button>
+                    <button id="touchPhase" class="action-btn phase">⚡ FIRE</button>
+                    <button id="touchWeapon" class="action-btn weapon-swap" title="Cycle Weapon">🔫 SWAP</button>
                 </div>
             </div>
         </main>

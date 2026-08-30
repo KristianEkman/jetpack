@@ -656,4 +656,194 @@ export class SoundEffects {
             }
         }
     }
+
+    // Spread Cannon (Tri-Beam Energy Burst)
+    playSpreadShotSound(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const freqs = [740, 980, 1320];
+
+        freqs.forEach((freq, idx) => {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = idx % 2 === 0 ? 'sawtooth' : 'square';
+            osc.frequency.setValueAtTime(freq, now);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.25, now + 0.12);
+
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.12);
+        });
+    }
+
+    // Plasma Grenade Launch (Pneumatic Mortar Pop)
+    playGrenadeLaunchSound(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.16);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, now);
+        filter.frequency.exponentialRampToValueAtTime(100, now + 0.16);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.16);
+    }
+
+    // Cluster Grenade / Plasma Blast AoE Explosion
+    playClusterExplosionSound(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+
+        // Sub-bass heavy drop
+        const subOsc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(180, now);
+        subOsc.frequency.exponentialRampToValueAtTime(25, now + 0.4);
+
+        subGain.gain.setValueAtTime(0.25, now);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+        subOsc.connect(subGain);
+        subGain.connect(this.ctx.destination);
+        subOsc.start(now);
+        subOsc.stop(now + 0.4);
+
+        // Distorted noise burst
+        try {
+            const bufferSize = this.ctx.sampleRate * 0.35;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.08));
+            }
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1400, now);
+            filter.frequency.exponentialRampToValueAtTime(150, now + 0.35);
+
+            const noiseGain = this.ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.2, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(this.ctx.destination);
+
+            noise.start(now);
+        } catch (e) {
+            // fallback
+        }
+    }
+
+    // Seeker Missile Launch (Lock-on Chirp + Rocket Ignition)
+    playMissileLaunchSound(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+
+        // Lock-on double chirp
+        const chirpOsc = this.ctx.createOscillator();
+        const chirpGain = this.ctx.createGain();
+        chirpOsc.type = 'sine';
+        chirpOsc.frequency.setValueAtTime(1800, now);
+        chirpOsc.frequency.setValueAtTime(2400, now + 0.03);
+
+        chirpGain.gain.setValueAtTime(0.08, now);
+        chirpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        chirpOsc.connect(chirpGain);
+        chirpGain.connect(this.ctx.destination);
+        chirpOsc.start(now);
+        chirpOsc.stop(now + 0.08);
+
+        // Rocket booster thrust sweep
+        const rocketOsc = this.ctx.createOscillator();
+        const rocketFilter = this.ctx.createBiquadFilter();
+        const rocketGain = this.ctx.createGain();
+
+        rocketOsc.type = 'sawtooth';
+        rocketOsc.frequency.setValueAtTime(220, now + 0.04);
+        rocketOsc.frequency.exponentialRampToValueAtTime(680, now + 0.22);
+
+        rocketFilter.type = 'bandpass';
+        rocketFilter.frequency.setValueAtTime(600, now + 0.04);
+        rocketFilter.frequency.exponentialRampToValueAtTime(1600, now + 0.22);
+        rocketFilter.Q.setValueAtTime(2.0, now + 0.04);
+
+        rocketGain.gain.setValueAtTime(0.001, now);
+        rocketGain.gain.linearRampToValueAtTime(0.14, now + 0.06);
+        rocketGain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+        rocketOsc.connect(rocketFilter);
+        rocketFilter.connect(rocketGain);
+        rocketGain.connect(this.ctx.destination);
+
+        rocketOsc.start(now + 0.04);
+        rocketOsc.stop(now + 0.24);
+    }
+
+    // Weapon Pickup Jingle (Futuristic Equip Chime)
+    playWeaponPickupSound(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+        notes.forEach((freq, i) => {
+            if (!this.ctx) return;
+            const t = now + i * 0.05;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t);
+
+            gain.gain.setValueAtTime(0.12, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(t);
+            osc.stop(t + 0.18);
+        });
+    }
 }

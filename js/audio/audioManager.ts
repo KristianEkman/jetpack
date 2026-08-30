@@ -299,6 +299,26 @@ export class AudioManager {
         this.sfx.playRespawn();
     }
 
+    playSpreadShotSound(): void {
+        this.sfx.playSpreadShotSound();
+    }
+
+    playGrenadeLaunchSound(): void {
+        this.sfx.playGrenadeLaunchSound();
+    }
+
+    playClusterExplosionSound(): void {
+        this.sfx.playClusterExplosionSound();
+    }
+
+    playMissileLaunchSound(): void {
+        this.sfx.playMissileLaunchSound();
+    }
+
+    playWeaponPickupSound(): void {
+        this.sfx.playWeaponPickupSound();
+    }
+
     startEnergyDrain(): void {
         this.sfx.startEnergyDrain();
     }

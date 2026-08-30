@@ -18,10 +18,13 @@ export function simulateMovement(
   if (player.isDead || !input) return;
 
   player.phaseCooldown = Math.max(0, player.phaseCooldown - dt);
+  player.weaponCooldown = Math.max(0, (player.weaponCooldown || 0) - dt);
   player.phaseBeamTimer = Math.max(0, player.phaseBeamTimer - dt);
   player.teleportCooldown = Math.max(0, player.teleportCooldown - dt);
   player.rapidFireTimer = Math.max(0, player.rapidFireTimer - dt);
   player.isPhasing = player.phaseBeamTimer > 0;
+
+  player.updateProjectiles(dt, enemyManager, playerTargets);
 
   const centerCol = Math.floor((player.x + player.width / 2) / TILE_SIZE);
   const centerRow = Math.floor((player.y + player.height / 2) / TILE_SIZE);
@@ -80,8 +83,8 @@ export function simulateMovement(
     Math.min(PLAYER_PHYSICS.TERMINAL_VELOCITY, player.vy),
   );
 
-  if (!isReplay && input.phase && player.phaseCooldown <= 0) {
-    player.performPhaseBeam(enemyManager, playerTargets);
+  if (!isReplay && input.phase && player.phaseCooldown <= 0 && player.weaponCooldown <= 0) {
+    player.fireWeapon(enemyManager, playerTargets);
   }
 
   moveAndCollide(player, dt);

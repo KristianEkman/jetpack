@@ -29,9 +29,88 @@ export const TILES = {
   EXTRA_LIFE: 19,
   ENEMY_BOSS: 20,
   RAPID_FIRE: 21,
+  WEAPON_SPREAD: 22,
+  WEAPON_GRENADE: 23,
+  WEAPON_MISSILE: 24,
 } as const;
 
 export type TileTypeValue = (typeof TILES)[keyof typeof TILES];
+
+export const WEAPON_TYPES = {
+  PHASE_BEAM: "phase_beam",
+  SPREAD_CANNON: "spread_cannon",
+  PLASMA_GRENADE: "plasma_grenade",
+  SEEKER_MISSILE: "seeker_missile",
+} as const;
+
+export type WeaponTypeValue =
+  (typeof WEAPON_TYPES)[keyof typeof WEAPON_TYPES];
+
+export const WEAPON_SPECS = {
+  [WEAPON_TYPES.PHASE_BEAM]: {
+    id: WEAPON_TYPES.PHASE_BEAM,
+    name: "Phase Beam",
+    shortName: "PHASE",
+    icon: "⚡",
+    cooldown: 0.3,
+    rapidCooldown: 0.08,
+    ammoPerPickup: Infinity,
+    maxAmmo: Infinity,
+    damage: 1,
+    color: "#00f0ff",
+  },
+  [WEAPON_TYPES.SPREAD_CANNON]: {
+    id: WEAPON_TYPES.SPREAD_CANNON,
+    name: "Spread Cannon",
+    shortName: "SPREAD",
+    icon: "🔱",
+    cooldown: 0.18,
+    rapidCooldown: 0.08,
+    ammoPerPickup: 25,
+    maxAmmo: 99,
+    damage: 1,
+    speed: 380,
+    spreadAngle: 0.36, // ~20.6 deg
+    lifetime: 0.85,
+    color: "#ff00dd",
+  },
+  [WEAPON_TYPES.PLASMA_GRENADE]: {
+    id: WEAPON_TYPES.PLASMA_GRENADE,
+    name: "Plasma Grenade",
+    shortName: "GRENADE",
+    icon: "💣",
+    cooldown: 0.45,
+    rapidCooldown: 0.22,
+    ammoPerPickup: 10,
+    maxAmmo: 40,
+    damage: 3,
+    launchSpeedX: 260,
+    launchSpeedY: -180,
+    gravity: 550,
+    bounceDamping: 0.62,
+    fuseTime: 1.25,
+    blastRadius: 48,
+    color: "#00ff66",
+  },
+  [WEAPON_TYPES.SEEKER_MISSILE]: {
+    id: WEAPON_TYPES.SEEKER_MISSILE,
+    name: "Seeker Missile",
+    shortName: "SEEKER",
+    icon: "🎯",
+    cooldown: 0.35,
+    rapidCooldown: 0.16,
+    ammoPerPickup: 8,
+    maxAmmo: 30,
+    damage: 2,
+    initialSpeed: 180,
+    maxSpeed: 420,
+    acceleration: 580,
+    turnRate: 5.5,
+    lifetime: 2.5,
+    blastRadius: 24,
+    color: "#ff6600",
+  },
+} as const;
 
 export const PLAYER_PHYSICS = {
   WIDTH: 22,

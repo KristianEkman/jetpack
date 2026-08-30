@@ -31,6 +31,11 @@ export interface AudioLike {
   playPortalWarp?: () => void;
   playTeleport?: () => void;
   playRespawn?: () => void;
+  playSpreadShotSound?: () => void;
+  playGrenadeLaunchSound?: () => void;
+  playClusterExplosionSound?: () => void;
+  playMissileLaunchSound?: () => void;
+  playWeaponPickupSound?: () => void;
   startEnergyDrain?: () => void;
   stopEnergyDrain?: () => void;
   startMenuMusic?: (forceReset?: boolean) => void;
