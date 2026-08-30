@@ -2,6 +2,197 @@ import { TILE_SIZE, TILES } from "../../shared/constants.js";
 import { ParticleSpec } from "../../shared/types.js";
 import { DebrisObject, DissolvedBrick } from "./types.js";
 
+function drawSpreadCannonPickup(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  pulse: number,
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.08);
+  ctx.lineJoin = "round";
+
+  // Stock, grip, and a clearly split three-barrel muzzle.
+  ctx.fillStyle = "#35105c";
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-12, -4);
+  ctx.lineTo(3, -4);
+  ctx.lineTo(7, 0);
+  ctx.lineTo(3, 4);
+  ctx.lineTo(-12, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#ff00dd";
+  ctx.fillRect(-8, 4, 4, 7);
+  ctx.strokeRect(-8, 4, 4, 7);
+
+  ctx.shadowColor = "#00f0ff";
+  ctx.shadowBlur = 5 + pulse * 3;
+  ctx.strokeStyle = "#00f0ff";
+  ctx.lineWidth = 2.4;
+  for (const offset of [-1, 0, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(3, offset * 1.5);
+    ctx.lineTo(12, offset * 5);
+    ctx.stroke();
+  }
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(-2, 0, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPlasmaGrenadePickup(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  pulse: number,
+  now: number,
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.lineJoin = "round";
+
+  // Mechanical cap and segmented grenade casing.
+  ctx.fillStyle = "#d9ffe5";
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.2;
+  ctx.fillRect(-4, -12, 8, 4);
+  ctx.strokeRect(-4, -12, 8, 4);
+  ctx.beginPath();
+  ctx.moveTo(3, -11);
+  ctx.quadraticCurveTo(11, -13, 9, -6);
+  ctx.strokeStyle = "#ffff00";
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+
+  const shell = ctx.createRadialGradient(-3, -4, 1, 0, 0, 11);
+  shell.addColorStop(0, "#baffcb");
+  shell.addColorStop(0.28, "#00ff66");
+  shell.addColorStop(1, "#006b35");
+  ctx.fillStyle = shell;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0, 1, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(0, 65, 35, 0.8)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-9, -2);
+  ctx.lineTo(9, -2);
+  ctx.moveTo(-9, 4);
+  ctx.lineTo(9, 4);
+  ctx.moveTo(-4, -8);
+  ctx.lineTo(-4, 10);
+  ctx.moveTo(4, -8);
+  ctx.lineTo(4, 10);
+  ctx.stroke();
+
+  // Animated chamber makes this read as plasma ordnance, not a plain bomb.
+  const coreRadius = 3.2 + pulse;
+  ctx.shadowColor = "#ffff00";
+  ctx.shadowBlur = 7 + pulse * 4;
+  ctx.fillStyle = "#ffffaa";
+  ctx.beginPath();
+  ctx.arc(0, 1, coreRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, 1, 6, now / 180, now / 180 + Math.PI * 1.3);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSeekerMissilePickup(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  pulse: number,
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.18);
+  ctx.lineJoin = "round";
+
+  // Exhaust flame and fins establish direction before the rocket body.
+  ctx.shadowColor = "#ff6600";
+  ctx.shadowBlur = 6 + pulse * 4;
+  ctx.fillStyle = "#ff6600";
+  ctx.beginPath();
+  ctx.moveTo(-10, -3);
+  ctx.lineTo(-16 - pulse * 2, 0);
+  ctx.lineTo(-10, 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#ffff66";
+  ctx.beginPath();
+  ctx.moveTo(-10, -1.5);
+  ctx.lineTo(-14 - pulse, 0);
+  ctx.lineTo(-10, 1.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#26384b";
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-10, -4);
+  ctx.lineTo(6, -4);
+  ctx.lineTo(13, 0);
+  ctx.lineTo(6, 4);
+  ctx.lineTo(-10, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#ff3300";
+  ctx.beginPath();
+  ctx.moveTo(-8, -4);
+  ctx.lineTo(-4, -9);
+  ctx.lineTo(1, -4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-8, 4);
+  ctx.lineTo(-4, 9);
+  ctx.lineTo(1, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Cyan seeker eye is visually separate from the orange warhead.
+  ctx.fillStyle = "#ff6600";
+  ctx.beginPath();
+  ctx.moveTo(6, -4);
+  ctx.lineTo(13, 0);
+  ctx.lineTo(6, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowColor = "#00f0ff";
+  ctx.shadowBlur = 7;
+  ctx.fillStyle = "#bfffff";
+  ctx.beginPath();
+  ctx.arc(8.5, 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 export function renderTile(
   ctx: CanvasRenderingContext2D,
   tile: number,
@@ -978,34 +1169,7 @@ export function renderTile(
         ctx.fill();
       }
 
-      // Diamond Badge
-      const w = 11;
-      const h = 12;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - h);
-      ctx.lineTo(cx + w, cy);
-      ctx.lineTo(cx, cy + h);
-      ctx.lineTo(cx - w, cy);
-      ctx.closePath();
-
-      const badgeGrad = ctx.createLinearGradient(cx - w, cy - h, cx + w, cy + h);
-      badgeGrad.addColorStop(0, "#ff00dd");
-      badgeGrad.addColorStop(0.5, "#9900ff");
-      badgeGrad.addColorStop(1, "#00f0ff");
-      ctx.fillStyle = badgeGrad;
-      ctx.fill();
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.font = "900 11px Orbitron, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = "#ff00dd";
-      ctx.shadowBlur = 8;
-      ctx.fillText("🔱", cx, cy + 0.5);
+      drawSpreadCannonPickup(ctx, cx, cy, pulse);
 
       ctx.restore();
       break;
@@ -1051,28 +1215,7 @@ export function renderTile(
         ctx.fill();
       }
 
-      // Rounded Capsule Badge
-      ctx.beginPath();
-      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
-
-      const badgeGrad = ctx.createLinearGradient(cx - 10, cy - 10, cx + 10, cy + 10);
-      badgeGrad.addColorStop(0, "#00ff66");
-      badgeGrad.addColorStop(0.5, "#00aa44");
-      badgeGrad.addColorStop(1, "#ffff00");
-      ctx.fillStyle = badgeGrad;
-      ctx.fill();
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.font = "900 11px Orbitron, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = "#00ff66";
-      ctx.shadowBlur = 8;
-      ctx.fillText("💣", cx, cy + 0.5);
+      drawPlasmaGrenadePickup(ctx, cx, cy, pulse, now);
 
       ctx.restore();
       break;
@@ -1118,36 +1261,7 @@ export function renderTile(
         ctx.fill();
       }
 
-      // Angular Rocket Pod Hex Badge
-      const w = 11;
-      const h = 12;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - h);
-      ctx.lineTo(cx + w, cy - h * 0.5);
-      ctx.lineTo(cx + w, cy + h * 0.5);
-      ctx.lineTo(cx, cy + h);
-      ctx.lineTo(cx - w, cy + h * 0.5);
-      ctx.lineTo(cx - w, cy - h * 0.5);
-      ctx.closePath();
-
-      const badgeGrad = ctx.createLinearGradient(cx - w, cy - h, cx + w, cy + h);
-      badgeGrad.addColorStop(0, "#ff6600");
-      badgeGrad.addColorStop(0.5, "#cc2200");
-      badgeGrad.addColorStop(1, "#ffcc00");
-      ctx.fillStyle = badgeGrad;
-      ctx.fill();
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.font = "900 11px Orbitron, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = "#ff6600";
-      ctx.shadowBlur = 8;
-      ctx.fillText("🎯", cx, cy + 0.5);
+      drawSeekerMissilePickup(ctx, cx, cy, pulse);
 
       ctx.restore();
       break;

@@ -63,7 +63,7 @@ export const WEAPON_SPECS = {
     id: WEAPON_TYPES.SPREAD_CANNON,
     name: "Spread Cannon",
     shortName: "SPREAD",
-    icon: "🔱",
+    icon: "🔫",
     cooldown: 0.18,
     rapidCooldown: 0.08,
     ammoPerPickup: 25,
@@ -96,7 +96,7 @@ export const WEAPON_SPECS = {
     id: WEAPON_TYPES.SEEKER_MISSILE,
     name: "Seeker Missile",
     shortName: "SEEKER",
-    icon: "🎯",
+    icon: "🚀",
     cooldown: 0.35,
     rapidCooldown: 0.16,
     ammoPerPickup: 8,
@@ -209,4 +209,3 @@ export const PLAYER_COLORS = [
 ] as const;
 
 export const DEFAULT_PLAYER_COLOR = PLAYER_COLORS[0];
-

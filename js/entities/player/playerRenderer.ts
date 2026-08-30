@@ -366,6 +366,19 @@ export function renderPlayerProjectiles(
       const angle = proj.rotation || Math.atan2(proj.vy, proj.vx);
       ctx.rotate(angle);
 
+      // Long tapered trail makes the fast bolt direction readable at a glance.
+      const trail = ctx.createLinearGradient(-18, 0, 2, 0);
+      trail.addColorStop(0, "rgba(0, 240, 255, 0)");
+      trail.addColorStop(0.55, "rgba(0, 240, 255, 0.5)");
+      trail.addColorStop(1, "rgba(255, 0, 221, 0.9)");
+      ctx.fillStyle = trail;
+      ctx.beginPath();
+      ctx.moveTo(-19, 0);
+      ctx.lineTo(1, -2.4);
+      ctx.lineTo(1, 2.4);
+      ctx.closePath();
+      ctx.fill();
+
       // Glow halo
       ctx.fillStyle = "rgba(255, 0, 221, 0.4)";
       ctx.beginPath();
@@ -386,6 +399,7 @@ export function renderPlayerProjectiles(
     } else if (proj.type === "plasma_grenade") {
       const pulse = (Math.sin(Date.now() / 80) + 1) * 0.5;
       const radius = proj.radius || 6;
+      ctx.rotate(proj.rotation || 0);
 
       // Outer radial aura
       const auraGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, radius + 4 + pulse * 2);
@@ -397,11 +411,24 @@ export function renderPlayerProjectiles(
       ctx.arc(0, 0, radius + 4 + pulse * 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Grenade shell
-      ctx.fillStyle = "#00ff66";
+      // Segmented metal shell around a hot plasma chamber.
+      const shell = ctx.createRadialGradient(-2, -2, 1, 0, 0, radius);
+      shell.addColorStop(0, "#caffd7");
+      shell.addColorStop(0.35, "#00ff66");
+      shell.addColorStop(1, "#006b35");
+      ctx.fillStyle = shell;
       ctx.beginPath();
       ctx.arc(0, 0, radius, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.strokeStyle = "rgba(0, 55, 28, 0.9)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-radius, 0);
+      ctx.lineTo(radius, 0);
+      ctx.moveTo(0, -radius);
+      ctx.lineTo(0, radius);
+      ctx.stroke();
 
       // Rotating core ring
       ctx.strokeStyle = "#ffffff";
@@ -415,6 +442,11 @@ export function renderPlayerProjectiles(
       ctx.beginPath();
       ctx.arc(0, 0, 2, 0, Math.PI * 2);
       ctx.fill();
+
+      // Fast blinking fuse pips communicate that the grenade is live.
+      const fuseProgress = 1 - proj.life / Math.max(0.001, proj.maxLife);
+      ctx.fillStyle = fuseProgress > 0.65 && pulse > 0.45 ? "#ffffff" : "#ffcc00";
+      ctx.fillRect(-1.5, -radius - 2, 3, 2);
     } else if (proj.type === "seeker_missile") {
       const angle = proj.rotation || Math.atan2(proj.vy, proj.vx);
       ctx.rotate(angle);
@@ -467,8 +499,21 @@ export function renderPlayerProjectiles(
       ctx.fill();
 
       // Sensor tip
-      ctx.fillStyle = "#00f0ff";
-      ctx.fillRect(7, -0.75, 1.5, 1.5);
+      ctx.shadowColor = "#00f0ff";
+      ctx.shadowBlur = 5;
+      ctx.fillStyle = "#bfffff";
+      ctx.beginPath();
+      ctx.arc(7.4, 0, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // A rotating lock ring distinguishes the guided missile from a rocket.
+      const scanAngle = Date.now() / 120;
+      ctx.strokeStyle = "rgba(0, 240, 255, 0.8)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(7.4, 0, 4.2, scanAngle, scanAngle + Math.PI * 0.75);
+      ctx.stroke();
     }
 
     ctx.restore();

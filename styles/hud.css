@@ -211,6 +211,13 @@
   opacity: 0.75;
 }
 
+/* Inactive slots collapse to just icon + ammo to save HUD space;
+   the active slot keeps its key hint and full weapon name. */
+.weapon-slot-btn:not(.active) .weapon-slot-key,
+.weapon-slot-btn:not(.active) .weapon-slot-name {
+  display: none;
+}
+
 .weapon-slot-key {
   font-family: var(--font-retro);
   font-size: 0.55rem;
@@ -256,6 +263,50 @@
   background: rgba(255, 68, 68, 0.15);
   border-color: #ff4444;
   box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+}
+
+/* ==========================================================================
+   DESKTOP HUD GRID (Wide screens: fuel stacked above arsenal in the middle
+   column, so LEVEL / SCORE / LIVES fit on one row next to the logo)
+   ========================================================================== */
+
+@media (min-width: 769px) {
+  .hud-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "stats fuel actions"
+      "stats arsenal actions";
+    align-items: center;
+    column-gap: 20px;
+    row-gap: 4px;
+  }
+
+  /* Flatten the mobile wrappers so their children become grid items */
+  .hud-mobile-bar,
+  .hud-dropdown-content {
+    display: contents;
+  }
+
+  .hud-stats-group {
+    grid-area: stats;
+  }
+
+  .fuel-item {
+    grid-area: fuel;
+    justify-self: center;
+  }
+
+  .hud-weapon-group {
+    grid-area: arsenal;
+    justify-self: center;
+  }
+
+  .hud-actions-group {
+    grid-area: actions;
+    justify-content: flex-end;
+  }
 }
 
 /* ==========================================================================
