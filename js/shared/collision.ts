@@ -45,6 +45,23 @@ export function isPointInBox(
 }
 
 /**
+ * Squared distance from a point to the closest point on an AABB box.
+ * Returns 0 when the point is inside the box. Prefer this over center
+ * distance for blast checks so large entities are hit by edge detonations.
+ */
+export function distanceSqToBox(
+  px: number,
+  py: number,
+  box: BoundingBox,
+): number {
+  const closestX = Math.max(box.x, Math.min(px, box.x + box.width));
+  const closestY = Math.max(box.y, Math.min(py, box.y + box.height));
+  const dx = px - closestX;
+  const dy = py - closestY;
+  return dx * dx + dy * dy;
+}
+
+/**
  * Computes the column and row index for an entity's center point.
  */
 export function getCenterTile(

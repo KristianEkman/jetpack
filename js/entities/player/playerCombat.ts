@@ -10,7 +10,7 @@ import {
   WEAPON_TYPES,
   WEAPON_SPECS,
 } from "../../shared/constants.js";
-import { isPointInBox, getCenterTile } from "../../shared/collision.js";
+import { isPointInBox, getCenterTile, distanceSqToBox } from "../../shared/collision.js";
 import { EnemyManager, ENEMY_TYPES } from "../enemy/index.js";
 import { PlayerProjectile, WeaponType } from "../../shared/types.js";
 import type { Player } from "./playerClass.js";
@@ -642,9 +642,7 @@ export function detonateGrenade(
     for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
       const enemy = enemyManager.enemies[i];
       if (enemy.dead) continue;
-      const ex = enemy.x + enemy.width / 2;
-      const ey = enemy.y + enemy.height / 2;
-      const distSq = (ex - proj.x) * (ex - proj.x) + (ey - proj.y) * (ey - proj.y);
+      const distSq = distanceSqToBox(proj.x, proj.y, enemy);
 
       if (distSq <= blastRadius * blastRadius) {
         const isBoss = enemy.type === ENEMY_TYPES.BOSS;
@@ -700,9 +698,7 @@ export function detonateMissile(
     for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
       const enemy = enemyManager.enemies[i];
       if (enemy.dead) continue;
-      const ex = enemy.x + enemy.width / 2;
-      const ey = enemy.y + enemy.height / 2;
-      const distSq = (ex - proj.x) * (ex - proj.x) + (ey - proj.y) * (ey - proj.y);
+      const distSq = distanceSqToBox(proj.x, proj.y, enemy);
 
       if (distSq <= (blastRadius + 10) * (blastRadius + 10)) {
         const isBoss = enemy.type === ENEMY_TYPES.BOSS;
