@@ -16,7 +16,7 @@ export class LevelManager {
         this.game = game;
     }
 
-    startLevel(index: number, isRestart: boolean = false): void {
+    startLevel(index: number, isRestart: boolean = false, continueCampaign: boolean = false): void {
         const game = this.game;
         game.isCustomLevel = false;
         game.activeCustomLevelRecord = null;
@@ -24,6 +24,12 @@ export class LevelManager {
         game.deathSequenceTimer = 0;
         game.isDeathHandled = false;
         const levelData = CAMPAIGN_LEVELS[index];
+
+        // Fresh start (menu, level select, retry): reset lives/score/fuel/ammo.
+        // Campaign next-level progression and restarts after death keep them.
+        if (!isRestart && !continueCampaign) {
+            game.player.resetForNewGame();
+        }
 
         game.tileMap.loadLevelData(levelData, isRestart);
         game.enemyManager.clear();
@@ -51,6 +57,11 @@ export class LevelManager {
         game.currentLevelIndex = -1;
         game.deathSequenceTimer = 0;
         game.isDeathHandled = false;
+
+        // Fresh play of a community level starts with full lives/score/fuel/ammo
+        if (!isRestart) {
+            game.player.resetForNewGame();
+        }
 
         game.tileMap.loadLevelData(record, isRestart);
         game.enemyManager.clear();
@@ -80,8 +91,6 @@ export class LevelManager {
             card.className = 'level-card';
             card.innerHTML = `<span>STAGE</span><span>${idx + 1}</span>`;
             card.addEventListener('click', () => {
-                game.player.score = 0;
-                game.player.lives = 3;
                 this.startLevel(idx);
             });
             grid.appendChild(card);
@@ -114,6 +123,7 @@ export class LevelManager {
         game.enemyManager.clear();
         game.tileMap.collectedEmeralds = 0;
         if (!isRestart) {
+            game.player.resetForNewGame();
             game.tileMap.resetExtraLifeState();
         }
 

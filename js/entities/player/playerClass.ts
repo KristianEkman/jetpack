@@ -151,6 +151,21 @@ export class Player {
     return this.rapidFireTimer > 0;
   }
 
+  // Full progress reset for a fresh (non-campaign-continuation) level start.
+  // Per-life state (position, cooldowns, projectiles, ...) is reset by spawn().
+  resetForNewGame(): void {
+    this.score = 0;
+    this.lives = PLAYER_PHYSICS.INITIAL_LIVES;
+    this.fuel = this.maxFuel;
+    this.activeWeapon = WEAPON_TYPES.PHASE_BEAM;
+    this.weaponAmmo = {
+      phase_beam: Infinity,
+      spread_cannon: 0,
+      plasma_grenade: 0,
+      seeker_missile: 0,
+    };
+  }
+
   setWeapon(type: WeaponType): boolean {
     if (type === WEAPON_TYPES.PHASE_BEAM) {
       this.activeWeapon = type;

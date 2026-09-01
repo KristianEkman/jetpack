@@ -184,8 +184,8 @@ export class Game {
     this.uiManager.updateHUD();
   }
 
-  startLevel(index: number, isRestart: boolean = false): void {
-    this.levelManager.startLevel(index, isRestart);
+  startLevel(index: number, isRestart: boolean = false, continueCampaign: boolean = false): void {
+    this.levelManager.startLevel(index, isRestart, continueCampaign);
   }
   restartCurrentLevel(isRestart: boolean = false): void {
     this.levelManager.restartCurrentLevel(isRestart);

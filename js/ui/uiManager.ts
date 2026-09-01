@@ -161,8 +161,6 @@ export class UIManager {
     document.getElementById("btnStartGame")?.addEventListener("click", () => {
       game.isMultiplayer = false;
       game.currentLevelIndex = 0;
-      game.player.score = 0;
-      game.player.lives = 3;
       game.levelManager.startLevel(0);
     });
 
@@ -245,8 +243,6 @@ export class UIManager {
       if (game.isMultiplayer) {
         game.network.startMatch();
       } else {
-        game.player.lives = 3;
-        game.player.score = 0;
         this.closeAllDialogs();
         game.levelManager.restartCurrentLevel(false);
       }
@@ -277,7 +273,7 @@ export class UIManager {
           this.showBanner("CONGRATULATIONS! YOU BEAT THE CAMPAIGN!");
           setTimeout(() => this.showDialog("dlgMainMenu"), 2000);
         } else {
-          game.levelManager.startLevel(game.currentLevelIndex);
+          game.levelManager.startLevel(game.currentLevelIndex, false, true);
         }
       }
     });
