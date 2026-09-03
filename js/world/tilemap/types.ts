@@ -28,6 +28,7 @@ export interface DebrisObject {
   bounce?: number;
   radius?: number;
   speed?: number;
+  color?: string;
 }
 
 export type TileMapListener<T = any> = (payload: T) => void;

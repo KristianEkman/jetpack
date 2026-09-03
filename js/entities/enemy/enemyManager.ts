@@ -277,6 +277,16 @@ export class EnemyManager {
     return this.enemies.splice(index, 1)[0];
   }
 
+  killAllEnemies(playerId: string = ""): number {
+    const snapshot = [...this.enemies];
+    let killed = 0;
+    for (const enemy of snapshot) {
+      if (this.damageEnemy(enemy.id, 9999, playerId)) killed++;
+    }
+    this.projectiles = [];
+    return killed;
+  }
+
   getClosestPlayer(enemy: Enemy, playerInput: Player[]): Player | null {
     if (!playerInput) return null;
     let playersList: Player[] = [];

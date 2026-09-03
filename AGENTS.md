@@ -26,7 +26,7 @@ Guidance for AI coding agents working in this repository.
 
 ## Code Organization
 
-The client entry point is `index.html` → `js/game.ts` (the `Game` master controller, which wires up all sub-managers and owns the `GAME_STATES` state machine: `menu`, `playing`, `paused`, `level_editor`, `game_over`, `level_complete`, `spectating`).
+The client entry point is `index.html` → `js/game.ts` (the `Game` master controller, which wires up all sub-managers and owns the `GAME_STATES` state machine: `menu`, `playing`, `paused`, `level_editor`, `game_over`, `level_complete`, `campaign_complete`, `spectating`).
 
 - `js/shared/` — **isomorphic code used by client AND server**: `constants.ts` (tile types, physics, `GAME_EVENTS`/`ROOM_EVENTS` socket event names, `NETWORK_SETTINGS`), `payloads.ts` (socket/REST payload interfaces), `types.ts`, `collision.ts`. Keep this directory free of DOM and Node-specific APIs.
 - `js/engine/` — client game loop (`loop.ts`), keyboard/touch input (`input.ts`).

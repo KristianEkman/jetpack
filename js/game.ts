@@ -16,6 +16,7 @@ import { NetworkManager } from "./network/networkManager.js";
 import { UIManager } from "./ui/uiManager.js";
 import { LevelManager } from "./levels/levelManager.js";
 import { MultiplayerController } from "./network/multiplayerController.js";
+import { FireworksShow } from "./world/fireworks.js";
 import { initErrorMonitor } from "./ui/errorMonitor.js";
 import { userAuthUI } from "./ui/userAuthUI.js";
 import {
@@ -35,6 +36,7 @@ export const GAME_STATES = {
   LEVEL_EDITOR: "level_editor",
   GAME_OVER: "game_over",
   LEVEL_COMPLETE: "level_complete",
+  CAMPAIGN_COMPLETE: "campaign_complete",
   SPECTATING: "spectating",
 } as const;
 
@@ -70,6 +72,7 @@ export class Game {
   multiplayerController: MultiplayerController;
   editor: LevelEditor;
   loop: GameLoop;
+  fireworks: FireworksShow;
 
   constructor() {
     initErrorMonitor();
@@ -103,6 +106,14 @@ export class Game {
       this.uiManager?.updateHUD();
     };
 
+    // Hidden debug shortcut (Ctrl+Shift+K): single-player only, the server
+    // is authoritative over enemies in multiplayer.
+    this.input.onKillAllEnemies = () => {
+      if (this.gameState !== GAME_STATES.PLAYING || this.isMultiplayer) return;
+      const killed = this.enemyManager.killAllEnemies();
+      this.uiManager?.showBanner(`🐞 DEBUG: ${killed} ENEMIES VAPORIZED`);
+    };
+
     this.playerManager = new PlayerManager(this.audio, this.tileMap);
     this.network = new NetworkManager();
 
@@ -127,6 +138,8 @@ export class Game {
 
     this.deathSequenceTimer = 0;
     this.isDeathHandled = false;
+
+    this.fireworks = new FireworksShow();
 
     this.uiManager = new UIManager(this);
     this.levelManager = new LevelManager(this);
@@ -234,9 +247,17 @@ export class Game {
   update(dt: number): void {
     if (
       this.gameState !== GAME_STATES.PLAYING &&
-      this.gameState !== GAME_STATES.SPECTATING
+      this.gameState !== GAME_STATES.SPECTATING &&
+      this.gameState !== GAME_STATES.CAMPAIGN_COMPLETE
     )
       return;
+
+    if (this.gameState === GAME_STATES.CAMPAIGN_COMPLETE) {
+      this.tileMap.update(dt, this.player, this.enemyManager);
+      this.fireworks.update(dt, this.tileMap);
+      this.uiManager.updateHUD();
+      return;
+    }
 
     let effectiveDt = dt;
 

@@ -1357,7 +1357,13 @@ export function renderTileMap(
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    if (d.type === "helmet") {
+    if (d.type === "shockwave") {
+      ctx.strokeStyle = d.color || "#ffd700";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.radius || 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (d.type === "helmet") {
       ctx.translate(d.x, d.y);
       ctx.rotate(d.rot);
       ctx.fillStyle = "#ecf0f1";

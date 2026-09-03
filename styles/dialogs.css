@@ -29,6 +29,11 @@
   background: rgba(0, 0, 0, 0.88);
 }
 
+/* The campaign-complete dialog keeps the fireworks visible behind it */
+#dlgCampaignComplete::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .dialog-content {
   padding: 30px;
   display: flex;
@@ -74,6 +79,74 @@
 .retro-dialog h2.success-title {
   color: var(--color-secondary);
   text-shadow: 0 0 15px rgba(51, 255, 119, 0.8);
+}
+
+.retro-dialog h2.victory-title {
+  font-size: 1.5rem;
+  background: linear-gradient(90deg, #ffd700, #ff2a5f, #00ffcc, #ffd700);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    victoryShimmer 3s linear infinite,
+    victoryPulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.7));
+}
+
+@keyframes victoryShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 300% 50%;
+  }
+}
+
+@keyframes victoryPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.retro-dialog .victory-subtitle {
+  color: var(--color-primary);
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.retro-dialog .campaign-complete-content {
+  position: relative;
+  overflow: hidden;
+}
+
+.retro-dialog .campaign-complete-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 15% 20%, rgba(255, 215, 0, 0.9), transparent),
+    radial-gradient(2px 2px at 80% 15%, rgba(0, 255, 204, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 60% 45%, rgba(255, 42, 95, 0.9), transparent),
+    radial-gradient(2px 2px at 30% 75%, rgba(0, 229, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 88% 65%, rgba(199, 125, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 45% 90%, rgba(255, 159, 28, 0.9), transparent);
+  animation: victoryTwinkle 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes victoryTwinkle {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .menu-buttons {

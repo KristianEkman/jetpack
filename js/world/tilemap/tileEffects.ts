@@ -153,6 +153,30 @@ export function addSparkles(
   }
 }
 
+export function addShockwave(
+  debris: DebrisObject[],
+  x: number,
+  y: number,
+  color: string = "#ffd700",
+  effectsEnabled: boolean = true,
+): void {
+  if (!effectsEnabled || !debris) return;
+  debris.push({
+    type: "shockwave",
+    x,
+    y,
+    vx: 0,
+    vy: 0,
+    rot: 0,
+    rotSpeed: 0,
+    life: 0.9,
+    maxLife: 0.9,
+    radius: 6,
+    speed: 320,
+    color,
+  });
+}
+
 export function updateParticles(particles: ParticleSpec[], dt: number): void {
   if (!particles) return;
   for (let i = particles.length - 1; i >= 0; i--) {

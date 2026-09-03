@@ -38,6 +38,7 @@ export class InputHandler {
     onPausePress: (() => void) | null;
     onWeaponSelect: ((slotIndex: number) => void) | null;
     onWeaponCycle: ((direction: 1 | -1) => void) | null;
+    onKillAllEnemies: (() => void) | null;
 
     constructor() {
         this.keys = {
@@ -55,6 +56,7 @@ export class InputHandler {
         this.onPausePress = null;
         this.onWeaponSelect = null;
         this.onWeaponCycle = null;
+        this.onKillAllEnemies = null;
 
         if (typeof window !== 'undefined') {
             this.setupKeyboard();
@@ -121,6 +123,14 @@ export class InputHandler {
                     this.keys.phase = true;
                     break;
                 case 'KeyK':
+                    // Hidden debug shortcut: Ctrl+Shift+K vaporizes all enemies
+                    if (e.ctrlKey && e.shiftKey) {
+                        // e.preventDefault();
+                        // if (this.onKillAllEnemies) this.onKillAllEnemies();
+                    } else {
+                        this.keys.suicide = true;
+                    }
+                    break;
                 case 'Backspace':
                     this.keys.suicide = true;
                     break;

@@ -279,6 +279,10 @@ export class AudioManager {
         this.sfx.playAllDiamondsCaught();
     }
 
+    playCampaignFanfare(): void {
+        this.sfx.playCampaignFanfare();
+    }
+
     playFuelPickup(): void {
         this.sfx.playFuelPickup();
     }

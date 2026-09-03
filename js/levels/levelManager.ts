@@ -9,8 +9,13 @@ import { TILE_SIZE, TILES } from '../world/tilemap.js';
 import { userService } from '../network/userService.js';
 import { CustomLevelHeader, CustomLevelRecord, CustomLevelResult } from '../shared/payloads.js';
 
+export function isFinalCampaignLevel(index: number): boolean {
+    return index === CAMPAIGN_LEVELS.length - 1;
+}
+
 export class LevelManager {
     game: Game;
+    celebrationDialogDelaySec: number = 4;
 
     constructor(game: Game) {
         this.game = game;
@@ -184,11 +189,18 @@ export class LevelManager {
         game.audio.stopThrust();
         if (game.audio.stopEnergyDrain) game.audio.stopEnergyDrain();
         game.audio.stopMusic();
-        game.audio.playPortalWarp();
 
         const fuelBonus = Math.floor(game.player.fuel * 10);
         const levelScore = 1000 + fuelBonus;
         game.player.score += levelScore;
+
+        // The final campaign level plays the grand fanfare instead of the portal warp
+        if (!game.isMultiplayer && !game.isCustomLevel && isFinalCampaignLevel(game.currentLevelIndex)) {
+            this.triggerCampaignComplete();
+            return;
+        }
+
+        game.audio.playPortalWarp();
 
         const statLevelScore = document.getElementById('statLevelScore');
         const statFuelBonus = document.getElementById('statFuelBonus');
@@ -240,6 +252,29 @@ export class LevelManager {
         }
 
         game.uiManager.showDialog('dlgLevelComplete');
+    }
+
+    triggerCampaignComplete(): void {
+        const game = this.game;
+        game.gameState = GAME_STATES.CAMPAIGN_COMPLETE;
+        game.fireworks.reset();
+        game.audio.playCampaignFanfare();
+
+        const statScore = document.getElementById('statCampaignScore');
+        if (statScore) statScore.textContent = String(game.player.score).padStart(6, '0');
+        const statLives = document.getElementById('statCampaignLives');
+        if (statLives) statLives.textContent = `${game.player.lives}`;
+
+        game.uiManager.showBanner('🏆 CAMPAIGN COMPLETE! 🏆');
+
+        // Let the fireworks show play over the fully visible level before
+        // bringing up the dialog (its backdrop would hide the celebration).
+        setTimeout(() => {
+            if (game.gameState === GAME_STATES.CAMPAIGN_COMPLETE) {
+                game.audio.playAllDiamondsCaught();
+                game.uiManager.showDialog('dlgCampaignComplete');
+            }
+        }, this.celebrationDialogDelaySec * 1000);
     }
 
 

@@ -17,6 +17,7 @@ import {
 } from "./types.js";
 import {
   addDeathExplosion as addDeathExplosionEffect,
+  addShockwave as addShockwaveEffect,
   addSparkles as addSparklesEffect,
   updateDebris,
   updateParticles,
@@ -445,6 +446,10 @@ export class TileMap {
       count,
       this.effectsEnabled,
     );
+  }
+
+  addShockwave(x: number, y: number, color: string = "#ffd700"): void {
+    addShockwaveEffect(this.debris, x, y, color, this.effectsEnabled);
   }
 
   isExitUnlocked(enemyManager?: EnemyManager | null): boolean {

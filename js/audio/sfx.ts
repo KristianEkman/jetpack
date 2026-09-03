@@ -285,6 +285,94 @@ export class SoundEffects {
         });
     }
 
+    // Grand victory fanfare when the entire campaign is completed
+    playCampaignFanfare(): void {
+        if (this.isMuted) return;
+        this.audio.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+
+        // Two staggered ascending arpeggios (C major then D major, brighter second voice),
+        // slightly delayed so they don't collide with the level's residual sounds
+        const arpA = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+        const arpB = [587.33, 739.99, 880.00, 1174.66, 1479.98, 1760.00, 2349.32];
+        this.scheduleArpeggio(arpA, {
+            stepTime: 0.09,
+            duration: 0.3,
+            peakGain: 0.25,
+            type: 'triangle',
+            startTimeOffset: 0.15,
+        });
+        this.scheduleArpeggio(arpB, {
+            stepTime: 0.09,
+            duration: 0.3,
+            peakGain: 0.15,
+            type: 'square',
+            startTimeOffset: 0.55,
+        });
+
+        // Deep bass root pulse under the finale chord
+        const rootTime = now + 1.3;
+        [130.81, 196.00].forEach((freq) => {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, rootTime);
+
+            gain.gain.setValueAtTime(0, rootTime);
+            gain.gain.linearRampToValueAtTime(0.22, rootTime + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.0001, rootTime + 2.0);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(rootTime);
+            osc.stop(rootTime + 2.0);
+        });
+
+        // Long sustained finale chord with detuned shimmer
+        const chordTime = now + 1.3;
+        const chordFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+
+        chordFreqs.forEach((freq) => {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, chordTime);
+
+            gain.gain.setValueAtTime(0, chordTime);
+            gain.gain.linearRampToValueAtTime(0.11, chordTime + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.0001, chordTime + 2.2);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(chordTime);
+            osc.stop(chordTime + 2.2);
+
+            const detunedOsc = this.ctx.createOscillator();
+            const detunedGain = this.ctx.createGain();
+
+            detunedOsc.type = 'triangle';
+            detunedOsc.frequency.setValueAtTime(freq * 1.005, chordTime);
+
+            detunedGain.gain.setValueAtTime(0, chordTime);
+            detunedGain.gain.linearRampToValueAtTime(0.07, chordTime + 0.06);
+            detunedGain.gain.exponentialRampToValueAtTime(0.0001, chordTime + 1.8);
+
+            detunedOsc.connect(detunedGain);
+            detunedGain.connect(this.ctx.destination);
+
+            detunedOsc.start(chordTime);
+            detunedOsc.stop(chordTime + 1.8);
+        });
+    }
+
     // Fuel Pickup Sound
     playFuelPickup(): void {
         if (this.isMuted) return;

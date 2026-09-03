@@ -277,15 +277,34 @@ export class UIManager {
         game.levelManager.openLevelEditor();
       } else {
         game.currentLevelIndex++;
+        // The final campaign level routes to the campaign-complete
+        // celebration in triggerLevelComplete(), so this is only levels 1-9.
         if (game.currentLevelIndex >= CAMPAIGN_LEVELS.length) {
           game.audio.stopMusic();
-          this.showBanner("CONGRATULATIONS! YOU BEAT THE CAMPAIGN!");
-          setTimeout(() => this.showDialog("dlgMainMenu"), 2000);
+          game.gameState = GAME_STATES.MENU;
+          this.showDialog("dlgMainMenu");
         } else {
           game.levelManager.startLevel(game.currentLevelIndex, false, true);
         }
       }
     });
+
+    document
+      .getElementById("btnCampaignPlayAgain")
+      ?.addEventListener("click", () => {
+        this.closeAllDialogs();
+        game.currentLevelIndex = 0;
+        game.levelManager.startLevel(0, false, false);
+      });
+
+    document
+      .getElementById("btnCampaignMenu")
+      ?.addEventListener("click", () => {
+        this.closeAllDialogs();
+        game.audio.stopMusic();
+        game.gameState = GAME_STATES.MENU;
+        this.showDialog("dlgMainMenu");
+      });
     document
       .getElementById("btnCompleteMenu")
       ?.addEventListener("click", () => {
