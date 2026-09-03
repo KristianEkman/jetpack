@@ -681,3 +681,68 @@ export const MELODY_PATTERN_L8: PatternArray = [
     NOTES.C7, null,     NOTES.G6, null,     NOTES.C6, null,     null,     null
 ];
 
+// --- LEVEL 9 TRACK: "Quantum Horizon" (Stage 9 - Quantum Citadel) ---
+export const BASS_PATTERN_L9: PatternArray = [
+    // --- Phase 1: Deep Pulse Drift (Steps 0 - 63) ---
+    NOTES.E2, null, NOTES.E2, null, NOTES.B2, null, NOTES.E3, null,
+    NOTES.E2, null, NOTES.E2, null, NOTES.B2, null, NOTES.D3, null,
+    NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.C3, null,
+    NOTES.C2, null, NOTES.C2, null, NOTES.G2, null, NOTES.E3, null,
+    NOTES.G2, null, NOTES.G2, null, NOTES.D3, null, NOTES.G3, null,
+    NOTES.G2, null, NOTES.G2, null, NOTES.D3, null, NOTES.B2, null,
+    NOTES.B2, null, NOTES.B2, null, NOTES.Fs3, null, NOTES.B3, null,
+    NOTES.B2, null, NOTES.A2, null, NOTES.B2, null, NOTES.Ds3, null,
+
+    // --- Phase 2: Particle Drive & Quantum Drift (Steps 64 - 127) ---
+    NOTES.E2, NOTES.E3, NOTES.E2, NOTES.E3, NOTES.E2, NOTES.E3, NOTES.B2, NOTES.E3,
+    NOTES.E2, NOTES.E3, NOTES.E2, NOTES.E3, NOTES.D3, NOTES.B2, NOTES.E3, NOTES.B2,
+    NOTES.C2, NOTES.C3, NOTES.C2, NOTES.C3, NOTES.C2, NOTES.C3, NOTES.G2, NOTES.C3,
+    NOTES.C2, NOTES.C3, NOTES.C2, NOTES.C3, NOTES.E3, NOTES.C3, NOTES.G3, NOTES.E3,
+    NOTES.A2, null, NOTES.A2, null, NOTES.E3, null, NOTES.A3, null,
+    NOTES.A2, null, NOTES.G2, null, NOTES.A2, null, NOTES.C3, null,
+    NOTES.B2, null, NOTES.B2, null, NOTES.Fs3, null, NOTES.B2, null,
+    NOTES.B2, null, NOTES.C3, null, NOTES.Cs3, null, NOTES.Ds3, null,
+
+    // --- Phase 3: Citadel Climax & Stinger (Steps 128 - 191) ---
+    NOTES.E2, NOTES.E3, NOTES.E2, NOTES.E3, NOTES.B2, NOTES.E3, NOTES.B2, NOTES.E3,
+    NOTES.E2, NOTES.E3, NOTES.E2, NOTES.E3, NOTES.G3, NOTES.E3, NOTES.B2, NOTES.G2,
+    NOTES.C2, NOTES.C3, NOTES.C2, NOTES.C3, NOTES.G2, NOTES.C3, NOTES.G2, NOTES.C3,
+    NOTES.D2, NOTES.D3, NOTES.D2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.A2, NOTES.D3,
+    NOTES.B2, null, NOTES.Fs3, null, NOTES.B2, null, NOTES.Ds3, null,
+    NOTES.B2, null, NOTES.A2, null, NOTES.B2, null, null, null,
+    NOTES.E2, null, NOTES.B2, null, NOTES.E3, null, NOTES.B2, null,
+    NOTES.E2, null, NOTES.E2, null, NOTES.E2, null, null, null
+];
+
+export const MELODY_PATTERN_L9: PatternArray = [
+    // --- Phase 1: Spacious Signal Theme (Steps 0 - 63) ---
+    NOTES.E5, null, null, NOTES.G5, null, null, NOTES.B5, null,
+    NOTES.E6, null, null, NOTES.B5, null, NOTES.G5, null, null,
+    NOTES.C6, null, null, NOTES.E6, null, null, NOTES.G6, null,
+    NOTES.E6, null, null, NOTES.C6, null, NOTES.G5, null, null,
+    NOTES.B5, null, null, NOTES.D6, null, null, NOTES.G6, null,
+    NOTES.A6, null, NOTES.G6, null, NOTES.D6, null, NOTES.B5, null,
+    NOTES.Ds6, null, null, NOTES.Fs6, null, null, NOTES.B5, null,
+    NOTES.Ds6, null, NOTES.Cs6, null, NOTES.B5, null, NOTES.Fs5, null,
+
+    // --- Phase 2: Shimmer Arpeggios & Echo (Steps 64 - 127) ---
+    NOTES.E5, NOTES.G5, NOTES.B5, NOTES.E6, NOTES.G6, NOTES.E6, NOTES.B5, NOTES.G5,
+    NOTES.E5, NOTES.G5, NOTES.B5, NOTES.E6, NOTES.B5, NOTES.G5, NOTES.E5, NOTES.B4,
+    NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.E6, NOTES.C6, NOTES.G5, NOTES.E5,
+    NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.G5, NOTES.E5, NOTES.C5, NOTES.G4,
+    NOTES.A5, null, NOTES.C6, null, NOTES.E6, null, null, null,
+    NOTES.A6, null, null, null, NOTES.E6, null, NOTES.C6, null,
+    NOTES.B5, null, NOTES.C6, null, NOTES.Cs6, null, NOTES.Ds6, null,
+    NOTES.Fs6, null, NOTES.Ds6, null, NOTES.B5, null, null, null,
+
+    // --- Phase 3: Citadel Climax & Stinger (Steps 128 - 191) ---
+    NOTES.E6, null, NOTES.B5, null, NOTES.G6, null, NOTES.E6, null,
+    NOTES.A6, null, NOTES.G6, null, NOTES.E6, null, NOTES.B5, null,
+    NOTES.C6, NOTES.E6, NOTES.G6, NOTES.E6, NOTES.C6, NOTES.G5, NOTES.E5, NOTES.C5,
+    NOTES.D6, NOTES.Fs6, NOTES.A6, NOTES.Fs6, NOTES.D6, NOTES.A5, NOTES.Fs5, NOTES.D5,
+    NOTES.B5, null, NOTES.Ds6, null, NOTES.Fs6, null, NOTES.B5, null,
+    NOTES.A5, null, NOTES.Fs5, null, NOTES.Ds5, null, NOTES.B4, null,
+    NOTES.E5, null, NOTES.G5, null, NOTES.B5, null, NOTES.E6, null,
+    NOTES.E6, null, NOTES.B5, null, NOTES.E5, null, null, null
+];
+
