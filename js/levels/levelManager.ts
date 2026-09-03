@@ -112,7 +112,7 @@ export class LevelManager {
         const game = this.game;
         const validation = game.editor.validateLevel();
         if (!validation.valid) {
-            console.error(validation.error);
+            game.uiManager.showBanner(validation.error || "INVALID LEVEL FORMAT");
             return;
         }
 

@@ -141,6 +141,17 @@ game.levelManager.playtestCustomLevel(true);
 assertPreservedState("playtestCustomLevel(isRestart)");
 console.log("   ✅ Editor playtest start/reset behavior verified.\n");
 
+// ── 7. Invalid editor level blocks playtest with a banner warning ──────────
+console.log("7️⃣  Testing playtest validation warnings...");
+game.tileMap.setTile(2, 2, TILES.AIR); // remove the spawn point
+game.gameState = GAME_STATES.LEVEL_EDITOR;
+const bannerText = document.getElementById("bannerText") as unknown as { textContent: string };
+bannerText.textContent = "";
+game.levelManager.playtestCustomLevel();
+assert.equal(game.gameState, GAME_STATES.LEVEL_EDITOR, "playtest should abort when the level is invalid");
+assert.match(bannerText.textContent, /Player Spawn/, "playtest should show the same warning banner as upload");
+console.log("   ✅ Playtest shows validation warnings and stays in the editor.\n");
+
 // Clean up audio and game loop at end of test run
 game.audio.stopMusic();
 game.audio.stopThrust();
