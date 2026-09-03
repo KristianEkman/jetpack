@@ -56,13 +56,12 @@ export class UserAuthUI {
     this.setupEventListeners();
     this.updateHUD();
 
-    // Validate stored session on launch: log in with persisted user ID or prompt with User Account dialog
-    userService.validateSession().then((user) => {
+    // Validate stored session on launch: restore a persisted login if present.
+    // Guests are never prompted — campaign is playable without an account;
+    // login is only requested by features that need it (multiplayer, level upload).
+    userService.validateSession().then(() => {
       this.updateHUD();
       this.refreshLoggedInState();
-      if (!user) {
-        this.openModal();
-      }
     });
   }
 

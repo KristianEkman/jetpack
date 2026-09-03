@@ -165,6 +165,11 @@ export class UIManager {
     });
 
     document.getElementById("btnMultiplayer")?.addEventListener("click", () => {
+      if (!userService.isLoggedIn()) {
+        this.showBanner("PLEASE LOG IN TO PLAY MULTIPLAYER");
+        userAuthUI.openModal();
+        return;
+      }
       this.showDialog("dlgMultiplayer");
       game.multiplayerController.showHubView();
       game.network.connect();
