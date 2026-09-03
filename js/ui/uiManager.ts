@@ -193,15 +193,19 @@ export class UIManager {
       this.showDialog("dlgMainMenu");
     });
 
+    document.getElementById("btnCreateLevel")?.addEventListener("click", () => {
+      game.editor.resetForNewLevel();
+      const chkRelease = document.getElementById("chkEditorIsReleased") as HTMLInputElement | null;
+      if (chkRelease) chkRelease.checked = true;
+      game.levelManager.openLevelEditor();
+      this.showBanner("NEW LEVEL — PLACE 🚀 SPAWN, 🌀 PORTAL & 💎 EMERALD");
+    });
+
     window.addEventListener("click", (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".community-level-dropdown")) {
         document.querySelectorAll(".community-level-dropdown-menu").forEach((el) => el.classList.add("hidden"));
         document.querySelectorAll(".community-level-card").forEach((el) => el.classList.remove("dropdown-open"));
       }
-    });
-
-    document.getElementById("btnOpenEditor")?.addEventListener("click", () => {
-      game.levelManager.openLevelEditor();
     });
 
     document.getElementById("btnControls")?.addEventListener("click", () => {
@@ -385,8 +389,15 @@ export class UIManager {
     const levels = await this.game.levelManager.fetchCustomLevels();
     const currentUserId = userService.getLoggedInUserId();
 
+    // Show the logged-in user's own levels at the top of the list
+    levels.sort((a, b) => {
+      const aOwn = currentUserId && a.authorId === currentUserId ? 0 : 1;
+      const bOwn = currentUserId && b.authorId === currentUserId ? 0 : 1;
+      return aOwn - bOwn;
+    });
+
     if (levels.length === 0) {
-      listContainer.innerHTML = `<div style="text-align:center; color: rgba(255,255,255,0.7); padding: 20px;">No community custom levels found yet. Create and upload one!</div>`;
+      listContainer.innerHTML = `<div style="text-align:center; color: rgba(255,255,255,0.7); padding: 20px;">No community custom levels found yet — hit ✏️ CREATE NEW LEVEL to make one!</div>`;
       return;
     }
 

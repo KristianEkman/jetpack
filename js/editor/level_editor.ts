@@ -170,6 +170,13 @@ export class LevelEditor {
         this.tileMap.setTile(col, row, this.selectedTile);
     }
 
+    resetForNewLevel(): void {
+        this.tileMap.grid.fill(TILES.AIR);
+        this.currentLevelId = null;
+        this.levelName = "Custom Level";
+        this.isReleased = true;
+    }
+
     validateLevel(): { valid: boolean; error?: string } {
         let spawnCount = 0;
         let portalCount = 0;

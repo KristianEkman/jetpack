@@ -212,12 +212,11 @@
                 <button id="btnStartGame" class="btn-menu primary btn-hero">🚀 START CAMPAIGN</button>
             </div>
 
-            <!-- 2x2 Secondary Game Modes & Editor Grid -->
+            <!-- Secondary Game Modes & Community Grid -->
             <div class="menu-grid">
                 <button id="btnMultiplayer" class="btn-menu primary-glow">🌐 MULTIPLAYER LOBBY</button>
                 <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
-                <button id="btnCommunityLevels" class="btn-menu accent">🌍 COMMUNITY LEVELS</button>
-                <button id="btnOpenEditor" class="btn-menu accent">✏️ LEVEL EDITOR</button>
+                <button id="btnCommunityLevels" class="btn-menu accent" style="grid-column: 1 / -1;">🌍 COMMUNITY LEVELS</button>
             </div>
 
             <div class="footer-note">
@@ -243,6 +242,7 @@
     <dialog id="dlgCommunityLevels" class="retro-dialog">
         <div class="dialog-content wide">
             <h2>🌍 COMMUNITY CUSTOM LEVELS</h2>
+            <button id="btnCreateLevel" class="btn-menu accent">✏️ CREATE NEW LEVEL</button>
             <div id="communityLevelList" class="community-level-list">
                 <!-- Populated via JS -->
             </div>
