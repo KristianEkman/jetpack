@@ -375,6 +375,71 @@ export const MELODY_PATTERN_L5: PatternArray = [
     NOTES.A5, null, NOTES.E5, null, NOTES.A5, null, null, null
 ];
 
+// --- LEVEL 6 TRACK: "Trickster Scherzo" (Stage 6 - Trickster Circuit) ---
+export const BASS_PATTERN_L6: PatternArray = [
+    // --- Phase 1: Sneaky Bounce Theme (Steps 0 - 63) ---
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.A2, null,
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.C3, NOTES.Cs3,
+    NOTES.G2, null, NOTES.D3, null, NOTES.G3, null, NOTES.D3, null,
+    NOTES.G2, null, NOTES.D3, null, NOTES.G3, null, NOTES.F3, NOTES.Fs3,
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.A2, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.A3, null, NOTES.G3, null,
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.A2, null,
+    NOTES.D2, null, NOTES.E2, null, NOTES.F2, null, NOTES.Fs2, null,
+
+    // --- Phase 2: Playful Lift & Dominant Tease (Steps 64 - 127) ---
+    NOTES.Bb2, null, NOTES.F3, null, NOTES.Bb2, null, NOTES.F3, null,
+    NOTES.Bb2, null, NOTES.F3, null, NOTES.D3, null, NOTES.C3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.A2, null, NOTES.E3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Cs3, null, NOTES.E3, null,
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.A2, null,
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.C3, NOTES.Cs3,
+    NOTES.G2, null, NOTES.D3, null, NOTES.G3, null, NOTES.D3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.A2, null, null, null,
+
+    // --- Phase 3: Mischief Climax & Stinger (Steps 128 - 191) ---
+    NOTES.D2, NOTES.D3, NOTES.D2, NOTES.D3, NOTES.A2, NOTES.D3, NOTES.A2, NOTES.D3,
+    NOTES.D2, NOTES.D3, NOTES.D2, NOTES.D3, NOTES.C3, NOTES.D3, NOTES.C3, NOTES.A2,
+    NOTES.Bb2, NOTES.D3, NOTES.Bb2, NOTES.D3, NOTES.F3, NOTES.D3, NOTES.Bb2, NOTES.D3,
+    NOTES.A2, NOTES.E3, NOTES.A2, NOTES.E3, NOTES.Cs3, NOTES.E3, NOTES.A2, NOTES.G3,
+    NOTES.D2, null, NOTES.A2, null, NOTES.D3, null, NOTES.A2, null,
+    NOTES.F2, null, NOTES.G2, null, NOTES.A2, null, null, null,
+    NOTES.D2, null, NOTES.D3, null, NOTES.D2, null, NOTES.A2, null,
+    NOTES.D2, null, NOTES.D2, null, NOTES.D2, null, null, null
+];
+
+export const MELODY_PATTERN_L6: PatternArray = [
+    // --- Phase 1: Sneaky Knock Motif (Steps 0 - 63) ---
+    NOTES.D5, null, NOTES.D5, null, NOTES.E5, NOTES.F5, NOTES.E5, NOTES.D5,
+    NOTES.A5, null, null, null, NOTES.G5, null, NOTES.F5, null,
+    NOTES.G5, null, NOTES.G5, null, NOTES.A5, NOTES.Bb5, NOTES.A5, NOTES.G5,
+    NOTES.D6, null, null, null, NOTES.C6, null, NOTES.Bb5, null,
+    NOTES.A5, NOTES.Bb5, NOTES.A5, NOTES.G5, NOTES.A5, null, NOTES.F5, null,
+    NOTES.E5, NOTES.F5, NOTES.E5, NOTES.D5, NOTES.E5, null, NOTES.Cs5, null,
+    NOTES.D5, null, NOTES.F5, NOTES.A5, NOTES.D6, null, NOTES.A5, null,
+    NOTES.F5, NOTES.E5, NOTES.D5, NOTES.C5, NOTES.D5, null, null, null,
+
+    // --- Phase 2: Chromatic Sneak & High Reply (Steps 64 - 127) ---
+    NOTES.D6, null, NOTES.D6, NOTES.C6, NOTES.Bb5, null, NOTES.D6, null,
+    NOTES.F6, null, NOTES.D6, null, NOTES.C6, NOTES.D6, NOTES.C6, NOTES.Bb5,
+    NOTES.A5, null, NOTES.Bb5, NOTES.B5, NOTES.C6, null, NOTES.Cs6, null,
+    NOTES.E6, null, NOTES.Cs6, null, NOTES.A5, null, NOTES.E5, null,
+    NOTES.D6, null, NOTES.D6, null, NOTES.E6, NOTES.F6, NOTES.E6, NOTES.D6,
+    NOTES.A6, null, null, null, NOTES.G6, null, NOTES.F6, null,
+    NOTES.E6, NOTES.F6, NOTES.E6, NOTES.D6, NOTES.Cs6, null, NOTES.A5, null,
+    NOTES.D6, null, NOTES.Cs6, null, NOTES.D6, null, null, null,
+
+    // --- Phase 3: Trickster Slide & Stinger (Steps 128 - 191) ---
+    NOTES.F5, NOTES.A5, NOTES.D6, NOTES.F6, NOTES.A6, NOTES.F6, NOTES.D6, NOTES.A5,
+    NOTES.G5, NOTES.Bb5, NOTES.D6, NOTES.G6, NOTES.Bb5, NOTES.G5, NOTES.D6, NOTES.Bb5,
+    NOTES.A5, NOTES.Gs5, NOTES.G5, NOTES.Fs5, NOTES.F5, NOTES.E5, NOTES.Eb5, NOTES.D5,
+    NOTES.Cs5, NOTES.D5, NOTES.Eb5, NOTES.E5, NOTES.F5, NOTES.Fs5, NOTES.G5, NOTES.Gs5,
+    NOTES.A5, null, NOTES.D6, null, NOTES.A5, NOTES.F5, NOTES.D5, null,
+    NOTES.F5, null, NOTES.E5, null, NOTES.Cs5, null, NOTES.A4, null,
+    NOTES.D5, null, NOTES.F5, null, NOTES.A5, null, NOTES.D6, null,
+    NOTES.D6, null, NOTES.A5, null, NOTES.D5, null, null, null
+];
+
 // --- MENU TRACK: "Cosmic Legato - Ambient Space Horizon" ---
 export const MENU_BASS_PATTERN: PatternArray = [
     NOTES.C2, NOTES.C2, NOTES.C3, NOTES.C3, NOTES.G2, NOTES.G2, NOTES.C3, NOTES.C3,
