@@ -746,3 +746,81 @@ export const MELODY_PATTERN_L9: PatternArray = [
     NOTES.E6, null, NOTES.B5, null, NOTES.E5, null, null, null
 ];
 
+
+// --- LEVEL 10 TRACK: "Omega Core Blues" (Stage 10 - Cyber Omega Core) ---
+// Original 12-bar blues in A: boogie-woogie bass, A blues scale melody (A C D Eb E G).
+export const BASS_PATTERN_L10: PatternArray = [
+    // --- Bars 1-3: I (A7) boogie-woogie (Steps 0 - 47) ---
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+
+    // --- Bar 4: Walk-up to IV (Steps 48 - 63) ---
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A3, null, NOTES.B3, null, NOTES.C4, null, NOTES.Cs4, null,
+
+    // --- Bars 5-6: IV (D7) (Steps 64 - 95) ---
+    NOTES.D3, null, NOTES.A3, null, NOTES.B3, null, NOTES.C4, null,
+    NOTES.D3, null, NOTES.A3, null, NOTES.B3, null, NOTES.C4, null,
+    NOTES.D3, null, NOTES.A3, null, NOTES.B3, null, NOTES.C4, null,
+    NOTES.D3, null, NOTES.A3, null, NOTES.B3, null, NOTES.C4, null,
+
+    // --- Bar 7: back to I (A7) (Steps 96 - 111) ---
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+
+    // --- Bar 8: Walk-up to V (Steps 112 - 127) ---
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A3, null, NOTES.B3, null, NOTES.Cs4, null, NOTES.D4, null,
+
+    // --- Bar 9: V (E7) (Steps 128 - 143) ---
+    NOTES.E2, null, NOTES.B2, null, NOTES.Cs3, null, NOTES.D3, null,
+    NOTES.E2, null, NOTES.B2, null, NOTES.Cs3, null, NOTES.D3, null,
+
+    // --- Bar 10: IV (D7) (Steps 144 - 159) ---
+    NOTES.D3, null, NOTES.A3, null, NOTES.B3, null, NOTES.C4, null,
+    NOTES.D3, null, NOTES.A3, null, NOTES.B3, null, NOTES.C4, null,
+
+    // --- Bar 11: I (A7) (Steps 160 - 175) ---
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+    NOTES.A2, null, NOTES.E3, null, NOTES.Fs3, null, NOTES.G3, null,
+
+    // --- Bar 12: Turnaround (V walk-down back to I) (Steps 176 - 191) ---
+    NOTES.E2, null, NOTES.B2, null, NOTES.D3, null, NOTES.E3, null,
+    NOTES.D3, null, NOTES.B2, null, NOTES.A2, null, NOTES.G2, null
+];
+
+export const MELODY_PATTERN_L10: PatternArray = [
+    // --- Phrase A: Statement lick over I (Steps 0 - 63) ---
+    NOTES.E5, null, null, null, NOTES.Ds5, null, NOTES.D5, null,
+    NOTES.C5, null, NOTES.A4, null, null, null, null, null,
+    null, null, NOTES.C5, null, NOTES.D5, null, NOTES.Ds5, null,
+    NOTES.E5, null, null, null, null, null, null, null,
+    NOTES.G5, null, NOTES.E5, null, NOTES.Ds5, null, NOTES.D5, null,
+    NOTES.C5, null, NOTES.A4, null, NOTES.G4, null, NOTES.A4, null,
+    NOTES.E5, null, null, null, null, null, null, null,
+    NOTES.G4, null, NOTES.A4, null, NOTES.C5, null, NOTES.D5, null,
+
+    // --- Phrase B: Repeat over IV, back to I (Steps 64 - 127) ---
+    NOTES.A5, null, null, null, NOTES.G5, null, NOTES.E5, null,
+    NOTES.D5, null, NOTES.C5, null, NOTES.A4, null, NOTES.C5, null,
+    NOTES.D5, null, null, null, NOTES.C5, null, NOTES.A4, null,
+    NOTES.G4, null, NOTES.A4, null, NOTES.C5, null, NOTES.D5, null,
+    NOTES.E5, null, null, null, NOTES.Ds5, null, NOTES.D5, null,
+    NOTES.C5, null, NOTES.A4, null, null, null, null, null,
+    null, null, NOTES.C5, null, NOTES.D5, null, NOTES.Ds5, null,
+    NOTES.E5, null, NOTES.G5, null, NOTES.A5, null, NOTES.G5, null,
+
+    // --- Phrase C: Answer over V-IV-I and turnaround (Steps 128 - 191) ---
+    NOTES.B5, null, NOTES.A5, null, NOTES.G5, null, NOTES.E5, null,
+    NOTES.G5, null, NOTES.A5, null, NOTES.B5, null, null, null,
+    NOTES.A5, null, NOTES.G5, null, NOTES.E5, null, NOTES.D5, null,
+    NOTES.C5, null, NOTES.A4, null, NOTES.C5, null, NOTES.D5, null,
+    NOTES.E5, null, NOTES.Ds5, null, NOTES.E5, null, NOTES.A5, null,
+    NOTES.C6, null, NOTES.A5, null, NOTES.G5, null, NOTES.E5, null,
+    NOTES.Ds5, null, NOTES.D5, null, NOTES.Ds5, null, NOTES.E5, null,
+    NOTES.G5, null, NOTES.E5, null, NOTES.D5, null, NOTES.B4, null
+];
