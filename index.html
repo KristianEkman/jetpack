@@ -216,6 +216,7 @@
             <div class="menu-grid">
                 <button id="btnMultiplayer" class="btn-menu primary-glow">🌐 MULTIPLAYER LOBBY</button>
                 <button id="btnLevelSelect" class="btn-menu">🗺️ SELECT LEVEL</button>
+                <button id="btnLeaderboardMenu" class="btn-menu gold-glow" style="grid-column: 1 / -1;">🏆 TOP 10 PILOTS</button>
                 <button id="btnCommunityLevels" class="btn-menu accent" style="grid-column: 1 / -1;">🌍 COMMUNITY LEVELS</button>
             </div>
 
@@ -302,6 +303,7 @@
             <div class="menu-buttons">
                 <button id="btnResume" class="btn-menu primary">▶️ RESUME</button>
                 <button id="btnRestartLevel" class="btn-menu">🔄 RESTART LEVEL</button>
+                <button id="btnPauseLeaderboard" class="btn-menu gold-glow">🏆 TOP SCORES</button>
                 <button id="btnPauseControls" class="btn-menu">❓ CONTROLS</button>
                 <button id="btnQuitToMenu" class="btn-menu danger">🚪 QUIT TO MENU</button>
             </div>
@@ -314,6 +316,7 @@
             <h2 id="gameOverTitle" class="danger-title">GAME OVER</h2>
             <p id="gameOverMessage" class="game-over-message hidden"></p>
             <p id="gameOverStats">Final Score: 000000</p>
+            <div id="gameOverLeaderboardNotice" class="leaderboard-notice hidden"></div>
             <div id="multiplayerGameOverResults" class="multiplayer-results hidden">
                 <h3>MATCH RESULTS</h3>
                 <div class="results-table-wrapper">
@@ -333,6 +336,7 @@
             </div>
             <div class="menu-buttons">
                 <button id="btnRetryLevel" class="btn-menu primary">🔄 RETRY LEVEL</button>
+                <button id="btnGameOverLeaderboard" class="btn-menu gold-glow">🏆 TOP SCORES</button>
                 <button id="btnGameOverMenu" class="btn-menu">🚪 MAIN MENU</button>
             </div>
         </div>
@@ -377,12 +381,14 @@
         <div class="dialog-content campaign-complete-content">
             <h2 class="victory-title">🏆 CAMPAIGN COMPLETE! 🏆</h2>
             <p class="victory-subtitle">You conquered all 10 stages of the Jetpack campaign!</p>
+            <div id="campaignCompleteLeaderboardNotice" class="leaderboard-notice hidden"></div>
             <div class="stats-box">
                 <p>Total Score: <span id="statCampaignScore">000000</span></p>
                 <p>Lives Remaining: <span id="statCampaignLives">0</span></p>
             </div>
             <div class="menu-buttons">
                 <button id="btnCampaignPlayAgain" class="btn-menu primary">🔄 PLAY AGAIN</button>
+                <button id="btnCampaignLeaderboard" class="btn-menu gold-glow">🏆 TOP 10 PILOTS</button>
                 <button id="btnCampaignMenu" class="btn-menu">🏠 MAIN MENU</button>
             </div>
         </div>
@@ -509,6 +515,7 @@
     <dialog id="userAuthModal" class="retro-dialog">
         <div class="dialog-content">
             <h2 id="userAuthTitle">USER ACCOUNT</h2>
+            <p id="userAuthSubtitle" class="auth-subtitle" style="font-size: 0.85rem; color: #ffcc00; margin: 0 0 12px 0; text-align: center; font-family: 'Rajdhani', sans-serif; display: none;"></p>
 
             <div id="loggedInUserCard" class="logged-in-card hidden" style="background: rgba(0, 255, 204, 0.08); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 12px; margin-bottom: 15px; text-align: center; width: 100%;">
                 <p style="margin: 0; font-size: 0.8rem; color: #888; letter-spacing: 1px;">CURRENTLY LOGGED IN AS</p>
@@ -542,6 +549,45 @@
             <div class="dialog-actions" style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
                 <button id="btnAuthLogout" class="btn-menu danger" style="display: none; flex: 1;">🚪 LOG OUT</button>
                 <button id="btnCloseUserAuth" class="btn-menu" style="flex: 1;">CLOSE</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- CAMPAIGN TOP 10 LEADERBOARD DIALOG -->
+    <dialog id="dlgLeaderboard" class="retro-dialog leaderboard-dialog">
+        <div class="dialog-content leaderboard-content">
+            <div class="leaderboard-header">
+                <h2 class="gold-title">🏆 TOP 10 PILOTS</h2>
+                <p class="leaderboard-subtitle">CAMPAIGN HALL OF FAME</p>
+            </div>
+
+            <div id="leaderboardStatusBanner" class="leaderboard-banner hidden"></div>
+
+            <div class="leaderboard-table-wrapper">
+                <table class="results-table leaderboard-table" aria-label="Campaign Top 10 Leaderboard">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 15%;">RANK</th>
+                            <th scope="col" style="width: 30%;">PILOT</th>
+                            <th scope="col" style="width: 20%;">SCORE</th>
+                            <th scope="col" style="width: 22%;">STAGE</th>
+                            <th scope="col" style="width: 13%;">DATE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #888; padding: 20px;">
+                                Loading leaderboard...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="leaderboardQualificationNote" class="leaderboard-qualification-note"></div>
+
+            <div class="dialog-actions">
+                <button id="btnCloseLeaderboard" class="btn-menu primary">BACK</button>
             </div>
         </div>
     </dialog>

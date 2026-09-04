@@ -9,6 +9,7 @@ import { TILES } from "../world/tilemap.js";
 import { userService } from "../network/userService.js";
 import { userAuthUI } from "./userAuthUI.js";
 import { serverHealthUI } from "./serverHealthUI.js";
+import { leaderboardUI } from "./leaderboardUI.js";
 
 export interface HUDState {
   level: string | null;
@@ -87,6 +88,7 @@ export class UIManager {
 
     this.initVersionBadge();
     serverHealthUI.init();
+    leaderboardUI.init();
 
     const btnHudToggle = document.getElementById("btnHudToggle");
     const gameHud = document.getElementById("gameHud");
@@ -180,6 +182,10 @@ export class UIManager {
       game.levelManager.openLevelSelect();
     });
 
+    document.getElementById("btnLeaderboardMenu")?.addEventListener("click", () => {
+      leaderboardUI.openModal();
+    });
+
     document.getElementById("btnCommunityLevels")?.addEventListener("click", () => {
       this.loadCommunityLevelsUI();
       this.showDialog("dlgCommunityLevels");
@@ -232,6 +238,12 @@ export class UIManager {
         game.levelManager.restartCurrentLevel(true);
       });
     document
+      .getElementById("btnPauseLeaderboard")
+      ?.addEventListener("click", () => {
+        leaderboardUI.openModal();
+      });
+
+    document
       .getElementById("btnPauseControls")
       ?.addEventListener("click", () => {
         this.showDialog("dlgControls");
@@ -256,6 +268,12 @@ export class UIManager {
         game.levelManager.restartCurrentLevel(false);
       }
     });
+    document
+      .getElementById("btnGameOverLeaderboard")
+      ?.addEventListener("click", () => {
+        leaderboardUI.openModal();
+      });
+
     document
       .getElementById("btnGameOverMenu")
       ?.addEventListener("click", () => {
@@ -288,6 +306,12 @@ export class UIManager {
         }
       }
     });
+
+    document
+      .getElementById("btnCampaignLeaderboard")
+      ?.addEventListener("click", () => {
+        leaderboardUI.openModal();
+      });
 
     document
       .getElementById("btnCampaignPlayAgain")

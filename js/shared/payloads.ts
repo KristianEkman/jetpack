@@ -222,3 +222,35 @@ export interface NetworkWorldSnapshotPayload extends WorldSnapshotPayload {
 export interface EnemyDestroyedResponse extends NetworkResponse {
   duplicate?: boolean;
 }
+
+export interface CampaignLeaderboardEntry {
+  userId: string;
+  userName: string;
+  score: number;
+  levelReached: number;
+  completedCampaign: boolean;
+  timestamp: number;
+}
+
+export interface CampaignLeaderboardResponse {
+  success: boolean;
+  scores: CampaignLeaderboardEntry[];
+  minScoreToQualify: number;
+  userRank?: number | null;
+  error?: string;
+}
+
+export interface SubmitCampaignScoreRequest {
+  score: number;
+  levelReached: number;
+  completedCampaign: boolean;
+}
+
+export interface SubmitCampaignScoreResponse {
+  success: boolean;
+  qualified: boolean;
+  rank?: number | null;
+  entry?: CampaignLeaderboardEntry;
+  scores?: CampaignLeaderboardEntry[];
+  error?: string;
+}

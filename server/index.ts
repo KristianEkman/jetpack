@@ -25,6 +25,11 @@ import {
   submitCustomLevelHighScore,
 } from "./levelModule.js";
 import {
+  getCampaignLeaderboard,
+  submitCampaignScore,
+  isScoreQualifying,
+} from "./campaignLeaderboardModule.js";
+import {
   GAME_EVENTS,
   MULTIPLAYER_MODES,
   ROOM_EVENTS,
@@ -288,6 +293,55 @@ app.post("/api/levels/:id/rate", async (req, res) => {
 app.post("/api/levels/:id/highscore", async (req, res) => {
   const { score, userName } = req.body || {};
   const result = await submitCustomLevelHighScore(req.params.id, score, userName);
+  if (!result.success) {
+    res.status(400).json(result);
+    return;
+  }
+  res.json(result);
+});
+
+/* ==========================================================================
+   CAMPAIGN LEADERBOARD REST API
+   ========================================================================== */
+
+// Get Top 10 campaign leaderboard
+app.get("/api/leaderboard/campaign", async (req, res) => {
+  const userId = (typeof req.query.userId === "string" ? req.query.userId : null) || getAuthUserId(req);
+  const result = await getCampaignLeaderboard(userId || undefined);
+  res.json(result);
+});
+
+// Check if score qualifies for Top 10
+app.post("/api/leaderboard/campaign/qualify", async (req, res) => {
+  const score = Number(req.body?.score) || 0;
+  const levelReached = Number(req.body?.levelReached) || 1;
+  const qualified = await isScoreQualifying(score, levelReached);
+  res.json({ success: true, qualified });
+});
+
+// Submit campaign score (requires user authentication)
+app.post("/api/leaderboard/campaign", async (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({
+      success: false,
+      qualified: false,
+      error: "Authentication required to submit campaign high score.",
+    });
+    return;
+  }
+
+  const user = await getUserById(userId);
+  if (!user) {
+    res.status(401).json({
+      success: false,
+      qualified: false,
+      error: "Invalid user account.",
+    });
+    return;
+  }
+
+  const result = await submitCampaignScore(user.id, user.name, req.body || {});
   if (!result.success) {
     res.status(400).json(result);
     return;

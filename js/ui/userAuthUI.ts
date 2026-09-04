@@ -19,10 +19,13 @@ export class UserAuthUI {
   private loggedInUserCard: HTMLElement | null = null;
   private loggedInUserName: HTMLElement | null = null;
   private loggedInUserId: HTMLElement | null = null;
+  private authSubtitle: HTMLElement | null = null;
 
   private btnHUDAuth: HTMLButtonElement | null = null;
   private btnMenuAccount: HTMLButtonElement | null = null;
   private hudBadge: HTMLElement | null = null;
+
+  private onSuccessCallback: ((user: UserProfile) => void) | null = null;
 
   private constructor() {}
 
@@ -44,6 +47,7 @@ export class UserAuthUI {
     this.btnClose = document.getElementById("btnCloseUserAuth") as HTMLButtonElement | null;
     this.statusMsg = document.getElementById("userAuthStatus");
     this.authFormContainer = document.getElementById("userAuthFormContainer");
+    this.authSubtitle = document.getElementById("userAuthSubtitle");
 
     this.loggedInUserCard = document.getElementById("loggedInUserCard");
     this.loggedInUserName = document.getElementById("loggedInUserName");
@@ -99,9 +103,15 @@ export class UserAuthUI {
     }
   }
 
-  public openModal(): void {
+  public openModal(options?: { subtitle?: string; onSuccess?: (user: UserProfile) => void }): void {
     if (!this.modal) return;
     this.clearForm();
+    this.onSuccessCallback = options?.onSuccess || null;
+    if (this.authSubtitle) {
+      this.authSubtitle.textContent =
+        options?.subtitle || "Log in or register to record scores, access custom levels, and play online.";
+      this.authSubtitle.style.display = "block";
+    }
     this.setMode(false);
     this.modal.showModal();
   }
@@ -162,15 +172,23 @@ export class UserAuthUI {
       : await userService.login(username, password);
 
     if (result.success && result.user) {
+      const user = result.user;
       this.showStatus(
         this.isRegisterMode
-          ? `User "${result.user.name}" created and logged in!`
-          : `Welcome back, ${result.user.name}!`,
+          ? `User "${user.name}" created and logged in!`
+          : `Welcome back, ${user.name}!`,
         false
       );
       this.updateHUD();
       this.refreshLoggedInState();
-      setTimeout(() => this.closeModal(), 1200);
+      const callback = this.onSuccessCallback;
+      this.onSuccessCallback = null;
+      setTimeout(() => {
+        this.closeModal();
+        if (callback) {
+          callback(user);
+        }
+      }, 1000);
     } else {
       this.showStatus(result.error || "An error occurred.", true);
     }

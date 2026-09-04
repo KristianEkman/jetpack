@@ -273,6 +273,7 @@ export class LevelManager {
             if (game.gameState === GAME_STATES.CAMPAIGN_COMPLETE) {
                 game.audio.playAllDiamondsCaught();
                 game.uiManager.showDialog('dlgCampaignComplete');
+                game.handleCampaignRunEnd(true);
             }
         }, this.celebrationDialogDelaySec * 1000);
     }

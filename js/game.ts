@@ -19,6 +19,9 @@ import { MultiplayerController } from "./network/multiplayerController.js";
 import { FireworksShow } from "./world/fireworks.js";
 import { initErrorMonitor } from "./ui/errorMonitor.js";
 import { userAuthUI } from "./ui/userAuthUI.js";
+import { leaderboardUI } from "./ui/leaderboardUI.js";
+import { leaderboardService } from "./network/leaderboardService.js";
+import { userService } from "./network/userService.js";
 import {
   MultiplayerRoomInfo,
   PublicRoomInfo,
@@ -300,6 +303,7 @@ export class Game {
               .getElementById("multiplayerGameOverResults")
               ?.classList.add("hidden");
             this.uiManager.showDialog("dlgGameOver");
+            this.handleCampaignRunEnd(false);
           }
         } else if (this.isMultiplayer) {
           this.deathSequenceTimer = 0;
@@ -430,6 +434,100 @@ export class Game {
       );
       this.ctx.restore();
     }
+  }
+
+  public async handleCampaignRunEnd(completedCampaign: boolean): Promise<void> {
+    if (this.isMultiplayer || this.isCustomLevel) return;
+
+    const score = this.player.score;
+    const levelReached = completedCampaign ? 10 : Math.max(1, this.currentLevelIndex + 1);
+
+    const noticeEl = document.getElementById(
+      completedCampaign ? "campaignCompleteLeaderboardNotice" : "gameOverLeaderboardNotice",
+    );
+    if (noticeEl) {
+      noticeEl.innerHTML = "";
+      noticeEl.classList.add("hidden");
+    }
+
+    if (score <= 0) return;
+
+    // Check if score qualifies for Top 10
+    const qualifies = await leaderboardService.checkIfScoreQualifies(score, levelReached);
+    if (!qualifies) return;
+
+    const loggedInUser = userService.getLoggedInUser();
+    if (loggedInUser) {
+      // Logged in: auto submit score
+      const res = await leaderboardService.submitScore({
+        score,
+        levelReached,
+        completedCampaign,
+      });
+
+      if (res.success && res.qualified && noticeEl) {
+        noticeEl.innerHTML = `
+          <div>🎉 <strong>TOP 10 PILOT!</strong> You achieved Rank #${res.rank} on the Leaderboard!</div>
+          <button class="claim-btn" id="btnNoticeViewLeaderboard">VIEW HALL OF FAME</button>
+        `;
+        noticeEl.classList.remove("hidden");
+        document.getElementById("btnNoticeViewLeaderboard")?.addEventListener("click", () => {
+          leaderboardUI.openModal(loggedInUser.id);
+        });
+      }
+    } else {
+      // Guest player achieved a qualifying Top 10 score
+      if (noticeEl) {
+        noticeEl.innerHTML = `
+          <div>🏆 <strong>TOP 10 QUALIFIER!</strong> Your score qualifies for the Hall of Fame!</div>
+          <div style="font-size: 0.8rem; color: #fff;">Log in or register to record your place.</div>
+          <button class="claim-btn" id="btnNoticeClaimScore">CLAIM HIGH SCORE</button>
+        `;
+        noticeEl.classList.remove("hidden");
+        document.getElementById("btnNoticeClaimScore")?.addEventListener("click", () => {
+          this.promptGuestHighScoreClaim(score, levelReached, completedCampaign, noticeEl);
+        });
+      }
+
+      // Prompt guest with auth modal
+      this.promptGuestHighScoreClaim(score, levelReached, completedCampaign, noticeEl);
+    }
+  }
+
+  private promptGuestHighScoreClaim(
+    score: number,
+    levelReached: number,
+    completedCampaign: boolean,
+    noticeEl: HTMLElement | null,
+  ): void {
+    userAuthUI.openModal({
+      subtitle: `🏆 TOP 10 SCORE (${score.toLocaleString()} PTS)! Log in or create an account to record your place in the Hall of Fame.`,
+      onSuccess: async (user) => {
+        const res = await leaderboardService.submitScore({
+          score,
+          levelReached,
+          completedCampaign,
+        });
+        if (noticeEl) {
+          if (res.success && res.qualified) {
+            noticeEl.innerHTML = `
+              <div>🎉 <strong>SCORE RECORDED!</strong> Rank #${res.rank} claimed by ${user.name}!</div>
+              <button class="claim-btn" id="btnNoticeViewLeaderboard">VIEW HALL OF FAME</button>
+            `;
+            document.getElementById("btnNoticeViewLeaderboard")?.addEventListener("click", () => {
+              leaderboardUI.openModal(user.id);
+            });
+          } else {
+            noticeEl.innerHTML = `<div>✅ Score submitted for ${user.name}!</div>`;
+          }
+          noticeEl.classList.remove("hidden");
+        }
+        leaderboardUI.openModal(
+          user.id,
+          `🎉 Congratulations, ${user.name}! You are ranked #${res.rank || "?"} in the Top 10 Pilots!`,
+        );
+      },
+    });
   }
 }
 
