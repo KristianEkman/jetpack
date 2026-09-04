@@ -15,9 +15,15 @@ import { AddressInfo } from "node:net";
 import { httpServer } from "../server/index.js";
 import { getFirebaseDatabase } from "../server/firebase.js";
 import {
+  resetCampaignLeaderboardForTest,
+  restoreCampaignLeaderboardSnapshot,
+} from "../server/campaignLeaderboardModule.js";
+import {
+  CampaignLeaderboardEntry,
   CampaignLeaderboardResponse,
   SubmitCampaignScoreResponse,
 } from "../js/shared/payloads.js";
+
 
 async function runTests(): Promise<void> {
   console.log("🧪 Starting Campaign Leaderboard Automated Test Suite...\n");
@@ -33,9 +39,17 @@ async function runTests(): Promise<void> {
   console.log(`📡 Test server listening on port ${address.port}\n`);
 
   const createdUserIds: string[] = [];
+  let leaderboardSnapshot: CampaignLeaderboardEntry[] = [];
+
 
   try {
+    // ── 0. Isolate test: clear any pre-existing leaderboard data ────────────
+    console.log("0️⃣  Clearing leaderboard to ensure a clean test environment...");
+    leaderboardSnapshot = await resetCampaignLeaderboardForTest();
+    console.log(`   ✅ Leaderboard cleared (${leaderboardSnapshot.length} existing entries saved for restore).\n`);
+
     // ── 1. Unauthenticated submission is rejected ────────────────────────────
+
     console.log("1️⃣  Testing unauthenticated score submission rejection...");
     const unauthRes = await fetch(`${baseUrl}/api/leaderboard/campaign`, {
       method: "POST",
@@ -193,9 +207,20 @@ async function runTests(): Promise<void> {
 
     console.log("🎉 All Campaign Leaderboard tests passed successfully!");
   } finally {
+    // Restore previously saved leaderboard snapshot first
+    if (leaderboardSnapshot.length > 0) {
+      try {
+        await restoreCampaignLeaderboardSnapshot(leaderboardSnapshot);
+        console.log(`🔄 Leaderboard snapshot restored (${leaderboardSnapshot.length} entries).`);
+      } catch (err) {
+        console.warn("⚠️ Snapshot restore warning:", err);
+      }
+    }
+
     // Clean up test data from Firebase RTDB if connected
     const db = getFirebaseDatabase();
     if (db && createdUserIds.length > 0) {
+
       try {
         for (const uid of createdUserIds) {
           await db.ref(`campaign_leaderboard/${uid}`).remove();

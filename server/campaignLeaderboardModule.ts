@@ -204,8 +204,40 @@ export async function submitCampaignScore(
 }
 
 /**
- * Resets memory store for automated tests.
+ * Resets in-memory store and optionally wipes Firebase RTDB path for automated tests.
+ * Returns the snapshot of all existing entries so the caller can restore them after the test.
  */
-export function resetCampaignLeaderboardForTest(): void {
+export async function resetCampaignLeaderboardForTest(): Promise<CampaignLeaderboardEntry[]> {
+  const snapshot = await getAllEntries();
   inMemoryScores.clear();
+  const db = getFirebaseDatabase();
+  if (db) {
+    try {
+      await db.ref(RTDB_PATH).remove();
+    } catch (err) {
+      console.warn("⚠️ Failed to clear leaderboard RTDB for test:", err);
+    }
+  }
+  return snapshot;
+}
+
+/**
+ * Restores a previously saved snapshot of leaderboard entries into Firebase RTDB
+ * and in-memory store. Used by tests to undo their side-effects.
+ */
+export async function restoreCampaignLeaderboardSnapshot(
+  entries: CampaignLeaderboardEntry[],
+): Promise<void> {
+  inMemoryScores.clear();
+  const db = getFirebaseDatabase();
+  for (const entry of entries) {
+    inMemoryScores.set(entry.userId, entry);
+    if (db) {
+      try {
+        await db.ref(`${RTDB_PATH}/${entry.userId}`).set(entry);
+      } catch (err) {
+        console.warn("⚠️ Failed to restore leaderboard entry in RTDB:", err);
+      }
+    }
+  }
 }
