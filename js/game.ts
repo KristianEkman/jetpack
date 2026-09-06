@@ -61,6 +61,7 @@ export class Game {
   isMultiplayer: boolean;
   selectedColor: string;
   currentLevelIndex: number;
+  campaignStartLevelIndex: number;
   gameState: GameState;
   isCustomLevel: boolean;
   activeCustomLevelRecord: CustomLevelRecord | null = null;
@@ -135,6 +136,7 @@ export class Game {
     }
 
     this.currentLevelIndex = 0;
+    this.campaignStartLevelIndex = 0;
     this.gameState = GAME_STATES.MENU;
     this.isCustomLevel = false;
     this.isCanvasRenderedForState = false;
@@ -438,6 +440,10 @@ export class Game {
 
   public async handleCampaignRunEnd(completedCampaign: boolean): Promise<void> {
     if (this.isMultiplayer || this.isCustomLevel) return;
+
+    // Only runs that started from Stage 1 count as campaign runs for the
+    // Top 10 — picking a later stage in the level select is practice mode.
+    if (this.campaignStartLevelIndex !== 0) return;
 
     const score = this.player.score;
     const levelReached = completedCampaign ? 10 : Math.max(1, this.currentLevelIndex + 1);

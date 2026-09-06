@@ -30,9 +30,12 @@ export class LevelManager {
         game.isDeathHandled = false;
         const levelData = CAMPAIGN_LEVELS[index];
 
-        // Fresh start (menu, level select, retry): reset lives/score/fuel/ammo.
+        // Fresh start (menu, level select, retry): reset lives/score/fuel/ammo
+        // and remember where the run began — only runs from Stage 1 are
+        // eligible for the campaign leaderboard.
         // Campaign next-level progression and restarts after death keep them.
         if (!isRestart && !continueCampaign) {
+            game.campaignStartLevelIndex = index;
             game.player.resetForNewGame();
         }
 
