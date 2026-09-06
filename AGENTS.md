@@ -31,7 +31,7 @@ The client entry point is `index.html` → `js/game.ts` (the `Game` master contr
 - `js/shared/` — **isomorphic code used by client AND server**: `constants.ts` (tile types, physics, `GAME_EVENTS`/`ROOM_EVENTS` socket event names, `NETWORK_SETTINGS`), `payloads.ts` (socket/REST payload interfaces), `types.ts`, `collision.ts`. Keep this directory free of DOM and Node-specific APIs.
 - `js/engine/` — client game loop (`loop.ts`), keyboard/touch input (`input.ts`).
 - `js/world/` — tile map model, rendering, and effects (`tilemap.ts` facade + `tilemap/` internals).
-- `js/entities/` — `Player` (facade `player.ts` + `player/` split: physics, combat, collectibles, effects, renderer, stuck-detection), `EnemyManager` and enemy types (`enemy/`: flitzer, homingMissile, turret, boss), `playerManager.ts` (remote-player rendering/interpolation).
+- `js/entities/` — `Player` (facade `player.ts` + `player/` split: physics, combat, collectibles, effects, renderer, stuck-detection; combat is split further under `player/combat/`: `phaseBeam`, `weaponFire`, `projectileUpdates`, `blasts`, shared `combatUtils`, re-exported via the `playerCombat.ts` facade), `EnemyManager` and enemy types (`enemy/`: flitzer, homingMissile, turret, boss), `playerManager.ts` (remote-player rendering/interpolation).
 - `js/levels/` — campaign level data (`campaign.ts`) and level loading/progression (`levelManager.ts`).
 - `js/network/` — `networkManager.ts` (Socket.IO client: connect, rooms, inputs, snapshots), `multiplayerController.ts` (client-side multiplayer orchestration), `userService.ts`.
 - `js/audio/` — Web Audio music sequencer (`sequencer.ts`, `notes.ts`, `patterns.ts`) and SFX (`sfx.ts`), behind `audioManager.ts`.
