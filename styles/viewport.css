@@ -248,6 +248,63 @@
   transform: scale(0.95);
 }
 
+/* Mobile landscape (rotated 90°): keep the game at its native 5:3 aspect
+   (height-driven width) so it stays narrower than the wide screen, and span
+   the touch controls across the full width so they sit in the empty side
+   margins - D-pad on the left, FLY/FIRE/SWAP on the right */
+@media (orientation: landscape) and (pointer: coarse) {
+  .game-viewport {
+    container-type: size;
+  }
+
+  .canvas-wrapper {
+    flex: none;
+    width: auto;
+    align-self: center;
+    height: 100%;
+    height: min(100cqh, 576px, 60cqw);
+  }
+
+  .touch-gamepad {
+    position: absolute;
+    left: 50%;
+    right: auto;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: none;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0 calc(12px + env(safe-area-inset-right, 0px))
+      calc(10px + env(safe-area-inset-bottom, 0px))
+      calc(12px + env(safe-area-inset-left, 0px));
+    pointer-events: none;
+    z-index: 40;
+  }
+
+  .dpad,
+  .action-buttons {
+    pointer-events: auto;
+  }
+
+  .dpad-btn {
+    background: rgba(16, 22, 36, 0.6);
+  }
+
+  .action-btn {
+    opacity: 0.85;
+  }
+
+  .action-buttons {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+}
+
 @media (max-width: 480px) {
   .game-viewport {
     padding: 4px 6px;

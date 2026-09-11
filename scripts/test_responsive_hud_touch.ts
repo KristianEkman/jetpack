@@ -59,6 +59,23 @@ assert.ok(hudCss.includes("@media (max-width: 768px)"), "hud.css must contain re
 assert.ok(hudCss.includes(".hud-bar.hud-open .hud-dropdown-content"), "hud.css must support .hud-open state");
 assert.ok(viewportCss.includes(".touch-gamepad"), "viewport.css must style touch gamepad");
 
+// E. Check mobile landscape narrowing (canvas keeps 5:3, controls pinned to canvas edges)
+const landscapeStart = viewportCss.indexOf("@media (orientation: landscape) and (pointer: coarse)");
+assert.ok(landscapeStart > 0, "viewport.css must contain mobile landscape media query");
+const landscapeBlock = viewportCss.substring(landscapeStart);
+assert.ok(
+  landscapeBlock.includes(".canvas-wrapper") && landscapeBlock.includes("width: auto"),
+  "landscape canvas must be height-driven (width: auto) to keep its 5:3 aspect and stay narrow",
+);
+assert.ok(
+  landscapeBlock.includes("height: min(100cqh, 576px, 60cqw)"),
+  "landscape canvas height must be capped so the 5:3 aspect never breaks",
+);
+assert.ok(
+  landscapeBlock.includes("translateX(-50%)") && landscapeBlock.includes("width: 100%"),
+  "landscape touch gamepad must span the full width so controls sit in the side margins",
+);
+
 console.log("   ✅ HTML & CSS structure verified.\n");
 
 // ── 2. Headless DOM Mock Verification of UIManager & InputHandler ───────────

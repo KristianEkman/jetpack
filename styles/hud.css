@@ -163,6 +163,20 @@
   transition: all 0.2s ease;
 }
 
+/* Powerup item — always occupies space so HUD doesn't shift when it appears/disappears */
+.powerup-item {
+  min-width: 64px;
+  transition: opacity 0.2s ease;
+}
+
+/* Override the global .hidden for powerup-item: keep layout space, just hide visually */
+.powerup-item.hidden {
+  display: flex !important;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Weapon Selector Arsenal Styles */
 .hud-weapon-group {
   order: 2;
