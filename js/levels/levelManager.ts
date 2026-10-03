@@ -7,6 +7,7 @@ import { Game, GAME_STATES } from '../game.js';
 import { CAMPAIGN_LEVELS } from './campaign.js';
 import { TILE_SIZE, TILES } from '../world/tilemap.js';
 import { userService } from '../network/userService.js';
+import { kongregateService } from '../network/kongregateService.js';
 import { CustomLevelHeader, CustomLevelRecord, CustomLevelResult } from '../shared/payloads.js';
 
 export function isFinalCampaignLevel(index: number): boolean {
@@ -212,6 +213,11 @@ export class LevelManager {
         if (statLevelScore) statLevelScore.textContent = '1000';
         if (statFuelBonus) statFuelBonus.textContent = `${fuelBonus}`;
         if (statTotalScore) statTotalScore.textContent = `${game.player.score}`;
+
+        if (!game.isMultiplayer && !game.isCustomLevel) {
+            kongregateService.submitScore(game.player.score);
+            kongregateService.submitLevel(game.currentLevelIndex + 1);
+        }
 
         document.getElementById('levelCompleteStats')?.classList.remove('hidden');
         document.getElementById('multiplayerLevelResults')?.classList.add('hidden');

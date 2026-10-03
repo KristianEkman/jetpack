@@ -42,6 +42,7 @@ function writeVersionFile() {
 
 export default defineConfig({
   root: '.',
+  base: './',
   define: {
     __GIT_COMMIT_HASH__: JSON.stringify(commitHash),
     __BUILD_DATE_TIME__: JSON.stringify(deployedAt)

@@ -741,8 +741,16 @@
         </div>
     </dialog>
 
-    <!-- Socket.IO Client Library -->
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Kongregate API (Active when running inside Kongregate) -->
+    <script src="https://cdn1.kongregate.com/javascripts/kongregate_api.js"></script>
+
+    <!-- Socket.IO Client Library (Local bundled copy with fallback) -->
+    <script src="./assets/socket.io.min.js"></script>
+    <script>
+        if (typeof io === 'undefined') {
+            document.write('<script src="/socket.io/socket.io.js"><\/script>');
+        }
+    </script>
     <!-- JS Application Scripts (ES6 Modules) -->
     <script type="module" src="js/game.js"></script>
 </body>

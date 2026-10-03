@@ -22,6 +22,7 @@ import { userAuthUI } from "./ui/userAuthUI.js";
 import { leaderboardUI } from "./ui/leaderboardUI.js";
 import { leaderboardService } from "./network/leaderboardService.js";
 import { userService } from "./network/userService.js";
+import { kongregateService } from "./network/kongregateService.js";
 import {
   MultiplayerRoomInfo,
   PublicRoomInfo,
@@ -457,6 +458,12 @@ export class Game {
     }
 
     if (score <= 0) return;
+
+    kongregateService.submitScore(score);
+    kongregateService.submitLevel(levelReached);
+    if (completedCampaign) {
+      kongregateService.submitCampaignComplete();
+    }
 
     // Check if score qualifies for Top 10
     const qualifies = await leaderboardService.checkIfScoreQualifies(score, levelReached);
