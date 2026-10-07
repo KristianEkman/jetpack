@@ -490,14 +490,18 @@ export class Game {
       }
     } else {
       // Guest player achieved a qualifying Top 10 score
+      const isKong = kongregateService.isAvailable();
       if (noticeEl) {
         noticeEl.innerHTML = `
           <div>🏆 <strong>TOP 10 QUALIFIER!</strong> Your score qualifies for the Hall of Fame!</div>
-          <div style="font-size: 0.8rem; color: #fff;">Log in or register to record your place.</div>
-          <button class="claim-btn" id="btnNoticeClaimScore">CLAIM HIGH SCORE</button>
+          <div style="font-size: 0.8rem; color: #fff;">${isKong ? "Sign in with Kongregate to record your place." : "Log in or register to record your place."}</div>
+          <button class="claim-btn" id="btnNoticeClaimScore">${isKong ? "SIGN IN WITH KONGREGATE" : "CLAIM HIGH SCORE"}</button>
         `;
         noticeEl.classList.remove("hidden");
         document.getElementById("btnNoticeClaimScore")?.addEventListener("click", () => {
+          if (isKong && kongregateService.isGuest()) {
+            kongregateService.showRegistrationBox();
+          }
           this.promptGuestHighScoreClaim(score, levelReached, completedCampaign, noticeEl);
         });
       }
@@ -513,8 +517,13 @@ export class Game {
     completedCampaign: boolean,
     noticeEl: HTMLElement | null,
   ): void {
+    const isKong = kongregateService.isAvailable();
+    const subtitle = isKong
+      ? `🏆 TOP 10 SCORE (${score.toLocaleString()} PTS)! Sign in or register with Kongregate to record your place in the Hall of Fame.`
+      : `🏆 TOP 10 SCORE (${score.toLocaleString()} PTS)! Log in or create an account to record your place in the Hall of Fame.`;
+
     userAuthUI.openModal({
-      subtitle: `🏆 TOP 10 SCORE (${score.toLocaleString()} PTS)! Log in or create an account to record your place in the Hall of Fame.`,
+      subtitle,
       onSuccess: async (user) => {
         const res = await leaderboardService.submitScore({
           score,

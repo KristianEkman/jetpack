@@ -525,6 +525,21 @@
                 <small id="loggedInUserId" style="color: #888; font-size: 0.75rem; word-break: break-all;"></small>
             </div>
 
+            <!-- Kongregate Account Card (Active when playing on Kongregate) -->
+            <div id="kongregateAuthCard" class="kongregate-auth-card hidden" style="background: rgba(179, 18, 23, 0.15); border: 1px solid rgba(255, 68, 68, 0.5); border-radius: 8px; padding: 14px; margin-bottom: 15px; text-align: center; width: 100%;">
+                <div id="kongGuestPrompt">
+                    <p style="color: #ffcc00; font-family: 'Press Start 2P', monospace; font-size: 0.75rem; margin: 0 0 10px 0;">🎮 KONGREGATE PILOT</p>
+                    <p style="font-size: 0.85rem; color: #ddd; margin-bottom: 14px; line-height: 1.4; font-family: 'Rajdhani', sans-serif;">Sign in or register with Kongregate to access Multiplayer, share Custom Levels, and claim your high score.</p>
+                    <button id="btnKongregateSignIn" class="btn-menu primary" style="width: 100%;">🔑 SIGN IN WITH KONGREGATE</button>
+                </div>
+                <div id="kongLoggedInInfo" class="hidden">
+                    <p style="margin: 0; font-size: 0.75rem; color: #aaa; letter-spacing: 1px;">LOGGED IN AS KONGREGATE PILOT</p>
+                    <h3 id="kongPilotName" style="margin: 6px 0; color: #00ffcc; font-family: 'Press Start 2P', monospace; font-size: 0.85rem;">Pilot</h3>
+                    <small id="kongPilotId" style="color: #888; font-size: 0.75rem; display: block; margin-top: 4px;"></small>
+                    <p id="kongPilotStatus" style="color: #44ff44; font-size: 0.8rem; margin: 8px 0 0 0; font-family: 'Rajdhani', sans-serif; font-weight: bold;">Authenticated via Kongregate APIs ✅</p>
+                </div>
+            </div>
+
             <div id="userAuthFormContainer" style="width: 100%;">
                 <div class="tab-buttons-row" style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%;">
                     <button id="btnAuthTabLogin" class="btn-menu active" style="flex: 1;">LOGIN</button>

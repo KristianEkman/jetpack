@@ -7,6 +7,7 @@ import { Game, GAME_STATES } from "../game.js";
 import { CAMPAIGN_LEVELS } from "../levels/campaign.js";
 import { TILES } from "../world/tilemap.js";
 import { userService } from "../network/userService.js";
+import { kongregateService } from "../network/kongregateService.js";
 import { userAuthUI } from "./userAuthUI.js";
 import { serverHealthUI } from "./serverHealthUI.js";
 import { leaderboardUI } from "./leaderboardUI.js";
@@ -168,6 +169,12 @@ export class UIManager {
 
     document.getElementById("btnMultiplayer")?.addEventListener("click", () => {
       if (!userService.isLoggedIn()) {
+        if (kongregateService.isAvailable() && kongregateService.isGuest()) {
+          this.showBanner("PLEASE SIGN IN WITH KONGREGATE TO PLAY MULTIPLAYER");
+          kongregateService.showRegistrationBox();
+          userAuthUI.openModal();
+          return;
+        }
         this.showBanner("PLEASE LOG IN TO PLAY MULTIPLAYER");
         userAuthUI.openModal();
         return;
@@ -354,6 +361,12 @@ export class UIManager {
     document.getElementById("btnEditorUpload")?.addEventListener("click", async () => {
       const loggedInUser = userService.getLoggedInUser();
       if (!loggedInUser) {
+        if (kongregateService.isAvailable() && kongregateService.isGuest()) {
+          this.showBanner("PLEASE SIGN IN WITH KONGREGATE TO UPLOAD CUSTOM LEVELS");
+          kongregateService.showRegistrationBox();
+          userAuthUI.openModal();
+          return;
+        }
         this.showBanner("PLEASE LOG IN TO UPLOAD CUSTOM LEVELS");
         userAuthUI.openModal();
         return;

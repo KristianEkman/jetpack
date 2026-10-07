@@ -1,4 +1,5 @@
 import { userService, UserProfile } from "../network/userService.js";
+import { kongregateService } from "../network/kongregateService.js";
 
 export class UserAuthUI {
   private static instance: UserAuthUI | null = null;
@@ -6,6 +7,7 @@ export class UserAuthUI {
   private isRegisterMode: boolean = false;
 
   private modal: HTMLDialogElement | null = null;
+  private userAuthTitle: HTMLElement | null = null;
   private btnAuthToggleTabLogin: HTMLButtonElement | null = null;
   private btnAuthToggleTabRegister: HTMLButtonElement | null = null;
   private inputUsername: HTMLInputElement | null = null;
@@ -20,6 +22,13 @@ export class UserAuthUI {
   private loggedInUserName: HTMLElement | null = null;
   private loggedInUserId: HTMLElement | null = null;
   private authSubtitle: HTMLElement | null = null;
+
+  private kongregateAuthCard: HTMLElement | null = null;
+  private kongGuestPrompt: HTMLElement | null = null;
+  private kongLoggedInInfo: HTMLElement | null = null;
+  private btnKongregateSignIn: HTMLButtonElement | null = null;
+  private kongPilotName: HTMLElement | null = null;
+  private kongPilotId: HTMLElement | null = null;
 
   private btnHUDAuth: HTMLButtonElement | null = null;
   private btnMenuAccount: HTMLButtonElement | null = null;
@@ -38,6 +47,7 @@ export class UserAuthUI {
 
   public init(): void {
     this.modal = document.getElementById("userAuthModal") as HTMLDialogElement | null;
+    this.userAuthTitle = document.getElementById("userAuthTitle");
     this.btnAuthToggleTabLogin = document.getElementById("btnAuthTabLogin") as HTMLButtonElement | null;
     this.btnAuthToggleTabRegister = document.getElementById("btnAuthTabRegister") as HTMLButtonElement | null;
     this.inputUsername = document.getElementById("authUserUsername") as HTMLInputElement | null;
@@ -53,6 +63,13 @@ export class UserAuthUI {
     this.loggedInUserName = document.getElementById("loggedInUserName");
     this.loggedInUserId = document.getElementById("loggedInUserId");
 
+    this.kongregateAuthCard = document.getElementById("kongregateAuthCard");
+    this.kongGuestPrompt = document.getElementById("kongGuestPrompt");
+    this.kongLoggedInInfo = document.getElementById("kongLoggedInInfo");
+    this.btnKongregateSignIn = document.getElementById("btnKongregateSignIn") as HTMLButtonElement | null;
+    this.kongPilotName = document.getElementById("kongPilotName");
+    this.kongPilotId = document.getElementById("kongPilotId");
+
     this.btnHUDAuth = document.getElementById("btnUserAuth") as HTMLButtonElement | null;
     this.btnMenuAccount = document.getElementById("btnMenuAccount") as HTMLButtonElement | null;
     this.hudBadge = document.getElementById("userAccountBadge");
@@ -60,9 +77,20 @@ export class UserAuthUI {
     this.setupEventListeners();
     this.updateHUD();
 
-    // Validate stored session on launch: restore a persisted login if present.
-    // Guests are never prompted — campaign is playable without an account;
-    // login is only requested by features that need it (multiplayer, level upload).
+    // Listen for Kongregate login events to update UI dynamically
+    kongregateService.onLogin((username, userId) => {
+      this.updateHUD();
+      this.refreshLoggedInState();
+      if (this.onSuccessCallback) {
+        const user = userService.getLoggedInUser() || { id: `kong_${userId}`, name: username };
+        const callback = this.onSuccessCallback;
+        this.onSuccessCallback = null;
+        callback(user);
+      }
+      this.closeModal();
+    });
+
+    // Validate stored session or auto-sync Kongregate session on launch
     userService.validateSession().then(() => {
       this.updateHUD();
       this.refreshLoggedInState();
@@ -76,6 +104,13 @@ export class UserAuthUI {
 
     if (this.btnMenuAccount) {
       this.btnMenuAccount.addEventListener("click", () => this.openModal());
+    }
+
+    if (this.btnKongregateSignIn) {
+      this.btnKongregateSignIn.addEventListener("click", () => {
+        kongregateService.showRegistrationBox();
+        this.showStatus("Please complete sign in using the Kongregate dialog...", false);
+      });
     }
 
     if (this.btnAuthToggleTabLogin) {
@@ -107,6 +142,26 @@ export class UserAuthUI {
     if (!this.modal) return;
     this.clearForm();
     this.onSuccessCallback = options?.onSuccess || null;
+
+    if (kongregateService.isAvailable()) {
+      if (this.userAuthTitle) this.userAuthTitle.textContent = "KONGREGATE ACCOUNT";
+      if (this.authSubtitle) {
+        this.authSubtitle.textContent =
+          options?.subtitle ||
+          (kongregateService.isGuest()
+            ? "Sign in or register with Kongregate to access online features."
+            : "Authenticated Kongregate pilot profile.");
+        this.authSubtitle.style.display = "block";
+      }
+      if (kongregateService.isGuest()) {
+        kongregateService.showRegistrationBox();
+      }
+      this.refreshLoggedInState();
+      this.modal.showModal();
+      return;
+    }
+
+    if (this.userAuthTitle) this.userAuthTitle.textContent = "USER ACCOUNT";
     if (this.authSubtitle) {
       this.authSubtitle.textContent =
         options?.subtitle || "Log in or register to record scores, access custom levels, and play online.";
@@ -142,6 +197,29 @@ export class UserAuthUI {
   }
 
   private refreshLoggedInState(): void {
+    if (kongregateService.isAvailable()) {
+      if (this.userAuthTitle) this.userAuthTitle.textContent = "KONGREGATE ACCOUNT";
+      if (this.authFormContainer) this.authFormContainer.style.display = "none";
+      if (this.loggedInUserCard) this.loggedInUserCard.classList.add("hidden");
+      if (this.kongregateAuthCard) this.kongregateAuthCard.classList.remove("hidden");
+      if (this.btnLogout) this.btnLogout.style.display = "none";
+
+      if (!kongregateService.isGuest() && kongregateService.getUsername()) {
+        const username = kongregateService.getUsername()!;
+        const userId = kongregateService.getUserId();
+        if (this.kongLoggedInInfo) this.kongLoggedInInfo.classList.remove("hidden");
+        if (this.kongGuestPrompt) this.kongGuestPrompt.classList.add("hidden");
+        if (this.kongPilotName) this.kongPilotName.textContent = username;
+        if (this.kongPilotId) this.kongPilotId.textContent = `Kongregate User ID: ${userId ?? "N/A"}`;
+      } else {
+        if (this.kongLoggedInInfo) this.kongLoggedInInfo.classList.add("hidden");
+        if (this.kongGuestPrompt) this.kongGuestPrompt.classList.remove("hidden");
+      }
+      return;
+    }
+
+    // Standalone / Non-Kongregate environment fallback
+    if (this.kongregateAuthCard) this.kongregateAuthCard.classList.add("hidden");
     const user = userService.getLoggedInUser();
     if (user) {
       if (this.loggedInUserCard) this.loggedInUserCard.classList.remove("hidden");
@@ -214,6 +292,20 @@ export class UserAuthUI {
   }
 
   public updateHUD(): void {
+    if (kongregateService.isAvailable()) {
+      if (!kongregateService.isGuest()) {
+        const username = kongregateService.getUsername();
+        if (this.hudBadge) {
+          this.hudBadge.textContent = username || "Pilot";
+        }
+        return;
+      }
+      if (this.hudBadge) {
+        this.hudBadge.textContent = "Guest";
+      }
+      return;
+    }
+
     const user = userService.getLoggedInUser();
     if (this.hudBadge) {
       this.hudBadge.textContent = user ? user.name : "Guest";

@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { Router, Request, Response } from "express";
-import { createUser, loginUser, getUserById } from "../userModule.js";
+import { createUser, loginUser, getUserById, upsertKongregateUser } from "../userModule.js";
 
 export function createUserRouter(): Router {
   const router = Router();
@@ -25,6 +25,16 @@ export function createUserRouter(): Router {
       res.status(401).json(result);
       return;
     }
+    res.json(result);
+  });
+
+  router.post("/api/users/kongregate", async (req: Request, res: Response): Promise<void> => {
+    const { username, userId } = req.body || {};
+    if (!username || !userId) {
+      res.status(400).json({ success: false, error: "Username and userId are required." });
+      return;
+    }
+    const result = await upsertKongregateUser(userId, username);
     res.json(result);
   });
 

@@ -128,22 +128,76 @@ export async function loginUser(name: string, password: string): Promise<UserAut
 }
 
 /**
+ * Upserts a Kongregate user profile in Firebase RTDB or returns authenticated profile.
+ */
+export async function upsertKongregateUser(
+  kongregateUserId: number | string,
+  username: string,
+): Promise<UserAuthResult> {
+  const trimmedName = username ? username.trim() : "";
+  if (!trimmedName || !kongregateUserId) {
+    return { success: false, error: "Valid username and Kongregate userId are required." };
+  }
+
+  const userId = `kong_${kongregateUserId}`;
+  const db = getFirebaseDatabase();
+  if (db) {
+    const normalizedName = trimmedName.toLowerCase();
+    const updates: Record<string, unknown> = {};
+    updates[`users/${userId}`] = {
+      id: userId,
+      username: trimmedName,
+      isKongregate: true,
+      kongregateId: kongregateUserId,
+      updatedAt: Date.now(),
+    };
+    updates[`usernames/${normalizedName}`] = userId;
+    try {
+      await db.ref().update(updates);
+    } catch (err: unknown) {
+      console.warn("Firebase update for Kongregate user failed:", err);
+    }
+  }
+
+  return {
+    success: true,
+    user: {
+      id: userId,
+      name: trimmedName,
+    },
+  };
+}
+
+/**
  * Retrieves public user profile by unique user ID.
  */
 export async function getUserById(id: string): Promise<UserProfile | null> {
   if (!id) return null;
   const db = getFirebaseDatabase();
-  if (!db) return null;
+  if (!db) {
+    if (id.startsWith("kong_")) {
+      return { id, name: "KongPilot_" + id.replace("kong_", "") };
+    }
+    return null;
+  }
 
   try {
     const userSnap = await db.ref(`users/${id}`).get();
-    if (!userSnap.exists()) return null;
+    if (!userSnap.exists()) {
+      if (id.startsWith("kong_")) {
+        return { id, name: "KongPilot_" + id.replace("kong_", "") };
+      }
+      return null;
+    }
     const userData = userSnap.val() as { id: string; username: string };
     return {
       id: userData.id,
       name: userData.username,
     };
   } catch {
+    if (id.startsWith("kong_")) {
+      return { id, name: "KongPilot_" + id.replace("kong_", "") };
+    }
     return null;
   }
 }
